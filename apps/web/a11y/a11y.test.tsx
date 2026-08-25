@@ -1,0 +1,112 @@
+import { describe, expect, it } from 'vitest';
+import { render } from '@testing-library/react';
+import axe from 'axe-core';
+import {
+  EmptyState,
+  Input,
+  StatusCell,
+  Table,
+  Widget,
+} from '@companyos/design-system';
+
+async function expectNoSeriousAxeViolations(container: HTMLElement) {
+  const results = await axe.run(container, {
+    runOnly: {
+      type: 'tag',
+      values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
+    },
+  });
+  const serious = results.violations.filter(
+    (v) => v.impact === 'serious' || v.impact === 'critical',
+  );
+  expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+}
+
+describe('a11y', () => {
+  it('shell landmark structure has no serious/critical violations', async () => {
+    const { container } = render(
+      <div>
+        <a href="#main-content">Skip to content</a>
+        <header>
+          <nav aria-label="Organization">Org switcher</nav>
+        </header>
+        <div style={{ display: 'flex' }}>
+          <aside aria-label="Primary">
+            <nav>
+              <a href="/">Dashboard</a>
+            </nav>
+          </aside>
+          <main id="main-content" tabIndex={-1}>
+            <h1>Dashboard</h1>
+          </main>
+          <aside aria-label="Copilot">
+            <h2>Copilot</h2>
+          </aside>
+        </div>
+      </div>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('login form structure has no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Sign in</h1>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <Input label="Email" type="email" name="email" autoComplete="username" />
+          <Input label="Password" type="password" name="password" autoComplete="current-password" />
+          <button type="submit">Sign in</button>
+        </form>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('dashboard empty widgets have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Dashboard</h1>
+        <Widget
+          title="My work"
+          empty={<EmptyState title="Coming later" description="No placeholder records." />}
+          footer="As of now"
+        />
+        <Widget
+          title="Inbox"
+          empty={<EmptyState title="Nothing here yet" description="When activity exists, it will show up here." />}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('members table with mock rows has no serious/critical violations', async () => {
+    const rows = [
+      { id: '1', name: 'Ada Lovelace', email: 'ada@example.com', status: 'active' },
+      { id: '2', name: 'Grace Hopper', email: 'grace@example.com', status: 'invited' },
+    ];
+    const { container } = render(
+      <main>
+        <h1>Members</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'name', header: 'Name', cell: (r) => r.name },
+            { key: 'email', header: 'Email', cell: (r) => r.email },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} />,
+            },
+          ]}
+          rows={rows}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+});

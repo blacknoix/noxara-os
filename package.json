@@ -10,7 +10,9 @@
     "build": "pnpm -r build",
     "dev:web": "pnpm --filter @companyos/web dev",
     "generate:sdk": "pnpm --filter @companyos/sdk generate",
-    "check:openapi-drift": "pnpm --filter @companyos/sdk check:drift"
+    "check:openapi-drift": "pnpm --filter @companyos/sdk check:drift",
+    "test:a11y": "pnpm --filter @companyos/web test:a11y",
+    "test:unit": "pnpm --filter @companyos/web test:unit"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

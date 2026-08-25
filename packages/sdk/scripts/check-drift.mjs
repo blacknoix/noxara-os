@@ -34,6 +34,17 @@ if (!doc.paths['/api/v1/auth/login'] || !doc.paths['/api/v1/auth/register']) {
   process.exit(1);
 }
 
+if (!doc.paths['/api/v1/dashboard']) {
+  console.error('OpenAPI drift: missing /api/v1/dashboard');
+  process.exit(1);
+}
+for (const name of ['DashboardResponse', 'DashboardWidget']) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing schema ${name}`);
+    process.exit(1);
+  }
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);

@@ -1,9 +1,10 @@
 export type ErrorStateProps = {
   title?: string;
   message: string;
+  requestId?: string;
 };
 
-export function ErrorState({ title = 'Something went wrong', message }: ErrorStateProps) {
+export function ErrorState({ title = 'Something went wrong', message, requestId }: ErrorStateProps) {
   return (
     <div
       role="alert"
@@ -27,6 +28,19 @@ export function ErrorState({ title = 'Something went wrong', message }: ErrorSta
       <p style={{ margin: '0.5rem auto 0', maxWidth: 480, lineHeight: 1.5, color: 'var(--cos-color-fg-muted)' }}>
         {message}
       </p>
+      {requestId ? (
+        <p
+          style={{
+            margin: '0.75rem auto 0',
+            maxWidth: 480,
+            fontSize: '0.75rem',
+            color: 'var(--cos-color-fg-muted)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          Request ID: <code style={{ fontFamily: 'ui-monospace, monospace' }}>{requestId}</code>
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-/** TypeScript SDK for CompanyOS Phase 1.2. */
+/** TypeScript SDK for CompanyOS Phase 1.3. */
 
 export type {
   Hello,
@@ -33,6 +33,8 @@ export type {
   DepartmentView,
   DepartmentListResponse,
   MyCapabilitiesResponse,
+  DashboardResponse,
+  DashboardWidget,
 } from './generated';
 
 import type {
@@ -50,6 +52,7 @@ import type {
   MemberListResponse,
   RoleListResponse,
   MyCapabilitiesResponse,
+  DashboardResponse,
 } from './generated';
 
 export type CompanyOsClientOptions = {
@@ -183,6 +186,19 @@ export class CompanyOsClient {
     });
     if (!res.ok) throw new Error(`myCapabilities failed: ${res.status}`);
     return (await res.json()) as MyCapabilitiesResponse;
+  }
+
+  async getDashboard(period?: string): Promise<DashboardResponse> {
+    const qs = period ? `?period=${encodeURIComponent(period)}` : '';
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/dashboard${qs}`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      throw new Error(`getDashboard failed: ${res.status}`);
+    }
+    return (await res.json()) as DashboardResponse;
   }
 
   async listHello(): Promise<HelloListResponse> {

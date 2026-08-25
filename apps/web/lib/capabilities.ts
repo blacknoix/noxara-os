@@ -55,6 +55,15 @@ export function useCapabilities() {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    const onOrgSwitch = () => {
+      cached = null;
+      void refresh();
+    };
+    window.addEventListener('cos:org-switched', onOrgSwitch);
+    return () => window.removeEventListener('cos:org-switched', onOrgSwitch);
+  }, [refresh]);
+
   const can = (permission: string) => caps?.allowed.includes(permission) ?? false;
 
   return { caps, loading, error, can, refresh };

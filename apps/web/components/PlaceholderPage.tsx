@@ -1,7 +1,11 @@
+import { EmptyState } from '@companyos/design-system';
+
 export default function PlaceholderPage({
   title,
+  description = 'This module is not enabled yet. No placeholder records.',
 }: {
   title: string;
+  description?: string;
 }) {
   return (
     <section>
@@ -15,7 +19,9 @@ export default function PlaceholderPage({
       >
         {title}
       </h1>
-      <p style={{ color: 'var(--cos-color-fg-muted)' }}>Phase 0 placeholder — no product data yet.</p>
+      <div style={{ marginTop: '1rem' }}>
+        <EmptyState title="Coming later" description={description} />
+      </div>
     </section>
   );
 }
