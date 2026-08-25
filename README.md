@@ -6,85 +6,76 @@ This repository is the system source for product docs, Rust services, the Next.j
 
 Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@companyos/*`; the GitHub repo is `noxara-os`.
 
-## Phase 0 status
+## Phase status
 
-Phase 0 foundations only — **not** CRM, finance product features, or AI copilot.
+- **Phase 0** foundations (merged): hello slice, RLS, outbox, authz PDP, gateway stub.
+- **Phase 1.1** (this line of work): Identity & Authentication — org-scoped JWTs, refresh cookies, MFA, OAuth, sessions, switch-org.
 
-You can:
-
-1. Clone the repo and install toolchains (Rust, pnpm, Docker).
-2. Run `scripts/dev-up` / `make dev-up` to start local dependencies + seed one org / two users.
-3. Hit the **hello** vertical slice through the gateway BFF.
-4. Open the web shell (`apps/web`) with loading / empty / error dashboard states.
-5. Ship a PR that clears the nine-gate DoD checklist.
+Not in scope yet: CRM, invoices, AI copilot, full SSO IdP, Flutter/Tauri, live AWS.
 
 ## Non-negotiable invariants
 
-See [docs/00-INDEX.md](docs/00-INDEX.md). Summary:
-
-1. One tenant key: `org_id` + PostgreSQL RLS everywhere.
-2. One PDP: `crates/authz` (deny by default; explicit deny wins).
-3. Bounded contexts own their data.
-4. Write + outbox atomically; NATS JetStream at-least-once; idempotent consumers.
-5. Long processes → Temporal workflows.
-6. Money = `amount_minor: i64` + ISO 4217 (never `f64`).
-7. Everything attributable (AI records the human it acts for).
-8. AI proposes, humans commit (v1).
+See [docs/00-INDEX.md](docs/00-INDEX.md).
 
 ## Monorepo layout
 
 ```text
-apps/web/                 Next.js App Router shell
-services/gateway/         Axum API gateway / BFF
-services/core/            Auth/org/user/audit home — Phase 0 hello service
-services/business|platform|ai/   Placeholders (split by config later)
-crates/                   ids, money, errors, telemetry, tenancy, events, outbox, authz, testkit
+apps/web/                 Next.js App Router (auth pages + shell)
+services/gateway/         Axum BFF — JWT authN, tenant headers, coarse authz
+services/core/            Auth + org/user/audit home + hello slice
+crates/                   ids, money, errors, telemetry, tenancy, events, outbox, authz, auth-token, testkit
 packages/design-system/   Tokens + primitives
-packages/sdk/             OpenAPI + TypeScript SDK stub
-infrastructure/docker/    Compose for local deps
-infrastructure/terraform/ Skeletons only (no live cloud)
-docs/                     Specs, ADRs, runbooks
-scripts/                  One-command bootstrap
+packages/sdk/             OpenAPI + TypeScript SDK
+docs/                     Specs, ADRs, threat models, runbooks
 ```
 
 ## Quick start
 
 ```bash
 cp .env.example .env
-make dev-up
+make dev-up          # postgres + deps; seeds Acme Demo
 pnpm install
+# terminal A
+AUTH_JWT_SECRET=local-dev-only-change-me AUTH_COOKIE_SECURE=0 \
+  cargo run -p companyos-core
+# terminal B
+AUTH_JWT_SECRET=local-dev-only-change-me COMPANYOS_LOCAL_AUTH=0 \
+  cargo run -p companyos-gateway
+# terminal C
 pnpm --filter @companyos/web dev
 ```
 
-**LOCAL-ONLY auth** (never production):
+### Auth locally
+
+- Web: `/login`, `/signup`, `/verify-email`, `/magic-link`, `/mfa`, `/reset-password`
+- Magic links / verification emails are **logged** and written under `.tmp/mail/` (or `AUTH_MAIL_DIR`). No real SMTP required locally.
+- Seeded member: `member@acme.demo` / `correct-horse-battery` (no MFA).
+- Seeded owner: same password but **MFA required** on login (enroll via `/mfa`).
+- Refresh token: httpOnly cookie `companyos_refresh`. Access token: in-memory only (not localStorage).
+- Breach checks: fixture list locally; set `HIBP_ENABLED=1` for Have I Been Pwned k-anonymity in prod.
+- OAuth: set `GOOGLE_OAUTH_*` / `MICROSOFT_OAUTH_*`. Tests use `OAUTH_MOCK_BASE`.
+- SSO admin API exists but returns `403 feature_disabled` unless `COMPANYOS_SSO_ENABLED=1` **and** org flag `sso`.
+
+### LOCAL-ONLY bypass (default off)
+
+Set `COMPANYOS_LOCAL_AUTH=1` only for scripts/tests:
 
 ```bash
 source .tmp/seed.env
 curl -s http://127.0.0.1:8080/api/v1/hello \
   -H "X-CompanyOS-Dev-Org-Id: $DEV_ORG_PUBLIC_ID" \
-  -H "X-CompanyOS-Dev-User-Id: $DEV_USER_OWNER_PUBLIC_ID"
+  -H "X-CompanyOS-Dev-User-Id: $DEV_USER_MEMBER_PUBLIC_ID"
 ```
-
-OpenSearch and ClickHouse are optional (`docker compose --profile full`). The hello path must work if they are down.
 
 ## Toolchain
 
 - `cargo fmt` / `cargo clippy -D warnings` / `cargo test --workspace`
-- `pnpm typecheck` / `pnpm lint` / Prettier
-- TypeScript **strict**
-- EditorConfig at repo root
-
-## Contract chain
-
-Rust hello types → OpenAPI 3.1 (`/api/v1/openapi.json`) → `packages/sdk` TypeScript.  
-CI fails on schema drift (`pnpm check:openapi-drift`).
+- `pnpm typecheck` / `pnpm lint`
+- OpenAPI drift: `pnpm check:openapi-drift`
 
 ## Docs
 
 - [Documentation index](docs/00-INDEX.md)
-- [CONTRIBUTING](CONTRIBUTING.md)
-- ADRs 001–015 under `docs/adrs/`
-
-## Out of scope (Phase 0)
-
-OAuth/MFA/SSO product, CRM, invoices, payments, projects, AI copilot, Flutter, Tauri, live AWS/K8s, real Temporal workflows beyond compose being up.
+- [Auth threat model](docs/threat-models/auth.md)
+- Runbooks: key rotation, mass session revocation, locked-out owner
+- ADR 016: org-scoped JWT + opaque refresh cookies

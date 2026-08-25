@@ -19,6 +19,14 @@ pub enum ErrorCode {
     TenancyViolation,
     Internal,
     ServiceUnavailable,
+    /// HTTP 429 — auth rate limits / progressive delays.
+    TooManyRequests,
+    /// Account temporarily locked after brute-force.
+    AccountLocked,
+    /// MFA challenge required before access token issuance.
+    MfaRequired,
+    /// Plan/feature flag disabled (e.g. SSO).
+    FeatureDisabled,
 }
 
 impl ErrorCode {
@@ -32,6 +40,10 @@ impl ErrorCode {
             Self::TenancyViolation => "tenancy_violation",
             Self::Internal => "internal",
             Self::ServiceUnavailable => "service_unavailable",
+            Self::TooManyRequests => "too_many_requests",
+            Self::AccountLocked => "account_locked",
+            Self::MfaRequired => "mfa_required",
+            Self::FeatureDisabled => "feature_disabled",
         }
     }
 
@@ -45,6 +57,10 @@ impl ErrorCode {
             Self::TenancyViolation => StatusCode::FORBIDDEN,
             Self::Internal => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE,
+            Self::TooManyRequests => StatusCode::TOO_MANY_REQUESTS,
+            Self::AccountLocked => StatusCode::FORBIDDEN,
+            Self::MfaRequired => StatusCode::UNAUTHORIZED,
+            Self::FeatureDisabled => StatusCode::FORBIDDEN,
         }
     }
 }
@@ -152,6 +168,10 @@ mod tests {
             ErrorCode::TenancyViolation,
             ErrorCode::Internal,
             ErrorCode::ServiceUnavailable,
+            ErrorCode::TooManyRequests,
+            ErrorCode::AccountLocked,
+            ErrorCode::MfaRequired,
+            ErrorCode::FeatureDisabled,
         ];
         let mut set = std::collections::HashSet::new();
         for c in codes {

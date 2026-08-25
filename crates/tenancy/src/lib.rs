@@ -119,6 +119,21 @@ pub async fn set_session_org_id(
     Ok(())
 }
 
+/// Allow auth-service to list memberships for a user across orgs (RLS bypass key).
+///
+/// **Must be called inside an open transaction.** Pair with clearing after use.
+pub async fn set_auth_lookup_user(
+    conn: &mut sqlx::PgConnection,
+    user_id: Uuid,
+) -> Result<(), TenancyError> {
+    sqlx::query("SELECT set_config('app.auth_lookup_user', $1, true)")
+        .bind(user_id.to_string())
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| TenancyError::SessionBind(e.to_string()))?;
+    Ok(())
+}
+
 /// Clear session org (tests / connection reuse). Must be inside a transaction.
 pub async fn clear_session_org_id(conn: &mut sqlx::PgConnection) -> Result<(), TenancyError> {
     sqlx::query("SELECT set_config('app.org_id', '', true)")

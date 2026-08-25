@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::auth::LocalAuth;
+use crate::auth::extract::LocalAuth;
 use crate::state::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
@@ -208,6 +208,7 @@ pub async fn create_hello(
 }
 
 fn enforce_dashboard_read(ctx: &companyos_tenancy::RequestContext) -> Result<(), AppError> {
+    // Hello remains readable to any authenticated member; authz crate is the PDP.
     let principal = authz::Principal::with_roles(vec![authz::Role::Member]);
     if !authz::is_allowed(&principal, &perms::workspace_dashboard_read()) {
         return Err(AppError::new(

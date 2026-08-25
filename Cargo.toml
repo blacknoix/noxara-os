@@ -9,6 +9,7 @@ members = [
     "crates/events",
     "crates/outbox",
     "crates/authz",
+    "crates/auth-token",
     "crates/testkit",
     "services/gateway",
     "services/core",
@@ -22,6 +23,7 @@ default-members = [
     "crates/events",
     "crates/outbox",
     "crates/authz",
+    "crates/auth-token",
     "crates/testkit",
     "services/gateway",
     "services/core",
@@ -44,6 +46,7 @@ companyos-tenancy = { path = "crates/tenancy" }
 companyos-events = { path = "crates/events" }
 companyos-outbox = { path = "crates/outbox" }
 companyos-authz = { path = "crates/authz" }
+companyos-auth-token = { path = "crates/auth-token" }
 companyos-testkit = { path = "crates/testkit" }
 
 # External
@@ -70,6 +73,18 @@ futures = "0.3"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 base64 = "0.22"
 sha2 = "0.10"
+sha1 = "0.10"
+jsonwebtoken = "9.3"
+argon2 = "0.5"
+rand = "0.8"
+hex = "0.4"
+hmac = "0.12"
+subtle = "2.6"
+totp-rs = { version = "5.6", features = ["otpauth"] }
+url = "2.5"
+urlencoding = "2.1"
+cookie = "0.18"
+time = "0.3"
 
 [profile.dev]
 debug = 1

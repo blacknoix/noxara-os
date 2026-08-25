@@ -34,3 +34,5 @@ Accepted ADRs [001–015](adrs/) document foundational decisions.
 - [API stubs](api/)
 - [Events stubs](events/)
 - [Runbooks](runbooks/)
+- [Auth threat model](threat-models/auth.md)
+- ADR [016](adrs/016-org-scoped-jwt-opaque-refresh.md) — org-scoped JWT + opaque refresh cookies

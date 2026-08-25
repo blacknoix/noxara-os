@@ -53,6 +53,11 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: test
         run: cargo test --workspace
+        env:
+          AUTH_JWT_SECRET: ci-test-auth-secret
+          AUTH_COOKIE_SECURE: "0"
+          COMPANYOS_LOCAL_AUTH: "0"
+          HIBP_ENABLED: "0"
 
   typescript:
     name: TypeScript (typecheck, lint, openapi drift)

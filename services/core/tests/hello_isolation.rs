@@ -8,21 +8,7 @@ use companyos_testkit::{connect, test_database_url};
 use sqlx::Row;
 
 async fn apply_core_migrations(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    let sql = include_str!("../migrations/001_init.sql");
-    for stmt in sql.split(';') {
-        let stmt = stmt.trim();
-        if stmt.is_empty() {
-            continue;
-        }
-        if stmt
-            .lines()
-            .all(|l| l.trim().is_empty() || l.trim_start().starts_with("--"))
-        {
-            continue;
-        }
-        sqlx::query(stmt).execute(pool).await?;
-    }
-    Ok(())
+    companyos_core::migrate(pool).await
 }
 
 #[tokio::test]

@@ -4,42 +4,43 @@
 
 - Rust stable (1.85+)
 - pnpm 9+
-- Docker (for `scripts/dev-up`)
+- Docker (for `scripts/dev-up`) or local Postgres 16
 - PostgreSQL client optional (`psql`) for seed scripts
 
 ## Quick start
 
 ```bash
 cp .env.example .env
-make dev-up          # or: bash scripts/dev-up
+make dev-up
 pnpm install
 pnpm --filter @companyos/web dev
 ```
 
-Hello path works even if OpenSearch/ClickHouse are down (they use compose profile `full`).
+Run core + gateway with the same `AUTH_JWT_SECRET`. See root [README.md](README.md) for auth details.
 
-## LOCAL-ONLY auth
+## Authentication (Phase 1.1)
 
-Phase 0 uses **local-only** authentication:
+Primary path: signed org-scoped access JWTs + opaque refresh cookie.
 
-- Headers `X-CompanyOS-Dev-Org-Id` + `X-CompanyOS-Dev-User-Id`
-- Or an **unsigned** Bearer payload containing `org_id` and `sub`
+- Access token: `Authorization: Bearer …` (web keeps it in memory)
+- Refresh: httpOnly cookie `companyos_refresh` on `/api/v1/auth`
+- Org switch: `POST /api/v1/auth/switch-org` → **new** access token
+- MFA mandatory for Owner/Admin (policy in `crates/authz`)
+- `COMPANYOS_LOCAL_AUTH=1` enables Phase 0 header/unsigned bypass (**default off**)
 
-Never enable this in production. Never commit secrets.
+Local mail: links printed to logs and `.tmp/mail/`.
 
 ## Definition of done (9 gates)
 
-Every PR must clear the checklist in `.github/PULL_REQUEST_TEMPLATE.md`:
+Every PR must clear the checklist in `.github/PULL_REQUEST_TEMPLATE.md`.
 
-1. Functionality
-2. API contract
-3. Tenancy
-4. Authorization (`crates/authz` only)
-5. Audit & events
-6. Tests
-7. UI slice (loading / empty / error)
-8. Observability
-9. Documentation
+Auth-specific DoD tests (see `services/core/tests/auth_phase11.rs`):
+
+- Refresh replay after rotation revokes the family
+- Membership revocation invalidates sessions within 10s
+- Brute-force → lockout (not 500s)
+- Org A token cannot read org B
+- MFA required for Owner/Admin
 
 ## Toolchain
 
@@ -49,12 +50,9 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm typecheck
 pnpm lint
+pnpm check:openapi-drift
 ```
-
-## Monorepo layout
-
-See root [README.md](../README.md).
 
 ## Invariants
 
-Read [docs/00-INDEX.md](docs/00-INDEX.md) before proposing architecture changes. A proposal that breaks an invariant is wrong.
+Read [docs/00-INDEX.md](docs/00-INDEX.md) before proposing architecture changes.

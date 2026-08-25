@@ -1,12 +1,17 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { TopBar } from './TopBar';
 import { Sidebar } from './Sidebar';
 import { ContextPanel } from './ContextPanel';
 
+const AUTH_PATHS = ['/login', '/signup', '/verify-email', '/magic-link', '/mfa', '/reset-password'];
+
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isAuth = AUTH_PATHS.some((p) => pathname?.startsWith(p));
   const [panelOpen, setPanelOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -14,16 +19,32 @@ export function AppShell({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
+  if (isAuth) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          opacity: mounted ? 1 : 0,
+          transition: 'opacity 280ms ease',
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
-      style={{
-        minHeight: '100vh',
-        display: 'grid',
-        gridTemplateRows: '56px 1fr',
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? 'none' : 'translateY(4px)',
-        transition: 'opacity 280ms ease, transform 320ms ease',
-      }}
+      style={
+        {
+          minHeight: '100vh',
+          display: 'grid',
+          gridTemplateRows: '56px 1fr',
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'none' : 'translateY(4px)',
+          transition: 'opacity 280ms ease, transform 320ms ease',
+        } satisfies CSSProperties
+      }
     >
       <TopBar onTogglePanel={() => setPanelOpen((v) => !v)} />
       <div
