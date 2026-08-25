@@ -102,6 +102,7 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
         Option<chrono::DateTime<chrono::Utc>>,
         i64,
         String,
+        String,
         Option<chrono::DateTime<chrono::Utc>>,
     )> = {
         let mut tx = state
@@ -114,7 +115,7 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
             .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
         let row = sqlx::query_as(
             r#"
-            SELECT m.revoked_at, m.policy_version, m.role, s.revoked_at
+            SELECT m.revoked_at, m.policy_version, m.role, m.status, s.revoked_at
             FROM membership m
             JOIN auth_session s ON s.id = $3
             WHERE m.id = $1 AND m.user_id = $2 AND m.org_id = $4
@@ -133,7 +134,7 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
         row
     };
 
-    let Some((mem_revoked, policy_version, role, sess_revoked)) = row else {
+    let Some((mem_revoked, policy_version, role, status, sess_revoked)) = row else {
         return Err(AppError::new(
             ErrorCode::Unauthorized,
             request_id,
@@ -141,11 +142,18 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
         ));
     };
 
-    if mem_revoked.is_some() {
+    if mem_revoked.is_some() || status == "revoked" {
         return Err(AppError::new(
             ErrorCode::Unauthorized,
             request_id,
             "membership revoked",
+        ));
+    }
+    if status == "suspended" {
+        return Err(AppError::new(
+            ErrorCode::Unauthorized,
+            request_id,
+            "membership suspended",
         ));
     }
     if sess_revoked.is_some() {

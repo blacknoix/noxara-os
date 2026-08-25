@@ -30,6 +30,16 @@ Primary path: signed org-scoped access JWTs + opaque refresh cookie.
 
 Local mail: links printed to logs and `.tmp/mail/`.
 
+## Workspace (Phase 1.2)
+
+- Organizations, memberships, invitations, teams/departments, roles + permission matrix
+- `crates/authz` catalogue must match `permission_definition` (CI test)
+- Last-Owner invariant enforced on revoke / suspend / demote
+- OrgProvisioning durable command (ADR 017); Temporal worker is a follow-up
+- Web: `/settings`, `/onboarding`, `/invite/accept`
+
+DoD tests: `services/core/tests/workspace_phase12.rs` and `auth_phase11.rs`.
+
 ## Definition of done (9 gates)
 
 Every PR must clear the checklist in `.github/PULL_REQUEST_TEMPLATE.md`.

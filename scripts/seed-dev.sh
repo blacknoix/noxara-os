@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Seed one org and two users for local development (Phase 1.1 identity model).
+# Seed one org and two users for local development (Phase 1.2 workspace model).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -11,6 +11,7 @@ mkdir -p "$ROOT/.tmp"
 if command -v psql >/dev/null 2>&1; then
   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/001_init.sql"
   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/002_auth.sql"
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/003_workspace.sql"
 else
   echo "psql not found — ensure migrations run when core starts"
 fi
@@ -27,8 +28,8 @@ MEMBER_PUBLIC="usr_${USER_MEMBER}"
 PASS_HASH="$(cd "$ROOT" && cargo run -q -p companyos-core --example hash_password -- "$SEED_PASSWORD" | tail -n 1)"
 
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<SQL
-INSERT INTO organization (id, public_id, name)
-VALUES ('${ORG_UUID}', '${ORG_PUBLIC}', 'Acme Demo')
+INSERT INTO organization (id, public_id, name, currency, timezone, plan, business_type)
+VALUES ('${ORG_UUID}', '${ORG_PUBLIC}', 'Acme Demo', 'USD', 'UTC', 'starter', 'general')
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO user_identity (
@@ -52,12 +53,15 @@ ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
 SELECT set_config('app.org_id', '${ORG_UUID}', false);
 
-INSERT INTO membership (id, org_id, user_id, public_id, role, policy_version)
+INSERT INTO membership (id, org_id, user_id, public_id, role, policy_version, status)
 VALUES
-  ('${MEM_OWNER}', '${ORG_UUID}', '${USER_OWNER}', 'mem_${MEM_OWNER}', 'owner', 1),
-  ('${MEM_MEMBER}', '${ORG_UUID}', '${USER_MEMBER}', 'mem_${MEM_MEMBER}', 'member', 1)
-ON CONFLICT (org_id, user_id) DO UPDATE SET role = EXCLUDED.role, revoked_at = NULL;
+  ('${MEM_OWNER}', '${ORG_UUID}', '${USER_OWNER}', 'mem_${MEM_OWNER}', 'owner', 1, 'active'),
+  ('${MEM_MEMBER}', '${ORG_UUID}', '${USER_MEMBER}', 'mem_${MEM_MEMBER}', 'member', 1, 'active')
+ON CONFLICT (org_id, user_id) DO UPDATE SET role = EXCLUDED.role, revoked_at = NULL, status = 'active';
 SQL
+
+echo "==> Running OrgProvisioning via core migrate/sync (start core once, or use API)"
+echo "    Prefer: cargo run -p companyos-core (migrate + catalogue sync), then create org / register."
 
 cat > "$ROOT/.tmp/seed.env" <<EOF
 DEV_ORG_UUID=${ORG_UUID}
@@ -77,3 +81,4 @@ echo "Seeded org ${ORG_PUBLIC} with owner ${OWNER_PUBLIC} and member ${MEMBER_PU
 echo "Wrote $ROOT/.tmp/seed.env"
 echo "Member login: member@acme.demo / ${SEED_PASSWORD}"
 echo "Owner login requires MFA enrollment after password."
+echo "After core starts, POST /api/v1/workspace/organizations or register to run OrgProvisioning."

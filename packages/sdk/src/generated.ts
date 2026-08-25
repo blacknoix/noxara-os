@@ -92,3 +92,147 @@ export type SessionListResponse = {
 export type MessageResponse = {
   message: string;
 };
+
+export type CreateOrgRequest = {
+  business_type?: string;
+  currency?: string;
+  name: string;
+  timezone?: string;
+};
+
+export type OrgResponse = {
+  branding: string;
+  business_type: string;
+  currency: string;
+  feature_flags: string;
+  fiscal_year_start_month: number;
+  name: string;
+  numbering_series: string;
+  org_id: string;
+  plan: string;
+  timezone: string;
+};
+
+export type UpdateOrgSettingsRequest = {
+  branding?: string;
+  business_type?: string;
+  currency?: string;
+  fiscal_year_start_month?: string;
+  name?: string;
+  numbering_series?: string;
+  timezone?: string;
+};
+
+export type MemberView = {
+  department_id?: string;
+  display_name: string;
+  email: string;
+  membership_id: string;
+  policy_version: number;
+  role: string;
+  role_id?: string;
+  role_name?: string;
+  status: string;
+  team_id?: string;
+  user_id: string;
+};
+
+export type MemberListResponse = {
+  items: MemberView[];
+};
+
+export type InviteMemberRequest = {
+  email: string;
+  /** Public role id (`rol_…`) or system key (`owner`, `admin`, …). */
+  role: string;
+};
+
+export type InviteResponse = {
+  email: string;
+  expires_at: string;
+  invitation_id: string;
+  status: string;
+};
+
+export type RoleView = {
+  approval_limit_amount_minor?: string;
+  approval_limit_currency?: string;
+  description: string;
+  is_system: boolean;
+  name: string;
+  permissions: RolePermissionView[];
+  role_id: string;
+  system_key?: string;
+};
+
+export type RolePermissionView = {
+  effect: string;
+  permission_id: string;
+  scope: string;
+};
+
+export type RoleListResponse = {
+  items: RoleView[];
+};
+
+export type UpsertRoleRequest = {
+  approval_limit_amount_minor?: string;
+  approval_limit_currency?: string;
+  description?: string;
+  name: string;
+  permissions: RolePermissionInput[];
+};
+
+export type RolePermissionInput = {
+  effect: string;
+  permission_id: string;
+  scope?: string;
+};
+
+export type CapabilityPreviewResponse = {
+  allowed: string[];
+  denied_sensitive: string[];
+  role_id: string;
+};
+
+export type PermissionCatalogueItem = {
+  action: string;
+  context: string;
+  description: string;
+  id: string;
+  resource: string;
+  sensitive: boolean;
+};
+
+export type PermissionCatalogueResponse = {
+  items: PermissionCatalogueItem[];
+};
+
+export type TeamView = {
+  department_id?: string;
+  lead_user_id?: string;
+  name: string;
+  parent_team_id?: string;
+  team_id: string;
+};
+
+export type TeamListResponse = {
+  items: TeamView[];
+};
+
+export type DepartmentView = {
+  department_id: string;
+  name: string;
+  parent_id?: string;
+};
+
+export type DepartmentListResponse = {
+  items: DepartmentView[];
+};
+
+export type MyCapabilitiesResponse = {
+  allowed: string[];
+  org_id: string;
+  policy_version: number;
+  role: string;
+};

@@ -38,3 +38,26 @@ Coordinate out-of-band identity proof with the customer; update `email` / `email
 ## Always
 
 Write an `auth_audit_event` note (or ticket link) for any break-glass SQL.
+
+## Restore last Owner (Phase 1.2)
+
+If an org has zero active Owners (should be unreachable via APIs; use only for
+disaster recovery):
+
+```sql
+SELECT set_config('app.org_id', '<org-uuid>', true);
+
+-- Promote an existing active membership to Owner
+UPDATE membership m
+SET role = 'owner',
+    role_id = (SELECT id FROM org_role WHERE org_id = m.org_id AND system_key = 'owner'),
+    status = 'active',
+    revoked_at = NULL,
+    policy_version = policy_version + 1,
+    updated_at = now()
+WHERE m.org_id = '<org-uuid>'
+  AND m.user_id = '<user-uuid>';
+```
+
+Confirm `SELECT COUNT(*) FROM membership WHERE org_id = '…' AND role = 'owner' AND status = 'active'` is ≥ 1.
+Bump `policy_version` (done above) so sessions re-auth. Audit the break-glass action.

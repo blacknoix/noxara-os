@@ -26,7 +26,7 @@ CompanyOS (repo `noxara-os`) is an AI-native, multi-tenant Business Operating Sy
 
 ## ADRs
 
-Accepted ADRs [001–015](adrs/) document foundational decisions.
+Accepted ADRs [001–017](adrs/) document foundational decisions.
 
 ## Other
 
@@ -36,3 +36,5 @@ Accepted ADRs [001–015](adrs/) document foundational decisions.
 - [Runbooks](runbooks/)
 - [Auth threat model](threat-models/auth.md)
 - ADR [016](adrs/016-org-scoped-jwt-opaque-refresh.md) — org-scoped JWT + opaque refresh cookies
+- ADR [017](adrs/017-org-provisioning-durable-command.md) — durable OrgProvisioning (Temporal follow-up)
+- Runbook: [locked-out owner / restore last Owner](runbooks/locked-out-owner-recovery.md)

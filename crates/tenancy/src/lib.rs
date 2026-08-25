@@ -134,6 +134,19 @@ pub async fn set_auth_lookup_user(
     Ok(())
 }
 
+/// Allow invitation accept to look up a row by token hash (RLS bypass key).
+pub async fn set_invite_token_hash(
+    conn: &mut sqlx::PgConnection,
+    token_hash: &str,
+) -> Result<(), TenancyError> {
+    sqlx::query("SELECT set_config('app.invite_token_hash', $1, true)")
+        .bind(token_hash)
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| TenancyError::SessionBind(e.to_string()))?;
+    Ok(())
+}
+
 /// Clear session org (tests / connection reuse). Must be inside a transaction.
 pub async fn clear_session_org_id(conn: &mut sqlx::PgConnection) -> Result<(), TenancyError> {
     sqlx::query("SELECT set_config('app.org_id', '', true)")

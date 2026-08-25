@@ -9,7 +9,8 @@ Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@c
 ## Phase status
 
 - **Phase 0** foundations (merged): hello slice, RLS, outbox, authz PDP, gateway stub.
-- **Phase 1.1** (this line of work): Identity & Authentication — org-scoped JWTs, refresh cookies, MFA, OAuth, sessions, switch-org.
+- **Phase 1.1** (merged): Identity & Authentication — org-scoped JWTs, refresh cookies, MFA, OAuth, sessions, switch-org.
+- **Phase 1.2** (this line of work): Workspace — organizations, memberships, roles, permissions, teams, invitations, OrgProvisioning.
 
 Not in scope yet: CRM, invoices, AI copilot, full SSO IdP, Flutter/Tauri, live AWS.
 
