@@ -4,8 +4,12 @@ import axe from 'axe-core';
 import {
   EmptyState,
   Input,
+  KanbanBoard,
+  MoneyCell,
   StatusCell,
   Table,
+  Tabs,
+  Timeline,
   Widget,
 } from '@companyos/design-system';
 
@@ -105,6 +109,80 @@ describe('a11y', () => {
           ]}
           rows={rows}
         />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('sales pipeline board (kanban columns) has no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Pipeline</h1>
+        <KanbanBoard
+          columns={[
+            {
+              id: 'stg_new',
+              title: 'New',
+              cards: [
+                {
+                  id: 'dl_1',
+                  title: 'Acme Corp expansion',
+                  meta: <MoneyCell amount={12000} currency="USD" />,
+                },
+              ],
+            },
+            {
+              id: 'stg_qualified',
+              title: 'Qualified',
+              cards: [
+                {
+                  id: 'dl_2',
+                  title: 'Globex renewal',
+                  meta: <MoneyCell amount={4500} currency="USD" />,
+                },
+              ],
+            },
+            { id: 'stg_won', title: 'Won', cards: [] },
+          ]}
+          onCardSelect={() => {}}
+          onCardMove={() => {}}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('customer record with tabs and timeline has no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Acme Corp</h1>
+        <Tabs
+          items={[
+            { id: 'overview', label: 'Overview' },
+            { id: 'timeline', label: 'Timeline' },
+            { id: 'deals', label: 'Deals' },
+            { id: 'quotes', label: 'Quotes' },
+          ]}
+          value="timeline"
+          onChange={() => {}}
+        >
+          <Timeline
+            items={[
+              {
+                id: 'act_1',
+                title: 'Discovery call',
+                description: 'Discussed renewal scope.',
+                timestamp: 'Aug 20, 2026',
+              },
+              {
+                id: 'act_2',
+                title: 'Sent quote',
+                description: 'Quote Q-ABC123 sent for review.',
+                timestamp: 'Aug 22, 2026',
+              },
+            ]}
+          />
+        </Tabs>
       </main>,
     );
     await expectNoSeriousAxeViolations(container);

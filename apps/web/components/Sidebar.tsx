@@ -38,7 +38,14 @@ const GROUPS: NavGroup[] = [
   {
     id: 'sales',
     label: 'Sales',
-    items: [{ href: '/sales', label: 'Pipeline', short: 'S', perm: null }],
+    items: [
+      { href: '/sales', label: 'Pipeline', short: 'S', perm: 'sales.deal.read' },
+      { href: '/sales/deals', label: 'Deals', short: 'D', perm: 'sales.deal.read' },
+      { href: '/sales/leads', label: 'Leads', short: 'L', perm: 'sales.lead.read' },
+      { href: '/sales/customers', label: 'Customers', short: 'C', perm: 'sales.customer.read' },
+      { href: '/sales/quotes', label: 'Quotes', short: 'Q', perm: 'sales.quote.read' },
+      { href: '/sales/reports', label: 'Reports', short: 'R', perm: 'sales.report.read' },
+    ],
   },
   {
     id: 'finance',
@@ -124,9 +131,12 @@ export function Sidebar({
             </div>
           ) : null}
           {group.items.map((item) => {
+            const hasNestedSiblings = group.items.some(
+              (other) => other.href !== item.href && other.href.startsWith(`${item.href}/`),
+            );
             const active =
-              item.href === '/'
-                ? pathname === '/'
+              item.href === '/' || hasNestedSiblings
+                ? pathname === item.href
                 : Boolean(pathname?.startsWith(item.href));
             return (
               <Link
