@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# One-command local bootstrap for CompanyOS Phase 0.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+COMPOSE_FILE="$ROOT/infrastructure/docker/docker-compose.yml"
+
+echo "==> CompanyOS dev-up"
+echo "    Bring-up: Postgres, Redis, NATS JetStream, Temporal (+ Postgres), MinIO"
+echo "    Optional (profile full): OpenSearch, ClickHouse — hello path works without them"
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "ERROR: docker is required for compose. Install Docker Desktop / Engine and retry."
+  exit 1
+fi
+
+docker compose -f "$COMPOSE_FILE" up -d postgres redis nats temporal-postgres temporal temporal-ui minio
+
+echo "==> Waiting for Postgres..."
+for i in $(seq 1 60); do
+  if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U companyos -d companyos >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+export DATABASE_URL="${DATABASE_URL:-postgres://companyos:companyos@127.0.0.1:5432/companyos}"
+export TEST_DATABASE_URL="${TEST_DATABASE_URL:-postgres://companyos:companyos@127.0.0.1:5432/companyos_test}"
+export COMPANYOS_LOCAL_AUTH=1
+export RUST_LOG="${RUST_LOG:-info,companyos=debug}"
+export CORE_SERVICE_URL="${CORE_SERVICE_URL:-http://127.0.0.1:8081}"
+
+cp -n .env.example .env 2>/dev/null || true
+
+echo "==> Seeding one org + two users..."
+bash "$ROOT/scripts/seed-dev.sh"
+
+echo "==> Starting core (8081) and gateway (8080) in background..."
+mkdir -p "$ROOT/.tmp"
+cargo build -p companyos-core -p companyos-gateway
+pkill -f "target/debug/companyos-core" 2>/dev/null || true
+pkill -f "target/debug/companyos-gateway" 2>/dev/null || true
+nohup "$ROOT/target/debug/companyos-core" >"$ROOT/.tmp/core.log" 2>&1 &
+nohup env CORE_SERVICE_URL="$CORE_SERVICE_URL" "$ROOT/target/debug/companyos-gateway" >"$ROOT/.tmp/gateway.log" 2>&1 &
+
+sleep 2
+echo "==> Health checks"
+curl -sf "http://127.0.0.1:8081/healthz" && echo " core ok"
+curl -sf "http://127.0.0.1:8080/healthz" && echo " gateway ok"
+
+echo ""
+echo "Dev stack is up."
+echo "  Gateway:  http://127.0.0.1:8080"
+echo "  Core:     http://127.0.0.1:8081"
+echo "  Web:      pnpm --filter @companyos/web dev"
+echo "  Temporal: http://127.0.0.1:8088"
+echo "  MinIO:    http://127.0.0.1:9001 (minioadmin/minioadmin)"
+echo ""
+echo "LOCAL-ONLY auth example:"
+echo "  curl -s http://127.0.0.1:8080/api/v1/hello \\"
+echo "    -H \"X-CompanyOS-Dev-Org-Id: \$(grep DEV_ORG_PUBLIC_ID .tmp/seed.env | cut -d= -f2)\" \\"
+echo "    -H \"X-CompanyOS-Dev-User-Id: \$(grep DEV_USER_OWNER_PUBLIC_ID .tmp/seed.env | cut -d= -f2)\""

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+docker compose -f "$ROOT/infrastructure/docker/docker-compose.yml" down
+pkill -f "target/debug/companyos-core" 2>/dev/null || true
+pkill -f "target/debug/companyos-gateway" 2>/dev/null || true
+echo "Dev stack stopped."

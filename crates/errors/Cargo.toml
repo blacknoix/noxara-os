@@ -1,0 +1,17 @@
+[package]
+name = "companyos-errors"
+description = "RFC 9457 problem+json error type for CompanyOS APIs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+axum = { workspace = true }
+http = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

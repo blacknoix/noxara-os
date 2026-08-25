@@ -1,130 +1,90 @@
-Noxara OS
-AI-native Business Operating System
+# CompanyOS (noxara-os)
 
-Noxara OS is a unified operating system for running a company across sales, finance, people, operations, workflows, analytics, and AI on one shared platform instead of stitching together disconnected SaaS tools. It is designed around four core foundations: one governed data model, one permission system, one workflow engine, and one AI copilot that acts inside the same security and policy boundary as human users.
+AI-native, multi-tenant **Business Operating System**.
 
-Vision
-Most companies do not struggle because they lack software; they struggle because their work is fragmented across too many tools, too many logins, too many duplicated records, and too many brittle integrations. Noxara OS exists to replace that sprawl with a single multi-tenant, event-driven platform where core business functions share the same system of record, authorization model, workflow runtime, and AI surface.
+This repository is the system source for product docs, Rust services, the Next.js web client, shared crates/packages, infrastructure skeletons, and the Rust → OpenAPI → TypeScript contract chain.
 
-Product thesis
-Noxara OS is not another ERP assembled from loosely connected modules.[file:32] The product thesis is that a modern business platform should be built as an AI-native operating system where every state change is auditable, every workflow is durable, every permission decision is centralized, and every AI action uses the same APIs and authority model as the end user.
+Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@companyos/*`; the GitHub repo is `noxara-os`.
 
-What Noxara OS includes
-Core domains
-Workspace: organizations, memberships, users, teams, departments, roles, permissions, settings.
+## Phase 0 status
 
-Sales: leads, customers, contacts, pipelines, deals, activities, quotes, and later orders and contracts.
+Phase 0 foundations only — **not** CRM, finance product features, or AI copilot.
 
-Finance: invoices, payments, allocations, expenses, journals, tax, FX, budgets, and accounting foundations.
+You can:
 
-Operations: projects, tasks, approvals, assets, inventory, procurement, and maintenance.
+1. Clone the repo and install toolchains (Rust, pnpm, Docker).
+2. Run `scripts/dev-up` / `make dev-up` to start local dependencies + seed one org / two users.
+3. Hit the **hello** vertical slice through the gateway BFF.
+4. Open the web shell (`apps/web`) with loading / empty / error dashboard states.
+5. Ship a PR that clears the nine-gate DoD checklist.
 
-People: employees, attendance, leave, payroll, performance, and recruitment.
+## Non-negotiable invariants
 
-AI: copilot orchestration, retrieval, suggestions, document extraction, forecasting, and cost controls.
+See [docs/00-INDEX.md](docs/00-INDEX.md). Summary:
 
-Admin and audit: audit logs, API keys, integrations, retention, export, and governance controls.
+1. One tenant key: `org_id` + PostgreSQL RLS everywhere.
+2. One PDP: `crates/authz` (deny by default; explicit deny wins).
+3. Bounded contexts own their data.
+4. Write + outbox atomically; NATS JetStream at-least-once; idempotent consumers.
+5. Long processes → Temporal workflows.
+6. Money = `amount_minor: i64` + ISO 4217 (never `f64`).
+7. Everything attributable (AI records the human it acts for).
+8. AI proposes, humans commit (v1).
 
-Shared platform capabilities
-Multi-tenant isolation enforced in PostgreSQL with Row-Level Security, not only in application code.
+## Monorepo layout
 
-One authorization implementation through a central authz layer used by gateway, services, workflows, and AI tools.
-Event-driven integration through a transactional outbox and NATS JetStream.
+```text
+apps/web/                 Next.js App Router shell
+services/gateway/         Axum API gateway / BFF
+services/core/            Auth/org/user/audit home — Phase 0 hello service
+services/business|platform|ai/   Placeholders (split by config later)
+crates/                   ids, money, errors, telemetry, tenancy, events, outbox, authz, testkit
+packages/design-system/   Tokens + primitives
+packages/sdk/             OpenAPI + TypeScript SDK stub
+infrastructure/docker/    Compose for local deps
+infrastructure/terraform/ Skeletons only (no live cloud)
+docs/                     Specs, ADRs, runbooks
+scripts/                  One-command bootstrap
+```
 
-Durable workflows for approvals, onboarding, dunning, imports, and long-running processes via Temporal.
+## Quick start
 
-Search, analytics, files, and notifications as first-class platform services.
+```bash
+cp .env.example .env
+make dev-up
+pnpm install
+pnpm --filter @companyos/web dev
+```
 
-Architecture
-Noxara OS is a multi-tenant, event-driven, service-oriented platform with TypeScript/React clients and a Rust backend stack.[file:33] The primary shape is Next.js on web, Flutter on mobile, Tauri on desktop, Rust with Axum and SQLx for services, PostgreSQL as the system of record, Redis for ephemeral coordination, ClickHouse for analytics, OpenSearch for search, S3-compatible object storage, NATS JetStream for events, and Temporal for workflow orchestration.
+**LOCAL-ONLY auth** (never production):
 
-Principles
-Bounded contexts own their data; no service reads another service's tables directly.
+```bash
+source .tmp/seed.env
+curl -s http://127.0.0.1:8080/api/v1/hello \
+  -H "X-CompanyOS-Dev-Org-Id: $DEV_ORG_PUBLIC_ID" \
+  -H "X-CompanyOS-Dev-User-Id: $DEV_USER_OWNER_PUBLIC_ID"
+```
 
-Tenancy is enforced in the database and propagated through every layer, including cache keys, event subjects, search filters, and analytics predicates.
+OpenSearch and ClickHouse are optional (`docker compose --profile full`). The hello path must work if they are down.
 
-Every meaningful state change becomes an event.
+## Toolchain
 
-Long-running business processes are workflows, not ad hoc cron jobs or status columns.
+- `cargo fmt` / `cargo clippy -D warnings` / `cargo test --workspace`
+- `pnpm typecheck` / `pnpm lint` / Prettier
+- TypeScript **strict**
+- EditorConfig at repo root
 
-AI has no privileged bypass path.
+## Contract chain
 
-Auditability, reversibility, and tenant isolation are non-negotiable from day one.
+Rust hello types → OpenAPI 3.1 (`/api/v1/openapi.json`) → `packages/sdk` TypeScript.  
+CI fails on schema drift (`pnpm check:openapi-drift`).
 
-Phase roadmap
-Phase	Scope	Target outcome
-Phase 0	Foundations, repo, toolchain, local dev, CI/CD, infra baseline, shared crates, contract chain	A new engineer can clone the repo, boot the stack, ship a trivial PR, and deploy to staging.
-Phase 1	Core platform and deal-to-cash	A design-partner org can sign up, manage workspace, run CRM, billing, projects, approvals, notifications, and an AI copilot in production.
-Phase 2	People, money depth, and supply	HR, attendance, leave, payroll basics, accounting skeleton, inventory, procurement, and stronger governance posture.
-Phase 3	Automation, analytics, API, marketplace	Customers can configure workflows, build reports, and integrate through a public API and SDKs.
-Phase 4	Enterprise scale and autonomy	Multi-region, enterprise isolation, AI agents, low-code customization, industry modules, and client parity.
-Phase 0 definition
-Phase 0 is short but mandatory.It establishes the monorepo layout, shared crates, synthetic-data local environment, staging deployment path, observability baseline, infrastructure scaffolding, and the Rust-to-OpenAPI-to-TypeScript contract chain that the rest of the product depends on.
+## Docs
 
-Definition of done
-Nothing in Noxara OS is considered done unless it clears functionality, API contract, tenancy, authorization, audit events, tests, UI slice quality, observability, and documentation gates. This means every shipped capability must be tenant-safe, permission-tested, auditable, monitored, documented, and usable in real screens with loading, empty, error, stale, and permission-denied states.
+- [Documentation index](docs/00-INDEX.md)
+- [CONTRIBUTING](CONTRIBUTING.md)
+- ADRs 001–015 under `docs/adrs/`
 
-Who it is for
-Noxara OS starts with small and mid-market businesses that are outgrowing tool sprawl and operational fragmentation. The initial wedge is an integrated deal-to-cash and operating workflow for design partners, with later expansion into back-office depth, extensibility, and enterprise features.
-Repository direction
-This repository is the system source for:
+## Out of scope (Phase 0)
 
-Product docs and ADRs.
-
-Monorepo applications and services.
-
-Shared design system and SDK packages.
-
-Infrastructure, deployment, and monitoring definitions.
-
-API contracts, event schemas, and operational runbooks.
-
-Initial repository layout
-text
-noxara-os/
-├── apps/
-│   ├── web/
-│   ├── mobile/
-│   ├── desktop/
-│   └── admin/
-├── services/
-│   ├── auth-service/
-│   ├── organization-service/
-│   ├── user-service/
-│   ├── crm-service/
-│   ├── finance-service/
-│   ├── project-service/
-│   ├── workflow-service/
-│   ├── notification-service/
-│   ├── ai-service/
-│   └── audit-service/
-├── packages/
-│   ├── design-system/
-│   ├── ui/
-│   ├── sdk/
-│   ├── shared-types/
-│   └── utils/
-├── crates/
-│   ├── authz/
-│   ├── tenancy/
-│   ├── events/
-│   ├── outbox/
-│   ├── telemetry/
-│   ├── money/
-│   ├── ids/
-│   ├── errors/
-│   └── testkit/
-├── infrastructure/
-├── docs/
-└── scripts/
-The repository shape follows the implementation plan and technical architecture so that service boundaries, shared contracts, and platform capabilities remain explicit from the first commit.
-
-Early success criteria
-The first major success state is not “features built”; it is ten design-partner organizations using Noxara OS as their primary system for the deal-to-cash loop for four consecutive weeks, with activation, reliability, security, operations, and documentation targets met.
-
-Status
-Current state: repo initialization and Phase 0 setup.
-
-License
-Proprietary until a formal license is published.
-
+OAuth/MFA/SSO product, CRM, invoices, payments, projects, AI copilot, Flutter, Tauri, live AWS/K8s, real Temporal workflows beyond compose being up.

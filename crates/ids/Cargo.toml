@@ -1,0 +1,15 @@
+[package]
+name = "companyos-ids"
+description = "UUIDv7 internal PKs and prefixed public IDs for CompanyOS"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+uuid = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

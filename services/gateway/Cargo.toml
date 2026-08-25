@@ -1,0 +1,25 @@
+[package]
+name = "companyos-gateway"
+description = "CompanyOS API gateway / BFF — Phase 0 thin proxy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "companyos-gateway"
+path = "src/main.rs"
+
+[dependencies]
+companyos-errors = { workspace = true }
+companyos-telemetry = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+http = { workspace = true }
+reqwest = { workspace = true }

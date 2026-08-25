@@ -1,0 +1,37 @@
+:root {
+  /* CompanyOS light tokens */
+  --cos-color-bg: #f3efe6;
+  --cos-color-bg-elevated: #fffdf8;
+  --cos-color-fg: #1c1914;
+  --cos-color-fg-muted: #5c564c;
+  --cos-color-border: #d9d0c1;
+  --cos-color-accent: #0f6b5c;
+  --cos-color-accent-fg: #f7fffc;
+  --cos-color-danger: #9b2c2c;
+  --cos-color-sidebar: #ebe4d6;
+  --cos-color-topbar: #fffdf8;
+  --cos-font-sans: "Sora", "Segoe UI", sans-serif;
+  --cos-font-display: "Fraunces", Georgia, serif;
+  --cos-radius-sm: 6px;
+  --cos-radius-md: 10px;
+  --cos-space-1: 0.25rem;
+  --cos-space-2: 0.5rem;
+  --cos-space-3: 0.75rem;
+  --cos-space-4: 1rem;
+  --cos-space-6: 1.5rem;
+  --cos-space-8: 2rem;
+  --cos-shadow-soft: 0 1px 0 rgba(28, 25, 20, 0.04);
+}
+
+[data-theme="dark"] {
+  --cos-color-bg: #141210;
+  --cos-color-bg-elevated: #1e1b17;
+  --cos-color-fg: #f4efe6;
+  --cos-color-fg-muted: #a89f90;
+  --cos-color-border: #3a342b;
+  --cos-color-accent: #3db89f;
+  --cos-color-accent-fg: #061410;
+  --cos-color-danger: #f07171;
+  --cos-color-sidebar: #1a1713;
+  --cos-color-topbar: #1e1b17;
+}
