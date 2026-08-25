@@ -46,8 +46,10 @@ export function TopBar({ onTogglePanel }: { onTogglePanel: () => void }) {
       }
       const me = await meRes.json();
       const mem = await memRes.json();
-      setCurrentOrg(me.org_id);
-      setMemberships(mem.items ?? []);
+      const items: Membership[] = mem.items ?? [];
+      setMemberships(items);
+      const match = items.find((m) => m.org_id === me.org_id);
+      setCurrentOrg(match?.org_name ?? me.org_id);
     } catch {
       setError('Identity request failed');
     } finally {
@@ -66,7 +68,8 @@ export function TopBar({ onTogglePanel }: { onTogglePanel: () => void }) {
       return;
     }
     setAccessToken(body.access_token);
-    setCurrentOrg(orgId);
+    const match = memberships.find((m) => m.org_id === orgId);
+    setCurrentOrg(match?.org_name ?? orgId);
     setOrgOpen(false);
   }
 
@@ -151,6 +154,9 @@ export function TopBar({ onTogglePanel }: { onTogglePanel: () => void }) {
                 </button>
               ))
             )}
+            <a href="/onboarding" style={{ ...menuItem, display: 'block' }}>
+              Create organization…
+            </a>
           </div>
         ) : null}
       </div>

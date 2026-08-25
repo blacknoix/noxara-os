@@ -218,9 +218,9 @@ pub async fn rotate_refresh(
     companyos_tenancy::set_session_org_id(&mut tx, OrgId::new(org_uuid))
         .await
         .map_err(|e| e.to_string())?;
-    let membership: (String, i64, Option<chrono::DateTime<Utc>>, String) = sqlx::query_as(
+    let membership: (String, i64, Option<chrono::DateTime<Utc>>, String, String) = sqlx::query_as(
         r#"
-        SELECT m.role, m.policy_version, m.revoked_at, u.public_id
+        SELECT m.role, m.policy_version, m.revoked_at, u.public_id, m.status
         FROM membership m
         JOIN user_identity u ON u.id = m.user_id
         WHERE m.id = $1
@@ -231,7 +231,7 @@ pub async fn rotate_refresh(
     .await
     .map_err(|e| e.to_string())?;
 
-    if membership.2.is_some() {
+    if membership.2.is_some() || membership.4 == "revoked" || membership.4 == "suspended" {
         revoke_family(&mut tx, family_id, "membership_revoked")
             .await
             .map_err(|e| e.to_string())?;

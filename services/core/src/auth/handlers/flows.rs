@@ -429,7 +429,7 @@ async fn issue_for_user(
         let rows = sqlx::query_as(
             r#"
         SELECT id, org_id, role, policy_version FROM membership
-        WHERE user_id = $1 AND revoked_at IS NULL
+        WHERE user_id = $1 AND revoked_at IS NULL AND status = 'active'
         ORDER BY created_at ASC
         "#,
         )
@@ -1062,7 +1062,7 @@ pub async fn switch_org(
         let row = sqlx::query_as(
             r#"
         SELECT id, role, policy_version FROM membership
-        WHERE user_id = $1 AND org_id = $2 AND revoked_at IS NULL
+        WHERE user_id = $1 AND org_id = $2 AND revoked_at IS NULL AND status = 'active'
         "#,
         )
         .bind(user.ctx.actor.user_id)
@@ -1235,7 +1235,7 @@ pub async fn list_memberships(
         SELECT o.public_id, o.name, m.role, m.policy_version
         FROM membership m
         JOIN organization o ON o.id = m.org_id
-        WHERE m.user_id = $1 AND m.revoked_at IS NULL
+        WHERE m.user_id = $1 AND m.revoked_at IS NULL AND m.status = 'active'
         ORDER BY o.name
         "#,
         )
@@ -1308,10 +1308,19 @@ pub async fn revoke_membership(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
+    crate::workspace::last_owner::ensure_not_last_owner(
+        &mut tx,
+        user.ctx.org_id.as_uuid(),
+        target,
+        &request_id,
+    )
+    .await?;
+
     let updated: Option<(Uuid,)> = sqlx::query_as(
         r#"
         UPDATE membership
-        SET revoked_at = now(), policy_version = policy_version + 1, updated_at = now()
+        SET revoked_at = now(), status = 'revoked',
+            policy_version = policy_version + 1, updated_at = now()
         WHERE org_id = $1 AND user_id = $2 AND revoked_at IS NULL
         RETURNING id
         "#,

@@ -379,6 +379,16 @@ pub async fn register(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
+    // Seed workspace roles/settings (durable OrgProvisioning command).
+    let _ = crate::workspace::provisioning::enqueue_and_run(
+        &state.pool,
+        org,
+        user_id,
+        "general",
+        &request_id,
+    )
+    .await;
+
     let link = format!(
         "{}/verify-email?token={}",
         mail::public_app_base(),
@@ -526,7 +536,7 @@ pub async fn login(
         SELECT m.id, m.org_id, o.public_id, m.role, m.policy_version
         FROM membership m
         JOIN organization o ON o.id = m.org_id
-        WHERE m.user_id = $1 AND m.revoked_at IS NULL
+        WHERE m.user_id = $1 AND m.revoked_at IS NULL AND m.status = 'active'
         ORDER BY m.created_at ASC
         "#,
         )

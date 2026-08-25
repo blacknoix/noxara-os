@@ -1,4 +1,4 @@
-/** TypeScript SDK for CompanyOS Phase 1.1. */
+/** TypeScript SDK for CompanyOS Phase 1.2. */
 
 export type {
   Hello,
@@ -16,6 +16,23 @@ export type {
   SessionView,
   SessionListResponse,
   MessageResponse,
+  CreateOrgRequest,
+  OrgResponse,
+  UpdateOrgSettingsRequest,
+  MemberView,
+  MemberListResponse,
+  InviteMemberRequest,
+  InviteResponse,
+  RoleView,
+  RoleListResponse,
+  UpsertRoleRequest,
+  CapabilityPreviewResponse,
+  PermissionCatalogueResponse,
+  TeamView,
+  TeamListResponse,
+  DepartmentView,
+  DepartmentListResponse,
+  MyCapabilitiesResponse,
 } from './generated';
 
 import type {
@@ -28,6 +45,11 @@ import type {
   MeResponse,
   MembershipListResponse,
   SessionListResponse,
+  CreateOrgRequest,
+  OrgResponse,
+  MemberListResponse,
+  RoleListResponse,
+  MyCapabilitiesResponse,
 } from './generated';
 
 export type CompanyOsClientOptions = {
@@ -110,6 +132,57 @@ export class CompanyOsClient {
     });
     if (!res.ok) throw new Error(`listSessions failed: ${res.status}`);
     return (await res.json()) as SessionListResponse;
+  }
+
+  async getOrganization(): Promise<OrgResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/workspace/organizations`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`getOrganization failed: ${res.status}`);
+    return (await res.json()) as OrgResponse;
+  }
+
+  async createOrganization(body: CreateOrgRequest): Promise<OrgResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/workspace/organizations`, {
+      method: 'POST',
+      headers: this.headers(),
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`createOrganization failed: ${res.status}`);
+    return (await res.json()) as OrgResponse;
+  }
+
+  async listMembers(): Promise<MemberListResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/workspace/members`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`listMembers failed: ${res.status}`);
+    return (await res.json()) as MemberListResponse;
+  }
+
+  async listRoles(): Promise<RoleListResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/workspace/roles`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`listRoles failed: ${res.status}`);
+    return (await res.json()) as RoleListResponse;
+  }
+
+  async myCapabilities(): Promise<MyCapabilitiesResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/workspace/me/capabilities`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`myCapabilities failed: ${res.status}`);
+    return (await res.json()) as MyCapabilitiesResponse;
   }
 
   async listHello(): Promise<HelloListResponse> {

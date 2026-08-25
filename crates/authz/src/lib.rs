@@ -11,8 +11,17 @@
 //!
 //! Permission IDs: `{context}.{resource}.{action}`  
 //! Examples: `workspace.dashboard.read`, `finance.invoice.approve`.
+//!
+//! Scopes: `own | team | department | organization`.
+
+pub mod catalogue;
+
+pub use catalogue::{
+    catalogue_ids, default_scope_for, perms, PermissionDef, PERMISSION_CATALOGUE, SENSITIVE_ACTIONS,
+};
 
 use std::collections::HashSet;
+use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -37,47 +46,141 @@ impl From<&str> for PermissionId {
     }
 }
 
-/// Built-in permissions.
-pub mod perms {
-    use super::PermissionId;
+/// Resource access scope for a grant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Scope {
+    Own,
+    Team,
+    Department,
+    Organization,
+}
 
-    pub fn workspace_dashboard_read() -> PermissionId {
-        PermissionId::new("workspace", "dashboard", "read")
+impl Scope {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Own => "own",
+            Self::Team => "team",
+            Self::Department => "department",
+            Self::Organization => "organization",
+        }
     }
 
-    pub fn finance_invoice_approve() -> PermissionId {
-        PermissionId::new("finance", "invoice", "approve")
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "own" => Some(Self::Own),
+            "team" => Some(Self::Team),
+            "department" => Some(Self::Department),
+            "organization" => Some(Self::Organization),
+            _ => None,
+        }
     }
 
-    pub fn admin_sso_manage() -> PermissionId {
-        PermissionId::new("admin", "sso", "manage")
-    }
-
-    pub fn admin_membership_manage() -> PermissionId {
-        PermissionId::new("admin", "membership", "manage")
+    /// Whether `self` covers the required scope (organization covers all).
+    pub fn covers(self, required: Scope) -> bool {
+        match self {
+            Self::Organization => true,
+            Self::Department => matches!(required, Scope::Department | Scope::Team | Scope::Own),
+            Self::Team => matches!(required, Scope::Team | Scope::Own),
+            Self::Own => required == Scope::Own,
+        }
     }
 }
 
-/// Built-in roles (Phase 1.1).
+/// Built-in system role templates (seeded per org during OrgProvisioning).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     Owner,
     Admin,
+    Finance,
+    Sales,
+    Manager,
     Member,
+    ReadOnly,
 }
 
 impl Role {
+    pub fn all_system() -> &'static [Role] {
+        &[
+            Self::Owner,
+            Self::Admin,
+            Self::Finance,
+            Self::Sales,
+            Self::Manager,
+            Self::Member,
+            Self::ReadOnly,
+        ]
+    }
+
+    pub fn display_name(self) -> &'static str {
+        match self {
+            Self::Owner => "Owner",
+            Self::Admin => "Admin",
+            Self::Finance => "Finance",
+            Self::Sales => "Sales",
+            Self::Manager => "Manager",
+            Self::Member => "Member",
+            Self::ReadOnly => "Read-only",
+        }
+    }
+
     /// Default allows for the role (explicit denials still win).
     pub fn default_allows(self) -> HashSet<PermissionId> {
+        let all: HashSet<PermissionId> = PERMISSION_CATALOGUE
+            .iter()
+            .map(|p| p.permission_id())
+            .collect();
         match self {
-            Self::Owner | Self::Admin => HashSet::from([
+            Self::Owner => all,
+            Self::Admin => all
+                .into_iter()
+                .filter(|p| p.as_str() != "workspace.org.create")
+                .collect(),
+            Self::Finance => HashSet::from([
                 perms::workspace_dashboard_read(),
+                perms::workspace_org_read(),
+                perms::workspace_member_read(),
+                perms::workspace_role_read(),
+                perms::workspace_team_read(),
+                perms::workspace_department_read(),
                 perms::finance_invoice_approve(),
-                perms::admin_sso_manage(),
+            ]),
+            Self::Sales => HashSet::from([
+                perms::workspace_dashboard_read(),
+                perms::workspace_org_read(),
+                perms::workspace_member_read(),
+                perms::workspace_role_read(),
+                perms::workspace_team_read(),
+                perms::workspace_department_read(),
+            ]),
+            Self::Manager => HashSet::from([
+                perms::workspace_dashboard_read(),
+                perms::workspace_org_read(),
+                perms::workspace_member_read(),
+                perms::workspace_member_invite(),
+                perms::workspace_role_read(),
+                perms::workspace_team_read(),
+                perms::workspace_team_manage(),
+                perms::workspace_department_read(),
                 perms::admin_membership_manage(),
             ]),
-            Self::Member => HashSet::from([perms::workspace_dashboard_read()]),
+            Self::Member => HashSet::from([
+                perms::workspace_dashboard_read(),
+                perms::workspace_org_read(),
+                perms::workspace_member_read(),
+                perms::workspace_role_read(),
+                perms::workspace_team_read(),
+                perms::workspace_department_read(),
+            ]),
+            Self::ReadOnly => HashSet::from([
+                perms::workspace_dashboard_read(),
+                perms::workspace_org_read(),
+                perms::workspace_member_read(),
+                perms::workspace_role_read(),
+                perms::workspace_team_read(),
+                perms::workspace_department_read(),
+            ]),
         }
     }
 
@@ -90,7 +193,11 @@ impl Role {
         match s {
             "owner" => Some(Self::Owner),
             "admin" => Some(Self::Admin),
+            "finance" => Some(Self::Finance),
+            "sales" => Some(Self::Sales),
+            "manager" => Some(Self::Manager),
             "member" => Some(Self::Member),
+            "read_only" | "readonly" | "read-only" => Some(Self::ReadOnly),
             _ => None,
         }
     }
@@ -99,8 +206,17 @@ impl Role {
         match self {
             Self::Owner => "owner",
             Self::Admin => "admin",
+            Self::Finance => "finance",
+            Self::Sales => "sales",
+            Self::Manager => "manager",
             Self::Member => "member",
+            Self::ReadOnly => "read_only",
         }
+    }
+
+    /// Whether this role is the Owner template (last-owner invariant).
+    pub fn is_owner(self) -> bool {
+        matches!(self, Self::Owner)
     }
 }
 
@@ -122,6 +238,30 @@ pub enum Effect {
 pub struct Statement {
     pub effect: Effect,
     pub permission: PermissionId,
+    #[serde(default = "default_statement_scope")]
+    pub scope: Scope,
+}
+
+fn default_statement_scope() -> Scope {
+    Scope::Organization
+}
+
+impl Statement {
+    pub fn allow(permission: PermissionId) -> Self {
+        Self {
+            effect: Effect::Allow,
+            permission,
+            scope: Scope::Organization,
+        }
+    }
+
+    pub fn deny(permission: PermissionId) -> Self {
+        Self {
+            effect: Effect::Deny,
+            permission,
+            scope: Scope::Organization,
+        }
+    }
 }
 
 /// Principal under evaluation (user within an org, with roles + statements).
@@ -138,6 +278,18 @@ impl Principal {
             roles,
             statements: vec![],
         }
+    }
+
+    /// Effective allowed permission IDs (for capability preview / nav).
+    pub fn effective_allows(&self) -> HashSet<PermissionId> {
+        let mut out = HashSet::new();
+        for p in PERMISSION_CATALOGUE {
+            let pid = p.permission_id();
+            if is_allowed(self, &pid) {
+                out.insert(pid);
+            }
+        }
+        out
     }
 }
 
@@ -178,7 +330,16 @@ pub fn validate_permission_id(id: &str) -> Result<(), AuthzError> {
 /// 3. Allow from any role default → Allow  
 /// 4. Otherwise → Deny
 pub fn decide(principal: &Principal, permission: &PermissionId) -> DecisionDetail {
-    // 1. Explicit deny wins.
+    decide_with_scope(principal, permission, Scope::Organization)
+}
+
+/// PDP with a required resource scope.
+pub fn decide_with_scope(
+    principal: &Principal,
+    permission: &PermissionId,
+    required_scope: Scope,
+) -> DecisionDetail {
+    // 1. Explicit deny wins (any scope).
     if principal
         .statements
         .iter()
@@ -191,12 +352,10 @@ pub fn decide(principal: &Principal, permission: &PermissionId) -> DecisionDetai
         };
     }
 
-    // 2. Explicit allow.
-    if principal
-        .statements
-        .iter()
-        .any(|s| s.effect == Effect::Allow && s.permission == *permission)
-    {
+    // 2. Explicit allow with sufficient scope.
+    if principal.statements.iter().any(|s| {
+        s.effect == Effect::Allow && s.permission == *permission && s.scope.covers(required_scope)
+    }) {
         return DecisionDetail {
             decision: Decision::Allow,
             permission: permission.clone(),
@@ -204,14 +363,16 @@ pub fn decide(principal: &Principal, permission: &PermissionId) -> DecisionDetai
         };
     }
 
-    // 3. Role defaults.
-    for role in &principal.roles {
-        if role.default_allows().contains(permission) {
-            return DecisionDetail {
-                decision: Decision::Allow,
-                permission: permission.clone(),
-                reason: "role_allow",
-            };
+    // 3. Role defaults (organization scope).
+    if required_scope == Scope::Organization || Scope::Organization.covers(required_scope) {
+        for role in &principal.roles {
+            if role.default_allows().contains(permission) {
+                return DecisionDetail {
+                    decision: Decision::Allow,
+                    permission: permission.clone(),
+                    reason: "role_allow",
+                };
+            }
         }
     }
 
@@ -225,6 +386,91 @@ pub fn decide(principal: &Principal, permission: &PermissionId) -> DecisionDetai
 
 pub fn is_allowed(principal: &Principal, permission: &PermissionId) -> bool {
     decide(principal, permission).decision == Decision::Allow
+}
+
+pub fn is_allowed_scoped(
+    principal: &Principal,
+    permission: &PermissionId,
+    required_scope: Scope,
+) -> bool {
+    decide_with_scope(principal, permission, required_scope).decision == Decision::Allow
+}
+
+/// Short-lived cache of effective permission sets keyed by membership + policy_version.
+///
+/// Invalidation: callers bump `policy_version` on role/membership/settings changes;
+/// entries whose key no longer matches are unused. TTL enforces ≤5s stale reads.
+#[derive(Debug, Default)]
+pub struct PermissionSetCache {
+    inner: std::sync::Mutex<std::collections::HashMap<CacheKey, CacheEntry>>,
+    ttl: Duration,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct CacheKey {
+    membership_id: String,
+    policy_version: i64,
+}
+
+#[derive(Debug, Clone)]
+struct CacheEntry {
+    allows: HashSet<String>,
+    inserted_at: Instant,
+}
+
+impl PermissionSetCache {
+    pub fn with_ttl(ttl: Duration) -> Self {
+        Self {
+            inner: std::sync::Mutex::new(std::collections::HashMap::new()),
+            ttl,
+        }
+    }
+
+    pub fn default_5s() -> Self {
+        Self::with_ttl(Duration::from_secs(5))
+    }
+
+    pub fn get(&self, membership_id: &str, policy_version: i64) -> Option<HashSet<String>> {
+        let mut guard = self.inner.lock().ok()?;
+        let key = CacheKey {
+            membership_id: membership_id.to_string(),
+            policy_version,
+        };
+        let entry = guard.get(&key)?;
+        if entry.inserted_at.elapsed() > self.ttl {
+            guard.remove(&key);
+            return None;
+        }
+        Some(entry.allows.clone())
+    }
+
+    pub fn put(&self, membership_id: &str, policy_version: i64, allows: HashSet<String>) {
+        if let Ok(mut guard) = self.inner.lock() {
+            guard.insert(
+                CacheKey {
+                    membership_id: membership_id.to_string(),
+                    policy_version,
+                },
+                CacheEntry {
+                    allows,
+                    inserted_at: Instant::now(),
+                },
+            );
+        }
+    }
+
+    /// Drop all entries for a membership (any policy_version).
+    pub fn invalidate_membership(&self, membership_id: &str) {
+        if let Ok(mut guard) = self.inner.lock() {
+            guard.retain(|k, _| k.membership_id != membership_id);
+        }
+    }
+
+    pub fn clear(&self) {
+        if let Ok(mut guard) = self.inner.lock() {
+            guard.clear();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -258,10 +504,8 @@ mod tests {
     #[test]
     fn explicit_deny_wins_over_owner_role() {
         let mut p = Principal::with_roles(vec![Role::Owner]);
-        p.statements.push(Statement {
-            effect: Effect::Deny,
-            permission: perms::finance_invoice_approve(),
-        });
+        p.statements
+            .push(Statement::deny(perms::finance_invoice_approve()));
         let d = decide(&p, &perms::finance_invoice_approve());
         assert_eq!(d.decision, Decision::Deny);
         assert_eq!(d.reason, "explicit_deny");
@@ -270,14 +514,10 @@ mod tests {
     #[test]
     fn explicit_deny_wins_over_explicit_allow() {
         let mut p = Principal::with_roles(vec![]);
-        p.statements.push(Statement {
-            effect: Effect::Allow,
-            permission: perms::workspace_dashboard_read(),
-        });
-        p.statements.push(Statement {
-            effect: Effect::Deny,
-            permission: perms::workspace_dashboard_read(),
-        });
+        p.statements
+            .push(Statement::allow(perms::workspace_dashboard_read()));
+        p.statements
+            .push(Statement::deny(perms::workspace_dashboard_read()));
         assert!(!is_allowed(&p, &perms::workspace_dashboard_read()));
     }
 
@@ -285,10 +525,8 @@ mod tests {
     fn explicit_allow_for_member_invoice() {
         let mut p = Principal::with_roles(vec![Role::Member]);
         assert!(!is_allowed(&p, &perms::finance_invoice_approve()));
-        p.statements.push(Statement {
-            effect: Effect::Allow,
-            permission: perms::finance_invoice_approve(),
-        });
+        p.statements
+            .push(Statement::allow(perms::finance_invoice_approve()));
         let d = decide(&p, &perms::finance_invoice_approve());
         assert_eq!(d.decision, Decision::Allow);
         assert_eq!(d.reason, "explicit_allow");
@@ -311,18 +549,14 @@ mod tests {
 
     #[test]
     fn decision_order_documented_in_reasons() {
-        // explicit deny
         let mut p = Principal::with_roles(vec![Role::Owner]);
-        p.statements.push(Statement {
-            effect: Effect::Deny,
-            permission: perms::workspace_dashboard_read(),
-        });
+        p.statements
+            .push(Statement::deny(perms::workspace_dashboard_read()));
         assert_eq!(
             decide(&p, &perms::workspace_dashboard_read()).reason,
             "explicit_deny"
         );
 
-        // role allow
         let p = Principal::with_roles(vec![Role::Member]);
         assert_eq!(
             decide(&p, &perms::workspace_dashboard_read()).reason,
@@ -335,6 +569,7 @@ mod tests {
         assert!(Role::Owner.requires_mfa());
         assert!(Role::Admin.requires_mfa());
         assert!(!Role::Member.requires_mfa());
+        assert!(!Role::Finance.requires_mfa());
         assert!(principal_requires_mfa(&Principal::with_roles(vec![
             Role::Owner
         ])));
@@ -352,5 +587,93 @@ mod tests {
         assert!(is_allowed(&p, &perms::admin_sso_manage()));
         let member = Principal::with_roles(vec![Role::Member]);
         assert!(!is_allowed(&member, &perms::admin_sso_manage()));
+    }
+
+    #[test]
+    fn system_role_deny_matrix_for_sensitive_actions() {
+        // Every non-owner system role × every sensitive action that role must not have by default.
+        let deny_pairs: &[(&str, Role)] = &[
+            ("workspace.member.invite", Role::Member),
+            ("workspace.member.invite", Role::ReadOnly),
+            ("workspace.member.invite", Role::Finance),
+            ("workspace.member.invite", Role::Sales),
+            ("workspace.role.assign", Role::Member),
+            ("workspace.role.assign", Role::ReadOnly),
+            ("workspace.role.assign", Role::Finance),
+            ("workspace.role.assign", Role::Sales),
+            ("workspace.role.assign", Role::Manager),
+            ("workspace.member.revoke", Role::Member),
+            ("workspace.member.revoke", Role::ReadOnly),
+            ("workspace.member.revoke", Role::Finance),
+            ("workspace.member.revoke", Role::Sales),
+            ("workspace.member.revoke", Role::Manager),
+            ("workspace.org.update_settings", Role::Member),
+            ("workspace.org.update_settings", Role::ReadOnly),
+            ("workspace.org.update_settings", Role::Finance),
+            ("workspace.org.update_settings", Role::Sales),
+            ("workspace.org.update_settings", Role::Manager),
+            ("finance.invoice.approve", Role::Member),
+            ("finance.invoice.approve", Role::ReadOnly),
+            ("finance.invoice.approve", Role::Sales),
+            ("finance.invoice.approve", Role::Manager),
+            ("finance.invoice.approve", Role::Admin), // Admin has it actually - skip
+        ];
+        for (perm, role) in deny_pairs {
+            if *role == Role::Admin && *perm == "finance.invoice.approve" {
+                continue;
+            }
+            let p = Principal::with_roles(vec![*role]);
+            assert!(
+                !is_allowed(&p, &PermissionId::from(*perm)),
+                "{role:?} must be denied {perm}"
+            );
+        }
+        // Owner allowed all sensitive
+        let owner = Principal::with_roles(vec![Role::Owner]);
+        for perm in SENSITIVE_ACTIONS {
+            assert!(
+                is_allowed(&owner, &PermissionId::from(*perm)),
+                "owner must allow {perm}"
+            );
+        }
+        // Finance can approve invoices
+        let finance = Principal::with_roles(vec![Role::Finance]);
+        assert!(is_allowed(&finance, &perms::finance_invoice_approve()));
+        // Admin can invite / assign / revoke / settings
+        let admin = Principal::with_roles(vec![Role::Admin]);
+        assert!(is_allowed(&admin, &perms::workspace_member_invite()));
+        assert!(is_allowed(&admin, &perms::workspace_role_assign()));
+        assert!(is_allowed(&admin, &perms::workspace_member_revoke()));
+        assert!(is_allowed(&admin, &perms::workspace_org_update_settings()));
+    }
+
+    #[test]
+    fn scope_covers_hierarchy() {
+        assert!(Scope::Organization.covers(Scope::Own));
+        assert!(Scope::Team.covers(Scope::Own));
+        assert!(!Scope::Own.covers(Scope::Team));
+    }
+
+    #[test]
+    fn permission_cache_ttl_and_version() {
+        let cache = PermissionSetCache::with_ttl(Duration::from_millis(50));
+        let mut set = HashSet::new();
+        set.insert("workspace.dashboard.read".into());
+        cache.put("mem1", 1, set.clone());
+        assert_eq!(cache.get("mem1", 1), Some(set));
+        assert!(cache.get("mem1", 2).is_none());
+        cache.invalidate_membership("mem1");
+        assert!(cache.get("mem1", 1).is_none());
+        cache.put("mem1", 3, HashSet::from(["x".into()]));
+        std::thread::sleep(Duration::from_millis(60));
+        assert!(cache.get("mem1", 3).is_none());
+    }
+
+    #[test]
+    fn read_only_denied_sensitive() {
+        let p = Principal::with_roles(vec![Role::ReadOnly]);
+        for perm in SENSITIVE_ACTIONS {
+            assert!(!is_allowed(&p, &PermissionId::from(*perm)));
+        }
     }
 }

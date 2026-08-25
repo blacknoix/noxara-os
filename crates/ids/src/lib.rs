@@ -30,6 +30,11 @@ pub enum IdKind {
     Deal,
     Customer,
     Hello,
+    Role,
+    Team,
+    Department,
+    Invitation,
+    Membership,
 }
 
 impl IdKind {
@@ -41,6 +46,11 @@ impl IdKind {
             Self::Deal => "dl_",
             Self::Customer => "cus_",
             Self::Hello => "hel_",
+            Self::Role => "rol_",
+            Self::Team => "tem_",
+            Self::Department => "dep_",
+            Self::Invitation => "ivt_",
+            Self::Membership => "mem_",
         }
     }
 
@@ -52,6 +62,11 @@ impl IdKind {
             "dl_" => Some(Self::Deal),
             "cus_" => Some(Self::Customer),
             "hel_" => Some(Self::Hello),
+            "rol_" => Some(Self::Role),
+            "tem_" => Some(Self::Team),
+            "dep_" => Some(Self::Department),
+            "ivt_" => Some(Self::Invitation),
+            "mem_" => Some(Self::Membership),
             _ => None,
         }
     }
@@ -114,6 +129,11 @@ impl FromStr for PublicId {
             ("inv_", IdKind::Invoice),
             ("cus_", IdKind::Customer),
             ("hel_", IdKind::Hello),
+            ("rol_", IdKind::Role),
+            ("tem_", IdKind::Team),
+            ("dep_", IdKind::Department),
+            ("ivt_", IdKind::Invitation),
+            ("mem_", IdKind::Membership),
             ("dl_", IdKind::Deal),
         ];
         for (prefix, kind) in PREFIXES {
@@ -193,6 +213,11 @@ mod tests {
             IdKind::Deal,
             IdKind::Customer,
             IdKind::Hello,
+            IdKind::Role,
+            IdKind::Team,
+            IdKind::Department,
+            IdKind::Invitation,
+            IdKind::Membership,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

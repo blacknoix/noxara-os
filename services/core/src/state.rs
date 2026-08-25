@@ -1,6 +1,7 @@
 //! Shared application state for companyos-core.
 
 use companyos_auth_token::KeyRing;
+use companyos_authz::PermissionSetCache;
 use sqlx::PgPool;
 use std::sync::Arc;
 
@@ -12,6 +13,7 @@ pub struct AppState {
     pub pool: PgPool,
     pub auth_keys: AuthKeys,
     pub rate_limiter: Arc<RateLimiter>,
+    pub perm_cache: Arc<PermissionSetCache>,
 }
 
 impl AppState {
@@ -20,6 +22,7 @@ impl AppState {
             pool,
             auth_keys: AuthKeys::new(ring),
             rate_limiter: Arc::new(RateLimiter::auth_strict()),
+            perm_cache: Arc::new(PermissionSetCache::default_5s()),
         }
     }
 }

@@ -1,4 +1,4 @@
-//! CompanyOS **core** service — Phase 1.1 auth + hello vertical slice.
+//! CompanyOS **core** service — Phase 1.2 workspace + auth + hello.
 
 use std::net::SocketAddr;
 

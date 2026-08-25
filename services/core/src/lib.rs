@@ -1,9 +1,10 @@
-//! CompanyOS core library (auth + hello) — used by the binary and integration tests.
+//! CompanyOS core library (auth + workspace + hello) — used by the binary and integration tests.
 
 pub mod auth;
 pub mod hello;
 pub mod openapi;
 pub mod state;
+pub mod workspace;
 
 use axum::routing::get;
 use axum::{Json, Router};
@@ -31,11 +32,13 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     for migration in [
         include_str!("../migrations/001_init.sql"),
         include_str!("../migrations/002_auth.sql"),
+        include_str!("../migrations/003_workspace.sql"),
     ] {
         for stmt in split_sql(migration) {
             sqlx::query(&stmt).execute(pool).await?;
         }
     }
+    workspace::sync_permission_catalogue(pool).await?;
     Ok(())
 }
 
@@ -57,6 +60,7 @@ pub fn build_router(state: AppState) -> Router {
             }),
         )
         .merge(auth::router())
+        .merge(workspace::router())
         .merge(hello::router())
         .merge(openapi::router())
         .layer(TraceLayer::new_for_http())

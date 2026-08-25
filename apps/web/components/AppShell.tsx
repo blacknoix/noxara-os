@@ -7,7 +7,16 @@ import { TopBar } from './TopBar';
 import { Sidebar } from './Sidebar';
 import { ContextPanel } from './ContextPanel';
 
-const AUTH_PATHS = ['/login', '/signup', '/verify-email', '/magic-link', '/mfa', '/reset-password'];
+const AUTH_PATHS = [
+  '/login',
+  '/signup',
+  '/verify-email',
+  '/magic-link',
+  '/mfa',
+  '/reset-password',
+  '/onboarding',
+  '/invite',
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
