@@ -7,7 +7,7 @@ use axum::extract::{Query, State};
 use axum::routing::get;
 use axum::{Json, Router};
 use chrono::Utc;
-use companyos_authz::{perms, Role};
+use companyos_authz::{is_allowed, perms, Role};
 use companyos_errors::{AppError, ErrorCode};
 use companyos_tenancy::set_session_org_id;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::auth::extract::AuthUser;
 use crate::state::AppState;
-use crate::workspace::require_perm;
+use crate::workspace::load_principal;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct DashboardResponse {
@@ -81,7 +81,29 @@ pub async fn get_dashboard(
     user: AuthUser,
     Query(q): Query<DashboardQuery>,
 ) -> Result<Json<DashboardResponse>, AppError> {
-    require_perm(&user, &state, &perms::workspace_dashboard_read())?;
+    let request_id = user.ctx.request_id.clone();
+    // Use full principal (role defaults + role_permission statements) so explicit
+    // deny / custom roles are honoured — same path as capabilities.
+    let (principal, _, _) = load_principal(
+        &state.pool,
+        user.ctx.org_id,
+        user.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    if !is_allowed(&principal, &perms::workspace_dashboard_read()) {
+        state
+            .perm_cache
+            .invalidate_membership(&user.membership_id.to_string());
+        return Err(AppError::new(
+            ErrorCode::Forbidden,
+            request_id,
+            format!(
+                "missing permission {}",
+                perms::workspace_dashboard_read().as_str()
+            ),
+        ));
+    }
 
     let period = if q.period.trim().is_empty() {
         default_period()

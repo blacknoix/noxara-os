@@ -251,15 +251,27 @@ async fn dashboard_forbidden_without_dashboard_perm() {
     };
     let state = app_state(seeded.pool.clone()).await;
 
-    // AuthUser loads role from membership.role (not JWT claims). Point it at a
-    // non-catalogue key so Role::parse fails → empty principal → deny.
+    // All system role keys include dashboard.read by default. Attach an explicit
+    // deny on the member's org_role so PDP denies (explicit deny wins).
     let mut tx = seeded.pool.begin().await.unwrap();
     set_session_org_id(&mut tx, seeded.org).await.unwrap();
+    let role_id: Uuid =
+        sqlx::query_scalar("SELECT role_id FROM membership WHERE org_id = $1 AND user_id = $2")
+            .bind(seeded.org.as_uuid())
+            .bind(seeded.member_id)
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
     sqlx::query(
-        "UPDATE membership SET role = 'no_dashboard_perm' WHERE org_id = $1 AND user_id = $2",
+        r#"
+        INSERT INTO role_permission (id, org_id, role_id, permission_id, effect, scope)
+        VALUES ($1, $2, $3, 'workspace.dashboard.read', 'deny', 'organization')
+        ON CONFLICT (role_id, permission_id, effect) DO NOTHING
+        "#,
     )
+    .bind(new_uuid_v7())
     .bind(seeded.org.as_uuid())
-    .bind(seeded.member_id)
+    .bind(role_id)
     .execute(&mut *tx)
     .await
     .unwrap();
