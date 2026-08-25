@@ -36,6 +36,15 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      # Docker POSTGRES_USER is a superuser and bypasses RLS; demote before isolation tests.
+      - name: Demote DB role for RLS
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql-client
+          PGPASSWORD=companyos psql -h 127.0.0.1 -U companyos -d companyos_test -v ON_ERROR_STOP=1 \
+            -c "ALTER ROLE companyos WITH NOSUPERUSER NOBYPASSRLS;"
+          PGPASSWORD=companyos psql -h 127.0.0.1 -U companyos -d companyos_test \
+            -c "SELECT current_user, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user;"
       - name: fmt
         run: cargo fmt --all -- --check
       - name: clippy

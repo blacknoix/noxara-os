@@ -25,3 +25,11 @@ make dev-down
 ## Auth
 
 LOCAL-ONLY headers — see `.tmp/seed.env` after seed.
+
+## PostgreSQL RLS and the `companyos` role
+
+Superusers (and roles with `BYPASSRLS`) bypass RLS even with `FORCE ROW LEVEL SECURITY`.
+Compose init (`infrastructure/docker/init/01-databases.sql`) and CI demote `companyos` to
+`NOSUPERUSER NOBYPASSRLS`. `companyos-testkit::connect()` fails loudly if the role still
+bypasses RLS, so isolation tests cannot pass as false greens.
+

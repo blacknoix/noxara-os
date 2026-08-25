@@ -25,7 +25,31 @@ pub async fn connect() -> anyhow::Result<PgPool> {
         .max_connections(5)
         .connect(&url)
         .await?;
+    assert_not_superuser(&pool).await?;
     Ok(pool)
+}
+
+/// Superusers (and BYPASSRLS) silently skip RLS — isolation tests would be false greens.
+pub async fn assert_not_superuser(pool: &PgPool) -> anyhow::Result<()> {
+    let row: (bool, bool) = sqlx::query_as(
+        r#"
+        SELECT rolsuper, rolbypassrls
+        FROM pg_roles
+        WHERE rolname = current_user
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
+    if row.0 || row.1 {
+        anyhow::bail!(
+            "TENANT ISOLATION SETUP ERROR: connected as role with SUPERUSER={} BYPASSRLS={}. \
+             PostgreSQL superusers bypass RLS even with FORCE ROW LEVEL SECURITY. \
+             Demote the role (ALTER ROLE … NOSUPERUSER NOBYPASSRLS) before running isolation tests.",
+            row.0,
+            row.1
+        );
+    }
+    Ok(())
 }
 
 /// Apply Phase 0 schema used by isolation tests (hello + outbox + RLS).
