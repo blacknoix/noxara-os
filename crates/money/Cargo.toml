@@ -1,0 +1,15 @@
+[package]
+name = "companyos-money"
+description = "Integer minor-unit money arithmetic for CompanyOS (never f64)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+serde_json = { workspace = true }

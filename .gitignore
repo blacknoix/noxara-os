@@ -1,0 +1,60 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+*.tsbuildinfo
+.turbo/
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+!.env*.example
+*.pem
+*.key
+credentials.json
+secrets/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Coverage / reports
+coverage/
+lcov.info
+tarpaulin-report.html
+*.profraw
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Local data / docker volumes
+infrastructure/docker/data/
+.tmp/
+tmp/
+
+# Logs
+*.log
+logs/
+
+# Generated OpenAPI (committed intentionally under packages/sdk)
+# Keep packages/sdk/openapi.json tracked.
+
+# Test artifacts
+test-results/
+playwright-report/

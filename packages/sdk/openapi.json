@@ -1,0 +1,117 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CompanyOS Core API",
+    "description": "Phase 0 foundations — hello resource. LOCAL-ONLY auth.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/hello": {
+      "get": {
+        "tags": ["hello"],
+        "operationId": "list_hello",
+        "responses": {
+          "200": {
+            "description": "Hello messages for the tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": ["hello"],
+        "operationId": "create_hello",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHelloRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created hello",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Hello"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Hello": {
+        "type": "object",
+        "required": ["id", "org_id", "message", "created_by"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Prefixed public id (`hel_…`)."
+          },
+          "org_id": {
+            "type": "string",
+            "description": "Prefixed org id (`org_…`)."
+          },
+          "message": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateHelloRequest": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "HelloListResponse": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hello"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "hello",
+      "description": "Phase 0 hello vertical slice"
+    }
+  ]
+}
