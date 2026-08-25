@@ -43,7 +43,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p style={{ margin: '0.4rem 0 0', color: 'var(--cos-color-fg-muted)', maxWidth: 520 }}>
-          Phase 0 shell — loading, empty, and error states only. No demo CRM metrics.
+          Phase 1.1 shell — sign in for org-scoped auth. No demo CRM metrics.
         </p>
       </header>
 

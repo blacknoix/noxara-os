@@ -1,20 +1,48 @@
-/** TypeScript SDK stub for CompanyOS Phase 0. */
+/** TypeScript SDK for CompanyOS Phase 1.1. */
 
-export type { Hello, CreateHelloRequest, HelloListResponse } from './generated';
-import type { Hello, CreateHelloRequest, HelloListResponse } from './generated';
+export type {
+  Hello,
+  CreateHelloRequest,
+  HelloListResponse,
+  RegisterRequest,
+  RegisterResponse,
+  LoginRequest,
+  TokenResponse,
+  MfaChallengeResponse,
+  SwitchOrgRequest,
+  MeResponse,
+  MembershipView,
+  MembershipListResponse,
+  SessionView,
+  SessionListResponse,
+  MessageResponse,
+} from './generated';
+
+import type {
+  Hello,
+  CreateHelloRequest,
+  HelloListResponse,
+  LoginRequest,
+  TokenResponse,
+  SwitchOrgRequest,
+  MeResponse,
+  MembershipListResponse,
+  SessionListResponse,
+} from './generated';
 
 export type CompanyOsClientOptions = {
   baseUrl: string;
-  /** LOCAL-ONLY: org public id for X-CompanyOS-Dev-Org-Id */
+  /** In-memory access token getter (preferred). */
+  getAccessToken?: () => string | null | undefined;
+  /** LOCAL-ONLY: org public id for X-CompanyOS-Dev-Org-Id (requires COMPANYOS_LOCAL_AUTH=1). */
   orgId?: string;
-  /** LOCAL-ONLY: user public id or uuid for X-CompanyOS-Dev-User-Id */
+  /** LOCAL-ONLY: user public id or uuid for X-CompanyOS-Dev-User-Id. */
   userId?: string;
   getHeaders?: () => Record<string, string>;
 };
 
 /**
- * Thin TypeScript SDK stub for CompanyOS Phase 0.
- * Auth headers are LOCAL-ONLY — never ship these to production clients as the sole auth.
+ * Thin TypeScript SDK. Prefer Bearer access tokens; keep them out of localStorage.
  */
 export class CompanyOsClient {
   constructor(private readonly opts: CompanyOsClientOptions) {}
@@ -25,15 +53,70 @@ export class CompanyOsClient {
       'Content-Type': 'application/json',
       ...(this.opts.getHeaders?.() ?? {}),
     };
+    const token = this.opts.getAccessToken?.();
+    if (token) h.Authorization = `Bearer ${token}`;
     if (this.opts.orgId) h['X-CompanyOS-Dev-Org-Id'] = this.opts.orgId;
     if (this.opts.userId) h['X-CompanyOS-Dev-User-Id'] = this.opts.userId;
     return h;
+  }
+
+  async login(body: LoginRequest): Promise<TokenResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/auth/login`, {
+      method: 'POST',
+      headers: this.headers(),
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`login failed: ${res.status}`);
+    return (await res.json()) as TokenResponse;
+  }
+
+  async switchOrg(body: SwitchOrgRequest): Promise<TokenResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/auth/switch-org`, {
+      method: 'POST',
+      headers: this.headers(),
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`switchOrg failed: ${res.status}`);
+    return (await res.json()) as TokenResponse;
+  }
+
+  async me(): Promise<MeResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/auth/me`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`me failed: ${res.status}`);
+    return (await res.json()) as MeResponse;
+  }
+
+  async listMemberships(): Promise<MembershipListResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/auth/memberships`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`listMemberships failed: ${res.status}`);
+    return (await res.json()) as MembershipListResponse;
+  }
+
+  async listSessions(): Promise<SessionListResponse> {
+    const res = await fetch(`${this.opts.baseUrl}/api/v1/auth/sessions`, {
+      method: 'GET',
+      headers: this.headers(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`listSessions failed: ${res.status}`);
+    return (await res.json()) as SessionListResponse;
   }
 
   async listHello(): Promise<HelloListResponse> {
     const res = await fetch(`${this.opts.baseUrl}/api/v1/hello`, {
       method: 'GET',
       headers: this.headers(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error(`listHello failed: ${res.status}`);
@@ -45,6 +128,7 @@ export class CompanyOsClient {
     const res = await fetch(`${this.opts.baseUrl}/api/v1/hello`, {
       method: 'POST',
       headers: this.headers(),
+      credentials: 'include',
       body: JSON.stringify(body),
     });
     if (!res.ok) {

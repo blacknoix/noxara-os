@@ -37,7 +37,7 @@ impl From<&str> for PermissionId {
     }
 }
 
-/// Built-in Phase 0 permissions.
+/// Built-in permissions.
 pub mod perms {
     use super::PermissionId;
 
@@ -48,13 +48,22 @@ pub mod perms {
     pub fn finance_invoice_approve() -> PermissionId {
         PermissionId::new("finance", "invoice", "approve")
     }
+
+    pub fn admin_sso_manage() -> PermissionId {
+        PermissionId::new("admin", "sso", "manage")
+    }
+
+    pub fn admin_membership_manage() -> PermissionId {
+        PermissionId::new("admin", "membership", "manage")
+    }
 }
 
-/// Mini Phase 0 roles.
+/// Built-in roles (Phase 1.1).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     Owner,
+    Admin,
     Member,
 }
 
@@ -62,13 +71,42 @@ impl Role {
     /// Default allows for the role (explicit denials still win).
     pub fn default_allows(self) -> HashSet<PermissionId> {
         match self {
-            Self::Owner => HashSet::from([
+            Self::Owner | Self::Admin => HashSet::from([
                 perms::workspace_dashboard_read(),
                 perms::finance_invoice_approve(),
+                perms::admin_sso_manage(),
+                perms::admin_membership_manage(),
             ]),
             Self::Member => HashSet::from([perms::workspace_dashboard_read()]),
         }
     }
+
+    /// Owner and Admin require TOTP MFA before an access token is issued.
+    pub fn requires_mfa(self) -> bool {
+        matches!(self, Self::Owner | Self::Admin)
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "owner" => Some(Self::Owner),
+            "admin" => Some(Self::Admin),
+            "member" => Some(Self::Member),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Owner => "owner",
+            Self::Admin => "admin",
+            Self::Member => "member",
+        }
+    }
+}
+
+/// Returns true if any role on the principal requires MFA.
+pub fn principal_requires_mfa(principal: &Principal) -> bool {
+    principal.roles.iter().any(|r| r.requires_mfa())
 }
 
 /// Effect of a policy statement.
@@ -290,5 +328,29 @@ mod tests {
             decide(&p, &perms::workspace_dashboard_read()).reason,
             "role_allow"
         );
+    }
+
+    #[test]
+    fn owner_and_admin_require_mfa() {
+        assert!(Role::Owner.requires_mfa());
+        assert!(Role::Admin.requires_mfa());
+        assert!(!Role::Member.requires_mfa());
+        assert!(principal_requires_mfa(&Principal::with_roles(vec![
+            Role::Owner
+        ])));
+        assert!(principal_requires_mfa(&Principal::with_roles(vec![
+            Role::Admin
+        ])));
+        assert!(!principal_requires_mfa(&Principal::with_roles(vec![
+            Role::Member
+        ])));
+    }
+
+    #[test]
+    fn admin_can_manage_sso() {
+        let p = Principal::with_roles(vec![Role::Admin]);
+        assert!(is_allowed(&p, &perms::admin_sso_manage()));
+        let member = Principal::with_roles(vec![Role::Member]);
+        assert!(!is_allowed(&member, &perms::admin_sso_manage()));
     }
 }

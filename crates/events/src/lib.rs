@@ -23,6 +23,8 @@ pub enum Context {
     Admin,
     /// Phase 0 hello slice lives under workspace for subject stability.
     Core,
+    /// Identity & authentication events.
+    Auth,
 }
 
 impl Context {
@@ -36,6 +38,7 @@ impl Context {
             Self::Ai => "ai",
             Self::Admin => "admin",
             Self::Core => "core",
+            Self::Auth => "auth",
         }
     }
 }

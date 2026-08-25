@@ -2,13 +2,71 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CompanyOS Core API",
-    "description": "Phase 0 foundations — hello resource. LOCAL-ONLY auth.",
-    "version": "0.1.0"
+    "description": "Phase 1.1 \u2014 org-scoped JWT auth + hello resource. LOCAL-ONLY auth is opt-in via COMPANYOS_LOCAL_AUTH=1.",
+    "license": {
+      "name": "Proprietary",
+      "identifier": "Proprietary"
+    },
+    "version": "0.2.0"
   },
   "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "POST /api/v1/auth/login",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "POST /api/v1/auth/register",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/hello": {
       "get": {
-        "tags": ["hello"],
+        "tags": [
+          "hello"
+        ],
+        "summary": "GET /api/v1/hello \u2014 list hello messages for the caller's org only.",
         "operationId": "list_hello",
         "responses": {
           "200": {
@@ -30,7 +88,10 @@
         }
       },
       "post": {
-        "tags": ["hello"],
+        "tags": [
+          "hello"
+        ],
+        "summary": "POST /api/v1/hello \u2014 write hello row + outbox + audit in one transaction.",
         "operationId": "create_hello",
         "requestBody": {
           "content": {
@@ -65,44 +126,555 @@
   },
   "components": {
     "schemas": {
-      "Hello": {
+      "CreateHelloRequest": {
         "type": "object",
-        "required": ["id", "org_id", "message", "created_by"],
+        "required": [
+          "message"
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "description": "Prefixed public id (`hel_…`)."
-          },
-          "org_id": {
-            "type": "string",
-            "description": "Prefixed org id (`org_…`)."
-          },
           "message": {
-            "type": "string"
-          },
-          "created_by": {
             "type": "string"
           }
         }
       },
-      "CreateHelloRequest": {
+      "Hello": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "id",
+          "org_id",
+          "message",
+          "created_by"
+        ],
         "properties": {
+          "created_by": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "Prefixed public id (`hel_\u2026`)."
+          },
           "message": {
             "type": "string"
+          },
+          "org_id": {
+            "type": "string",
+            "description": "Prefixed org id (`org_\u2026`)."
           }
         }
       },
       "HelloListResponse": {
         "type": "object",
-        "required": ["items"],
+        "required": [
+          "items"
+        ],
         "properties": {
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Hello"
             }
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "device_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "MagicLinkConsumeRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "device_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "MagicLinkRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "org_id",
+          "roles",
+          "policy_version",
+          "session_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "policy_version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      },
+      "MembershipListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipView"
+            }
+          }
+        }
+      },
+      "MembershipView": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "org_name",
+          "role",
+          "policy_version"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "org_name": {
+            "type": "string"
+          },
+          "policy_version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "MfaChallengeResponse": {
+        "type": "object",
+        "required": [
+          "mfa_required",
+          "challenge_token",
+          "message"
+        ],
+        "properties": {
+          "challenge_token": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "mfa_required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MfaConfirmRequest": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "challenge_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "MfaConfirmResponse": {
+        "type": "object",
+        "required": [
+          "recovery_codes",
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "recovery_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MfaSetupRequest": {
+        "type": "object",
+        "properties": {
+          "challenge_token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When Owner/Admin must enroll before an access token exists."
+          }
+        }
+      },
+      "MfaSetupResponse": {
+        "type": "object",
+        "required": [
+          "secret",
+          "otpauth_uri"
+        ],
+        "properties": {
+          "otpauth_uri": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          }
+        }
+      },
+      "MfaVerifyRequest": {
+        "type": "object",
+        "required": [
+          "challenge_token"
+        ],
+        "properties": {
+          "challenge_token": {
+            "type": "string"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "device_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recovery_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PasswordResetConfirm": {
+        "type": "object",
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "properties": {
+          "new_password": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "display_name",
+          "org_name"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "org_name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "org_id",
+          "email",
+          "verification_required"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "verification_required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResendVerificationRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionView"
+            }
+          }
+        }
+      },
+      "SessionView": {
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "created_at",
+          "last_seen_at",
+          "current"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "device_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "ip_address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_seen_at": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "user_agent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SsoConfigView": {
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "protocol",
+          "display_name",
+          "enabled",
+          "config"
+        ],
+        "properties": {
+          "config": {},
+          "display_name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          }
+        }
+      },
+      "SsoListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SsoConfigView"
+            }
+          }
+        }
+      },
+      "SwitchOrgRequest": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "session_id"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          }
+        }
+      },
+      "UpsertSsoRequest": {
+        "type": "object",
+        "required": [
+          "protocol",
+          "display_name",
+          "config"
+        ],
+        "properties": {
+          "config": {},
+          "display_name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "protocol": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
           }
         }
       }
@@ -112,6 +684,10 @@
     {
       "name": "hello",
       "description": "Phase 0 hello vertical slice"
+    },
+    {
+      "name": "auth",
+      "description": "Phase 1.1 identity & authentication"
     }
   ]
 }

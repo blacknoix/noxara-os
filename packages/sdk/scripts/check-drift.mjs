@@ -12,14 +12,26 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const committed = readFileSync(join(root, 'openapi.json'), 'utf8');
 const hash = createHash('sha256').update(committed).digest('hex');
 
-const expectedHelloKeys = ['id', 'org_id', 'message', 'created_by'];
 const doc = JSON.parse(committed);
+const expectedHelloKeys = ['id', 'org_id', 'message', 'created_by'];
 const keys = Object.keys(doc.components.schemas.Hello.properties);
 for (const k of expectedHelloKeys) {
   if (!keys.includes(k)) {
     console.error(`OpenAPI drift: Hello schema missing ${k}`);
     process.exit(1);
   }
+}
+
+for (const name of ['TokenResponse', 'LoginRequest', 'RegisterRequest', 'SwitchOrgRequest']) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing auth schema ${name}`);
+    process.exit(1);
+  }
+}
+
+if (!doc.paths['/api/v1/auth/login'] || !doc.paths['/api/v1/auth/register']) {
+  console.error('OpenAPI drift: missing auth paths');
+  process.exit(1);
 }
 
 if (!existsSync(join(root, 'src/generated.ts'))) {
@@ -34,6 +46,12 @@ for (const k of expectedHelloKeys) {
     process.exit(1);
   }
 }
+for (const name of ['TokenResponse', 'access_token', 'SwitchOrgRequest']) {
+  if (!gen.includes(name)) {
+    console.error(`generated.ts drift: missing ${name}`);
+    process.exit(1);
+  }
+}
 
 console.log(`openapi drift check ok (sha256 ${hash.slice(0, 12)}…)`);
 
@@ -44,17 +62,11 @@ if (liveUrl) {
     console.error(`failed to fetch live openapi: ${res.status}`);
     process.exit(1);
   }
-  const live = await res.text();
-  const liveNorm = JSON.stringify(JSON.parse(live), null, 2) + '\n';
-  const committedNorm = JSON.stringify(JSON.parse(committed), null, 2) + '\n';
-  // Compare schema components only for stability across utoipa formatting.
-  const liveSchemas = JSON.parse(live).components.schemas;
-  const committedSchemas = JSON.parse(committed).components.schemas;
+  const liveSchemas = JSON.parse(await res.text()).components.schemas;
+  const committedSchemas = doc.components.schemas;
   if (JSON.stringify(liveSchemas) !== JSON.stringify(committedSchemas)) {
     console.error('OpenAPI schema drift between live core and packages/sdk/openapi.json');
     process.exit(1);
   }
   console.log('live OpenAPI schemas match committed file');
-  void liveNorm;
-  void committedNorm;
 }
