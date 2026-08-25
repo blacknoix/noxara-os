@@ -13,20 +13,20 @@ CompanyOS (repo `noxara-os`) is an AI-native, multi-tenant Business Operating Sy
 7. **Everything is attributable.** Every mutation writes an audit entry naming the actor, including AI which always records the human it acts on behalf of.
 8. **AI proposes, humans commit (v1).** Every AI write is a previewed diff, tagged, cited, and reversible.
 
-## Spec placeholders
+## Specs
 
 | Doc | Status |
 |-----|--------|
 | [01-PRD](specs/01-PRD.md) | Placeholder — points at invariants |
 | [02-TRD](specs/02-TRD.md) | Placeholder |
-| [03-UIUX](specs/03-UIUX.md) | Placeholder |
+| [03-UIUX](specs/03-UIUX.md) | Active — Phase 1.3 shell & design system |
 | [04-APP-FLOW](specs/04-APP-FLOW.md) | Placeholder |
 | [05-SCHEMA](specs/05-SCHEMA.md) | Placeholder |
-| [06-IMPLEMENTATION-PLAN](specs/06-IMPLEMENTATION-PLAN.md) | Placeholder |
+| [06-IMPLEMENTATION-PLAN](specs/06-IMPLEMENTATION-PLAN.md) | Active — phase outline through 1.3 |
 
 ## ADRs
 
-Accepted ADRs [001–017](adrs/) document foundational decisions.
+Accepted ADRs [001–018](adrs/) document foundational decisions.
 
 ## Other
 
@@ -37,4 +37,5 @@ Accepted ADRs [001–017](adrs/) document foundational decisions.
 - [Auth threat model](threat-models/auth.md)
 - ADR [016](adrs/016-org-scoped-jwt-opaque-refresh.md) — org-scoped JWT + opaque refresh cookies
 - ADR [017](adrs/017-org-provisioning-durable-command.md) — durable OrgProvisioning (Temporal follow-up)
+- ADR [018](adrs/018-table-virtualisation.md) — Table virtualisation (`@tanstack/react-virtual`)
 - Runbook: [locked-out owner / restore last Owner](runbooks/locked-out-owner-recovery.md)

@@ -1,4 +1,4 @@
-//! CompanyOS gateway / BFF — Phase 1.1.
+//! CompanyOS gateway / BFF — Phase 1.3.
 //!
 //! Authenticates access JWTs (org-scoped), resolves tenant, runs a coarse authz
 //! pre-check, attaches request context headers, and proxies to core.
@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "1.1"
+                    "phase": "1.3"
                 }))
             }),
         )
@@ -91,6 +91,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/auth/{*rest}", any(proxy_auth))
         .route("/api/v1/openapi.json", any(proxy_openapi))
         .route("/api/v1/hello", any(proxy_hello))
+        .route("/api/v1/dashboard", any(proxy_dashboard))
+        .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
@@ -145,8 +147,8 @@ async fn refresh_jwks(state: &GatewayState) {
 fn coarse_authz(claims: &AccessClaims, path: &str) -> Result<(), &'static str> {
     let roles: Vec<Role> = claims.roles.iter().filter_map(|r| Role::parse(r)).collect();
     let principal = Principal::with_roles(roles);
-    // Coarse pre-check: hello requires workspace.dashboard.read.
-    if path.starts_with("/api/v1/hello")
+    // Coarse pre-check: hello + dashboard require workspace.dashboard.read.
+    if (path.starts_with("/api/v1/hello") || path.starts_with("/api/v1/dashboard"))
         && !authz::is_allowed(&principal, &perms::workspace_dashboard_read())
     {
         return Err("missing workspace.dashboard.read");
@@ -208,6 +210,13 @@ async fn authenticate(
     ))
 }
 
+fn with_query(req: &Request, path: &str) -> String {
+    match req.uri().query() {
+        Some(q) if !path.contains('?') => format!("{path}?{q}"),
+        _ => path.to_string(),
+    }
+}
+
 async fn proxy_to(
     state: &GatewayState,
     req: Request,
@@ -221,8 +230,14 @@ async fn proxy_to(
         .unwrap_or("unknown")
         .to_string();
 
+    // Authz path check uses path without query.
+    let auth_path = upstream_path
+        .split_once('?')
+        .map(|(p, _)| p)
+        .unwrap_or(upstream_path);
+
     let claims = if require_auth {
-        match authenticate(state, req.headers(), upstream_path, &request_id).await {
+        match authenticate(state, req.headers(), auth_path, &request_id).await {
             Ok(c) => c,
             Err(e) => return e.into_response(),
         }
@@ -253,7 +268,6 @@ async fn proxy_to(
     }
 
     let url = format!("{}{}", state.core_url.trim_end_matches('/'), upstream_path);
-    // Preserve query string if present in original URI path+query — caller passes path only.
     let mut outbound = state.client.request(method, &url);
     for (k, v) in headers.iter() {
         if k == axum::http::header::HOST || k == axum::http::header::CONTENT_LENGTH {
@@ -300,7 +314,19 @@ async fn proxy_to(
 }
 
 async fn proxy_hello(State(state): State<GatewayState>, req: Request) -> Response {
-    proxy_to(&state, req, "/api/v1/hello", true).await
+    let upstream = with_query(&req, "/api/v1/hello");
+    proxy_to(&state, req, &upstream, true).await
+}
+
+async fn proxy_dashboard(State(state): State<GatewayState>, req: Request) -> Response {
+    let upstream = with_query(&req, "/api/v1/dashboard");
+    proxy_to(&state, req, &upstream, true).await
+}
+
+async fn proxy_workspace(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, true).await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {
@@ -309,12 +335,7 @@ async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Respo
 
 async fn proxy_auth(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
-    let query = req
-        .uri()
-        .query()
-        .map(|q| format!("?{q}"))
-        .unwrap_or_default();
-    let upstream = format!("{path}{query}");
+    let upstream = with_query(&req, &path);
     // Some auth admin routes require auth — core enforces; gateway lets Bearer through.
     proxy_to(&state, req, &upstream, false).await
 }

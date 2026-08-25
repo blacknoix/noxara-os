@@ -1,6 +1,7 @@
-//! CompanyOS core library (auth + workspace + hello) — used by the binary and integration tests.
+//! CompanyOS core library (auth + workspace + dashboard + hello) — used by the binary and integration tests.
 
 pub mod auth;
+pub mod dashboard;
 pub mod hello;
 pub mod openapi;
 pub mod state;
@@ -61,6 +62,7 @@ pub fn build_router(state: AppState) -> Router {
         )
         .merge(auth::router())
         .merge(workspace::router())
+        .merge(dashboard::router())
         .merge(hello::router())
         .merge(openapi::router())
         .layer(TraceLayer::new_for_http())

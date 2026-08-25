@@ -3,14 +3,16 @@
 export function ContextPanel({ open }: { open: boolean }) {
   return (
     <aside
+      aria-label="Copilot"
       aria-hidden={!open}
       style={{
         borderLeft: open ? '1px solid var(--cos-color-border)' : 'none',
         background: 'var(--cos-color-bg-elevated)',
-        padding: open ? '1rem' : 0,
+        padding: open ? '1rem 1.1rem' : 0,
         overflow: 'hidden',
         opacity: open ? 1 : 0,
         transition: 'opacity 200ms ease',
+        minWidth: 0,
       }}
     >
       {open ? (
@@ -23,11 +25,10 @@ export function ContextPanel({ open }: { open: boolean }) {
               fontWeight: 550,
             }}
           >
-            Context
+            Copilot
           </h2>
           <p style={{ margin: 0, color: 'var(--cos-color-fg-muted)', fontSize: '0.88rem', lineHeight: 1.5 }}>
-            Collapsible context panel placeholder. Detail views and AI citations will land here in later
-            phases.
+            AI copilot arrives in phase 1.9. Citations and drafts will land here.
           </p>
         </>
       ) : null}

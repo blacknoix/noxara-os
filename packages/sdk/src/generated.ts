@@ -101,25 +101,25 @@ export type CreateOrgRequest = {
 };
 
 export type OrgResponse = {
-  branding: string;
+  branding: Record<string, unknown>;
   business_type: string;
   currency: string;
-  feature_flags: string;
+  feature_flags: Record<string, unknown>;
   fiscal_year_start_month: number;
   name: string;
-  numbering_series: string;
+  numbering_series: Record<string, unknown>;
   org_id: string;
   plan: string;
   timezone: string;
 };
 
 export type UpdateOrgSettingsRequest = {
-  branding?: string;
+  branding?: Record<string, unknown>;
   business_type?: string;
   currency?: string;
   fiscal_year_start_month?: string;
   name?: string;
-  numbering_series?: string;
+  numbering_series?: Record<string, unknown>;
   timezone?: string;
 };
 
@@ -235,4 +235,30 @@ export type MyCapabilitiesResponse = {
   org_id: string;
   policy_version: number;
   role: string;
+};
+
+export type DashboardResponse = {
+  /** RFC3339 timestamp when this snapshot was produced. */
+  as_of: string;
+  /** Requested period window (e.g. `30d`); accepted but does not invent metrics. */
+  period: string;
+  /** Derived from the caller's primary role. */
+  role_layout: string;
+  widgets: DashboardWidget[];
+};
+
+export type DashboardWidget = {
+  id: string;
+  /** checklist | stat | module_empty | feed */
+  kind: string;
+  /** Widget-specific JSON body (checklist items, empty lists, module stubs). */
+  payload: Record<string, unknown>;
+  range_label?: string;
+  /** module_not_enabled | coming_in_later_phase | no_data */
+  reason_code?: string;
+  /** Always false for honest empties in Phase 1.3 (pattern present for later). */
+  stale: boolean;
+  /** ready | empty | unavailable | loading */
+  status: string;
+  title: string;
 };

@@ -40,6 +40,20 @@ Local mail: links printed to logs and `.tmp/mail/`.
 
 DoD tests: `services/core/tests/workspace_phase12.rs` and `auth_phase11.rs`.
 
+## Design system & shell (Phase 1.3)
+
+Package: `packages/design-system` (`@companyos/design-system`).
+
+- **Upgrade in place** — do not fork a second UI kit or parallel token set.
+- Tokens: light / dark / high-contrast (`data-theme`), plus `tokens.css` and shared `styles.css` (focus rings, skip-link, reduced motion).
+- One `Table` + `FilterBar` grammar everywhere; saved views serialize to URL (`q`, `f`, `view`). See ADR [018](docs/adrs/018-table-virtualisation.md).
+- Component gallery (Storybook-equivalent): `/dev/components` in the web app.
+- App shell: TopBar 56px, grouped permission-aware Sidebar (collapsed 64px persisted), Context panel 380px (copilot placeholder labelled 1.9), Command bar ⌘K.
+- Dashboard: `GET /api/v1/dashboard` — widget descriptors + honest empties; gateway proxies workspace + dashboard.
+- A11y: `pnpm test:a11y` (axe on shell / dashboard / members / login structures); also `pnpm test:unit` for table virtualisation smoke.
+
+When adding a primitive: export from `packages/design-system/src/index.ts`, document props/keyboard/a11y in `packages/design-system/README.md`, and show it on `/dev/components` when practical.
+
 ## Definition of done (9 gates)
 
 Every PR must clear the checklist in `.github/PULL_REQUEST_TEMPLATE.md`.
@@ -61,6 +75,8 @@ cargo test --workspace
 pnpm typecheck
 pnpm lint
 pnpm check:openapi-drift
+pnpm test:a11y
+pnpm test:unit
 ```
 
 ## Invariants

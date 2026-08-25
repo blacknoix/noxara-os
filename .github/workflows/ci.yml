@@ -74,3 +74,5 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm check:openapi-drift
+      - run: pnpm test:a11y
+      - run: pnpm test:unit

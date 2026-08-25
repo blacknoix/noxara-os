@@ -24,6 +24,10 @@ function tsType(v) {
     if (v.additionalProperties) return 'Record<string, unknown>';
     return 'Record<string, unknown>';
   }
+  // utoipa emits bare `{}` for some serde_json::Value fields
+  if (typeof v === 'object' && !v.type && !v.$ref && !v.anyOf && !v.oneOf) {
+    return 'Record<string, unknown>';
+  }
   return 'string';
 }
 
@@ -76,6 +80,8 @@ const emit = [
   'DepartmentView',
   'DepartmentListResponse',
   'MyCapabilitiesResponse',
+  'DashboardResponse',
+  'DashboardWidget',
 ];
 
 const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Run pnpm generate:sdk */\n`;

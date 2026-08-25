@@ -1,0 +1,47 @@
+/* CompanyOS shared base styles — import after tokens.css */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cos-color-focus-ring);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.cos-skip-link {
+  position: absolute;
+  left: var(--cos-space-4);
+  top: -100px;
+  z-index: calc(var(--cos-z-command) + 1);
+  padding: var(--cos-space-2) var(--cos-space-4);
+  background: var(--cos-color-accent);
+  color: var(--cos-color-accent-fg);
+  font-family: var(--cos-font-sans);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: var(--cos-radius-sm);
+  text-decoration: none;
+  transition: top var(--cos-duration-fast) var(--cos-ease-standard);
+}
+
+.cos-skip-link:focus {
+  top: var(--cos-space-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -378,6 +378,12 @@ export default function SettingsPage() {
 
       {tab === 'members' ? (
         <section style={{ display: 'grid', gap: '1rem' }}>
+          <p style={muted}>
+            Prefer the full members experience?{' '}
+            <a href="/members" style={{ color: 'var(--cos-color-accent)' }}>
+              Open members with filters
+            </a>
+          </p>
           {can('workspace.member.invite') ? (
             <form onSubmit={(e) => void invite(e)} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <label style={{ display: "grid", gap: "0.35rem", fontSize: "0.85rem", color: "var(--cos-color-fg-muted)" }}>

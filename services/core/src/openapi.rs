@@ -1,4 +1,4 @@
-//! OpenAPI 3.1 document for Hello + Auth + Workspace (contract chain source).
+//! OpenAPI 3.1 document for Hello + Auth + Workspace + Dashboard (contract chain source).
 
 use axum::routing::get;
 use axum::{Json, Router};
@@ -14,6 +14,7 @@ use crate::auth::handlers::types::{
 };
 use crate::auth::sessions::SessionView;
 use crate::auth::sso::{SsoConfigView, UpsertSsoRequest};
+use crate::dashboard::{DashboardResponse, DashboardWidget};
 use crate::hello::{CreateHelloRequest, Hello, HelloListResponse};
 use crate::state::AppState;
 use crate::workspace::types::{
@@ -30,6 +31,7 @@ use crate::workspace::types::{
     paths(
         crate::hello::list_hello,
         crate::hello::create_hello,
+        crate::dashboard::get_dashboard,
         crate::auth::handlers::register,
         crate::auth::handlers::login,
         crate::workspace::handlers::create_organization,
@@ -57,6 +59,8 @@ use crate::workspace::types::{
         Hello,
         CreateHelloRequest,
         HelloListResponse,
+        DashboardResponse,
+        DashboardWidget,
         RegisterRequest,
         RegisterResponse,
         LoginRequest,
@@ -113,11 +117,12 @@ use crate::workspace::types::{
         (name = "hello", description = "Phase 0 hello vertical slice"),
         (name = "auth", description = "Phase 1.1 identity & authentication"),
         (name = "workspace", description = "Phase 1.2 organizations, members, roles, teams"),
+        (name = "dashboard", description = "Phase 1.3 dashboard BFF widget descriptors"),
     ),
     info(
         title = "CompanyOS Core API",
-        version = "0.3.0",
-        description = "Phase 1.2 — workspace (orgs, memberships, roles, permissions) + auth + hello."
+        version = "0.4.0",
+        description = "Phase 1.3 — dashboard BFF + workspace + auth + hello."
     )
 )]
 pub struct ApiDoc;

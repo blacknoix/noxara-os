@@ -2,12 +2,12 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CompanyOS Core API",
-    "description": "Phase 1.2 — workspace (orgs, memberships, roles, permissions) + auth + hello.",
+    "description": "Phase 1.3 — dashboard BFF + workspace + auth + hello.",
     "license": {
       "name": "Proprietary",
       "identifier": "Proprietary"
     },
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "paths": {
     "/api/v1/auth/login": {
@@ -57,6 +57,44 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "GET /api/v1/dashboard — first-paint widget descriptors for the shell home.",
+        "operationId": "get_dashboard",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "path",
+            "description": "Period window hint (default `30d`). Metrics are not invented from this.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard widget snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
           }
         }
       }
@@ -740,6 +778,83 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "required": [
+          "as_of",
+          "period",
+          "role_layout",
+          "widgets"
+        ],
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "description": "RFC3339 timestamp when this snapshot was produced."
+          },
+          "period": {
+            "type": "string",
+            "description": "Requested period window (e.g. `30d`); accepted but does not invent metrics."
+          },
+          "role_layout": {
+            "type": "string",
+            "description": "Derived from the caller's primary role."
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardWidget"
+            }
+          }
+        }
+      },
+      "DashboardWidget": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "status",
+          "stale",
+          "payload"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "description": "checklist | stat | module_empty | feed"
+          },
+          "payload": {
+            "type": "object",
+            "description": "Widget-specific JSON body (checklist items, empty lists, module stubs)."
+          },
+          "range_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason_code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "module_not_enabled | coming_in_later_phase | no_data"
+          },
+          "stale": {
+            "type": "boolean",
+            "description": "Always false for honest empties in Phase 1.3 (pattern present for later)."
+          },
+          "status": {
+            "type": "string",
+            "description": "ready | empty | unavailable | loading"
+          },
+          "title": {
+            "type": "string"
           }
         }
       },
@@ -1782,6 +1897,10 @@
     {
       "name": "workspace",
       "description": "Phase 1.2 organizations, members, roles, teams"
+    },
+    {
+      "name": "dashboard",
+      "description": "Phase 1.3 dashboard BFF widget descriptors"
     }
   ]
 }

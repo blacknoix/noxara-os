@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react';
+
 export type EmptyStateProps = {
   title: string;
   description?: string;
+  action?: ReactNode;
 };
 
-export function EmptyState({ title, description }: EmptyStateProps) {
+export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
     <div
       style={{
@@ -27,6 +30,7 @@ export function EmptyState({ title, description }: EmptyStateProps) {
       {description ? (
         <p style={{ margin: '0.5rem auto 0', maxWidth: 420, lineHeight: 1.5 }}>{description}</p>
       ) : null}
+      {action ? <div style={{ marginTop: 'var(--cos-space-4)' }}>{action}</div> : null}
     </div>
   );
 }
