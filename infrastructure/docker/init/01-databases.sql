@@ -1,6 +1,8 @@
--- POSTGRES_USER is a superuser by default; RLS is bypassed for superusers even with
--- FORCE ROW LEVEL SECURITY. Demote for local app/test connections.
-ALTER ROLE companyos WITH NOSUPERUSER NOBYPASSRLS;
+-- Bootstrap user (POSTGRES_USER) must remain SUPERUSER.
+-- App/tests connect as non-superuser `companyos` so PostgreSQL RLS is enforced
+-- (superusers bypass RLS even with FORCE ROW LEVEL SECURITY).
 
-CREATE DATABASE companyos_test;
-GRANT ALL PRIVILEGES ON DATABASE companyos_test TO companyos;
+CREATE ROLE companyos LOGIN PASSWORD 'companyos' NOSUPERUSER NOBYPASSRLS CREATEDB;
+
+CREATE DATABASE companyos OWNER companyos;
+CREATE DATABASE companyos_test OWNER companyos;
