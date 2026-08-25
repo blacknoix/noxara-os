@@ -108,12 +108,11 @@ async fn hello_write_outbox_and_cross_tenant_isolation() {
     // Org B cannot read org A's hello.
     let mut tx = pool.begin().await.unwrap();
     set_session_org_id(&mut tx, org_b).await.unwrap();
-    let found: Option<(uuid::Uuid,)> =
-        sqlx::query_as("SELECT id FROM hello_message WHERE id = $1")
-            .bind(hello_id)
-            .fetch_optional(&mut *tx)
-            .await
-            .unwrap();
+    let found: Option<(uuid::Uuid,)> = sqlx::query_as("SELECT id FROM hello_message WHERE id = $1")
+        .bind(hello_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .unwrap();
     assert!(found.is_none(), "org B must not read org A hello");
 
     let rows = sqlx::query("SELECT id, org_id FROM hello_message")
