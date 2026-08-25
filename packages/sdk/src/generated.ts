@@ -322,6 +322,19 @@ export type QuoteDto = {
   version_number: number;
 };
 
+export type QuoteLineDto = {
+  description: string;
+  discount_minor: number;
+  id: string;
+  line_total_minor: number;
+  position: number;
+  product_id?: string;
+  quantity: number;
+  tax_minor: number;
+  tax_rate_bps: number;
+  unit_price_minor: number;
+};
+
 export type LeadDto = {
   company_name?: string;
   converted_customer_id?: string;
@@ -343,6 +356,21 @@ export type LeadDto = {
 export type BoardResponse = {
   pipeline: PipelineDto;
   stages: BoardStage[];
+};
+
+export type BoardStage = {
+  deals: DealDto[];
+  stage: StageDto;
+};
+
+export type StageDto = {
+  id: string;
+  is_lost: boolean;
+  is_won: boolean;
+  name: string;
+  pipeline_id: string;
+  position: number;
+  probability: number;
 };
 
 export type ReportSummaryResponse = {
@@ -390,6 +418,15 @@ export type CreateQuoteRequest = {
   owner_user_id?: string;
   quote_number?: string;
   valid_until?: string;
+};
+
+export type CreateQuoteLineRequest = {
+  description?: string;
+  discount_minor?: number;
+  product_id?: string;
+  quantity: number;
+  tax_rate_bps?: number;
+  unit_price_minor: number;
 };
 
 export type InvoiceActionResponse = {
