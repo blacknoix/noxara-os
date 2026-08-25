@@ -249,16 +249,174 @@ export type DashboardResponse = {
 
 export type DashboardWidget = {
   id: string;
-  /** checklist | stat | module_empty | feed */
+  /** checklist | stat | module_empty | feed | pipeline */
   kind: string;
   /** Widget-specific JSON body (checklist items, empty lists, module stubs). */
   payload: Record<string, unknown>;
   range_label?: string;
-  /** module_not_enabled | coming_in_later_phase | no_data */
+  /** module_not_enabled | coming_in_later_phase | no_data | crm_unreachable */
   reason_code?: string;
-  /** Always false for honest empties in Phase 1.3 (pattern present for later). */
+  /** Always false for honest empties in Phase 1.4 (pattern present for later). */
   stale: boolean;
   /** ready | empty | unavailable | loading */
   status: string;
   title: string;
+};
+
+export type CustomerDto = {
+  billing_address?: string;
+  created_at: string;
+  email?: string;
+  id: string;
+  name: string;
+  notes?: string;
+  owner_user_id?: string;
+  phone?: string;
+  updated_at: string;
+  version: number;
+  website?: string;
+};
+
+export type DealDto = {
+  amount_minor: number;
+  created_at: string;
+  currency: string;
+  customer_id?: string;
+  expected_close_date?: string;
+  id: string;
+  lead_id?: string;
+  lost_at?: string;
+  lost_reason?: string;
+  name: string;
+  owner_user_id?: string;
+  pipeline_id: string;
+  probability?: string;
+  stage_id: string;
+  status: string;
+  updated_at: string;
+  version: number;
+  won_at?: string;
+  won_reason?: string;
+};
+
+export type QuoteDto = {
+  accepted_at?: string;
+  created_at: string;
+  currency: string;
+  customer_id: string;
+  deal_id?: string;
+  discount_minor: number;
+  id: string;
+  lines: QuoteLineDto[];
+  notes?: string;
+  owner_user_id?: string;
+  previous_quote_id?: string;
+  quote_number: string;
+  status: string;
+  subtotal_minor: number;
+  tax_minor: number;
+  total_minor: number;
+  updated_at: string;
+  valid_until?: string;
+  version: number;
+  version_number: number;
+};
+
+export type LeadDto = {
+  company_name?: string;
+  converted_customer_id?: string;
+  converted_deal_id?: string;
+  created_at: string;
+  email?: string;
+  id: string;
+  name: string;
+  notes?: string;
+  owner_user_id?: string;
+  phone?: string;
+  score: number;
+  source?: string;
+  status: string;
+  updated_at: string;
+  version: number;
+};
+
+export type BoardResponse = {
+  pipeline: PipelineDto;
+  stages: BoardStage[];
+};
+
+export type ReportSummaryResponse = {
+  activity_volume: ActivityVolumeItem[];
+  pipeline_by_stage: StageSummary[];
+  weighted_forecast: WeightedForecast;
+  win_rate: WinRateSummary;
+};
+
+export type PipelineDto = {
+  id: string;
+  is_default: boolean;
+  name: string;
+};
+
+export type CreateDealRequest = {
+  amount_minor?: number;
+  currency?: string;
+  customer_id?: string;
+  expected_close_date?: string;
+  lead_id?: string;
+  name: string;
+  owner_user_id?: string;
+  pipeline_id?: string;
+  probability?: string;
+  stage_id?: string;
+};
+
+export type CreateCustomerRequest = {
+  billing_address?: string;
+  email?: string;
+  name: string;
+  notes?: string;
+  owner_user_id?: string;
+  phone?: string;
+  website?: string;
+};
+
+export type CreateQuoteRequest = {
+  currency?: string;
+  customer_id: string;
+  deal_id?: string;
+  lines?: CreateQuoteLineRequest[];
+  notes?: string;
+  owner_user_id?: string;
+  quote_number?: string;
+  valid_until?: string;
+};
+
+export type InvoiceActionResponse = {
+  available: boolean;
+  reason: string;
+};
+
+export type StageSummary = {
+  currency: string;
+  open_amount_minor: number;
+  open_deal_count: number;
+  stage_id: string;
+  stage_name: string;
+};
+
+export type WinRateSummary = {
+  lost_count: number;
+  win_rate_pct: number;
+  won_count: number;
+};
+
+export type WeightedForecast = {
+  amount_minor: number;
+  currency: string;
+};
+
+export type ActivityVolumeItem = {
+  count: number;
+  kind: string;
 };

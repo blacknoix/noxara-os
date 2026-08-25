@@ -82,6 +82,21 @@ const emit = [
   'MyCapabilitiesResponse',
   'DashboardResponse',
   'DashboardWidget',
+  'CustomerDto',
+  'DealDto',
+  'QuoteDto',
+  'LeadDto',
+  'BoardResponse',
+  'ReportSummaryResponse',
+  'PipelineDto',
+  'CreateDealRequest',
+  'CreateCustomerRequest',
+  'CreateQuoteRequest',
+  'InvoiceActionResponse',
+  'StageSummary',
+  'WinRateSummary',
+  'WeightedForecast',
+  'ActivityVolumeItem',
 ];
 
 const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Run pnpm generate:sdk */\n`;

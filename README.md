@@ -11,9 +11,10 @@ Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@c
 - **Phase 0** foundations (merged): hello slice, RLS, outbox, authz PDP, gateway stub.
 - **Phase 1.1** (merged): Identity & Authentication — org-scoped JWTs, refresh cookies, MFA, OAuth, sessions, switch-org.
 - **Phase 1.2** (merged): Workspace — organizations, memberships, roles, permissions, teams, invitations, OrgProvisioning.
-- **Phase 1.3** (this line of work): Application shell, design system, dashboard BFF, command bar, members saved views, axe CI.
+- **Phase 1.3** (merged): Application shell, design system, dashboard BFF, command bar, members saved views, axe CI.
+- **Phase 1.4** (this line of work): CRM / Sales service (`companyos-crm`), gateway proxy for `/api/v1/sales/*`, dashboard pipeline widget, merged OpenAPI.
 
-Not in scope yet: CRM boards, invoices, real AI copilot (1.9), full SSO IdP, Flutter/Tauri, live AWS.
+Not in scope yet: invoices / finance metrics, real AI copilot (1.9), full SSO IdP, Flutter/Tauri, live AWS.
 
 ## Non-negotiable invariants
 
@@ -23,8 +24,9 @@ See [docs/00-INDEX.md](docs/00-INDEX.md).
 
 ```text
 apps/web/                 Next.js App Router (auth pages + shell)
-services/gateway/         Axum BFF — JWT authN, tenant headers, coarse authz
-services/core/            Auth + org/user/audit home + hello slice
+services/gateway/         Axum BFF — JWT authN, tenant headers, coarse authz, core + CRM proxy
+services/core/            Auth + org/user/audit home + hello slice + dashboard BFF
+services/business/crm-service/  CRM / Sales API (`/api/v1/sales/...`)
 crates/                   ids, money, errors, telemetry, tenancy, events, outbox, authz, auth-token, testkit
 packages/design-system/   Tokens + Table/FilterBar/shell primitives (gallery: /dev/components)
 packages/sdk/             OpenAPI + TypeScript SDK

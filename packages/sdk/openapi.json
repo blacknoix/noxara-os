@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CompanyOS Core API",
-    "description": "Phase 1.3 — dashboard BFF + workspace + auth + hello.",
+    "description": "Phase 1.3 \u2014 dashboard BFF + workspace + auth + hello.",
     "license": {
       "name": "Proprietary",
       "identifier": "Proprietary"
@@ -66,7 +66,7 @@
         "tags": [
           "dashboard"
         ],
-        "summary": "GET /api/v1/dashboard — first-paint widget descriptors for the shell home.",
+        "summary": "GET /api/v1/dashboard \u2014 first-paint widget descriptors for the shell home.",
         "operationId": "get_dashboard",
         "parameters": [
           {
@@ -104,7 +104,7 @@
         "tags": [
           "hello"
         ],
-        "summary": "GET /api/v1/hello — list hello messages for the caller's org only.",
+        "summary": "GET /api/v1/hello \u2014 list hello messages for the caller's org only.",
         "operationId": "list_hello",
         "responses": {
           "200": {
@@ -129,7 +129,7 @@
         "tags": [
           "hello"
         ],
-        "summary": "POST /api/v1/hello — write hello row + outbox + audit in one transaction.",
+        "summary": "POST /api/v1/hello \u2014 write hello row + outbox + audit in one transaction.",
         "operationId": "create_hello",
         "requestBody": {
           "content": {
@@ -640,6 +640,1076 @@
           }
         }
       }
+    },
+    "/api/v1/sales/activities": {
+      "get": {
+        "tags": [
+          "sales-activities"
+        ],
+        "summary": "GET /api/v1/sales/activities?customer_id=&deal_id=&lead_id=",
+        "operationId": "list_activities",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-activities"
+        ],
+        "summary": "POST /api/v1/sales/activities",
+        "operationId": "create_activity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/contacts/{id}": {
+      "patch": {
+        "tags": [
+          "sales-contacts"
+        ],
+        "summary": "PATCH /api/v1/sales/contacts/{id}",
+        "operationId": "update_contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/sales/customers": {
+      "get": {
+        "tags": [
+          "sales-customers"
+        ],
+        "summary": "GET /api/v1/sales/customers",
+        "operationId": "list_customers",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search name/email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-customers"
+        ],
+        "summary": "POST /api/v1/sales/customers",
+        "operationId": "create_customer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCustomerResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Strict duplicate check failed"
+          }
+        }
+      }
+    },
+    "/api/v1/sales/customers/{id}": {
+      "get": {
+        "tags": [
+          "sales-customers"
+        ],
+        "summary": "GET /api/v1/sales/customers/{id}",
+        "operationId": "get_customer",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sales-customers"
+        ],
+        "summary": "DELETE /api/v1/sales/customers/{id} \u2014 soft delete.",
+        "operationId": "delete_customer",
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sales-customers"
+        ],
+        "summary": "PATCH /api/v1/sales/customers/{id}",
+        "operationId": "update_customer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "version mismatch"
+          }
+        }
+      }
+    },
+    "/api/v1/sales/customers/{id}/contacts": {
+      "get": {
+        "tags": [
+          "sales-contacts"
+        ],
+        "summary": "GET /api/v1/sales/customers/{id}/contacts",
+        "operationId": "list_contacts",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-contacts"
+        ],
+        "summary": "POST /api/v1/sales/customers/{id}/contacts",
+        "operationId": "create_contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/deals": {
+      "get": {
+        "tags": [
+          "sales-deals"
+        ],
+        "summary": "GET /api/v1/sales/deals",
+        "operationId": "list_deals",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-deals"
+        ],
+        "summary": "POST /api/v1/sales/deals",
+        "operationId": "create_deal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDealRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/deals/{id}": {
+      "get": {
+        "tags": [
+          "sales-deals"
+        ],
+        "summary": "GET /api/v1/sales/deals/{id}",
+        "operationId": "get_deal",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sales-deals"
+        ],
+        "summary": "PATCH /api/v1/sales/deals/{id} \u2014 field + stage updates; writes stage history on stage change.",
+        "operationId": "update_deal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDealRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/sales/deals/{id}/lose": {
+      "post": {
+        "tags": [
+          "sales-deals"
+        ],
+        "summary": "POST /api/v1/sales/deals/{id}/lose",
+        "operationId": "lose_deal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoseDealRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/deals/{id}/win": {
+      "post": {
+        "tags": [
+          "sales-deals"
+        ],
+        "summary": "POST /api/v1/sales/deals/{id}/win",
+        "description": "**Idempotent**: if the deal is already `won`, returns the current deal\nwithout emitting a second `deal.won.v1` event.",
+        "operationId": "win_deal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WinDealRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DealDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/imports/customers/confirm": {
+      "post": {
+        "tags": [
+          "sales-imports"
+        ],
+        "summary": "POST /api/v1/sales/imports/customers/confirm \u2014 single all-or-nothing\ntransaction (see module docs for the 10k-row scaling note).",
+        "operationId": "confirm_customers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConfirmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/imports/customers/preview": {
+      "post": {
+        "tags": [
+          "sales-imports"
+        ],
+        "summary": "POST /api/v1/sales/imports/customers/preview \u2014 no writes.",
+        "operationId": "preview_customers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/leads": {
+      "get": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "GET /api/v1/sales/leads",
+        "operationId": "list_leads",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "POST /api/v1/sales/leads",
+        "operationId": "create_lead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/leads/{id}": {
+      "get": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "GET /api/v1/sales/leads/{id}",
+        "operationId": "get_lead",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "PATCH /api/v1/sales/leads/{id}",
+        "operationId": "update_lead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/sales/leads/{id}/convert": {
+      "post": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "POST /api/v1/sales/leads/{id}/convert",
+        "description": "One transaction: creates the customer + primary contact + deal, marks the\nlead converted, and emits `lead.converted.v1` + `customer.created.v1`.\nDuplicate detection runs before conversion \u2014 callers must pass\n`force: true` to proceed despite matches. Idempotent on `Idempotency-Key`.",
+        "operationId": "convert_lead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertLeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertLeadResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "duplicates found or already converted"
+          }
+        }
+      }
+    },
+    "/api/v1/sales/leads/{id}/disqualify": {
+      "post": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "POST /api/v1/sales/leads/{id}/disqualify",
+        "operationId": "disqualify_lead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisqualifyLeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/leads/{id}/qualify": {
+      "post": {
+        "tags": [
+          "sales-leads"
+        ],
+        "summary": "POST /api/v1/sales/leads/{id}/qualify",
+        "operationId": "qualify_lead",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/pipelines": {
+      "get": {
+        "tags": [
+          "sales-pipelines"
+        ],
+        "summary": "GET /api/v1/sales/pipelines",
+        "operationId": "list_pipelines",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/pipelines/default/board": {
+      "get": {
+        "tags": [
+          "sales-pipelines"
+        ],
+        "summary": "GET /api/v1/sales/pipelines/default/board \u2014 kanban view: stages + open deals.",
+        "description": "Also mounted at `GET /api/v1/sales/deals/board` (same handler).",
+        "operationId": "default_board",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/products": {
+      "get": {
+        "tags": [
+          "sales-products"
+        ],
+        "summary": "GET /api/v1/sales/products",
+        "operationId": "list_products",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-products"
+        ],
+        "summary": "POST /api/v1/sales/products",
+        "operationId": "create_product",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/products/{id}": {
+      "patch": {
+        "tags": [
+          "sales-products"
+        ],
+        "summary": "PATCH /api/v1/sales/products/{id}",
+        "operationId": "update_product",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/sales/quotes": {
+      "get": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "GET /api/v1/sales/quotes",
+        "operationId": "list_quotes",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "POST /api/v1/sales/quotes",
+        "operationId": "create_quote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/quotes/{id}": {
+      "get": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "GET /api/v1/sales/quotes/{id}",
+        "operationId": "get_quote",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "PATCH /api/v1/sales/quotes/{id}",
+        "description": "If the current quote is `accepted`, this creates a **new** draft version\n(`version_number + 1`, `previous_quote_id` set to the accepted quote) and\nleaves the accepted row untouched. Otherwise the draft is updated in place.",
+        "operationId": "update_quote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/sales/quotes/{id}/accept": {
+      "post": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "POST /api/v1/sales/quotes/{id}/accept",
+        "operationId": "accept_quote",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/quotes/{id}/invoice-action": {
+      "get": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "GET /api/v1/sales/quotes/{id}/invoice-action",
+        "description": "Always disabled in this phase \u2014 invoicing/finance integration ships later.",
+        "operationId": "invoice_action",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceActionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/quotes/{id}/reject": {
+      "post": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "POST /api/v1/sales/quotes/{id}/reject",
+        "operationId": "reject_quote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/quotes/{id}/send": {
+      "post": {
+        "tags": [
+          "sales-quotes"
+        ],
+        "summary": "POST /api/v1/sales/quotes/{id}/send",
+        "operationId": "send_quote",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/reports/summary": {
+      "get": {
+        "tags": [
+          "sales-reports"
+        ],
+        "summary": "GET /api/v1/sales/reports/summary",
+        "operationId": "report_summary",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -826,7 +1896,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "checklist | stat | module_empty | feed"
+            "description": "checklist | stat | module_empty | feed | pipeline"
           },
           "payload": {
             "type": "object",
@@ -843,11 +1913,11 @@
               "string",
               "null"
             ],
-            "description": "module_not_enabled | coming_in_later_phase | no_data"
+            "description": "module_not_enabled | coming_in_later_phase | no_data | crm_unreachable"
           },
           "stale": {
             "type": "boolean",
-            "description": "Always false for honest empties in Phase 1.3 (pattern present for later)."
+            "description": "Always false for honest empties in Phase 1.4 (pattern present for later)."
           },
           "status": {
             "type": "string",
@@ -907,14 +1977,14 @@
           },
           "id": {
             "type": "string",
-            "description": "Prefixed public id (`hel_…`)."
+            "description": "Prefixed public id (`hel_\u2026`)."
           },
           "message": {
             "type": "string"
           },
           "org_id": {
             "type": "string",
-            "description": "Prefixed org id (`org_…`)."
+            "description": "Prefixed org id (`org_\u2026`)."
           }
         }
       },
@@ -944,7 +2014,7 @@
           },
           "role": {
             "type": "string",
-            "description": "Public role id (`rol_…`) or system key (`owner`, `admin`, …)."
+            "description": "Public role id (`rol_\u2026`) or system key (`owner`, `admin`, \u2026)."
           }
         }
       },
@@ -1882,6 +2952,1942 @@
             "type": "string"
           }
         }
+      },
+      "ActivityDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "occurred_at",
+          "created_at"
+        ],
+        "properties": {
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "lead_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurred_at": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ActivityListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityDto"
+            }
+          }
+        }
+      },
+      "ActivityVolumeItem": {
+        "type": "object",
+        "required": [
+          "kind",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      "BoardResponse": {
+        "type": "object",
+        "required": [
+          "pipeline",
+          "stages"
+        ],
+        "properties": {
+          "pipeline": {
+            "$ref": "#/components/schemas/PipelineDto"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardStage"
+            }
+          }
+        }
+      },
+      "BoardStage": {
+        "type": "object",
+        "required": [
+          "stage",
+          "deals"
+        ],
+        "properties": {
+          "deals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DealDto"
+            }
+          },
+          "stage": {
+            "$ref": "#/components/schemas/StageDto"
+          }
+        }
+      },
+      "ContactDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "first_name",
+          "last_name",
+          "is_primary",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_primary": {
+            "type": "boolean"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "ContactListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactDto"
+            }
+          }
+        }
+      },
+      "ConvertLeadRequest": {
+        "type": "object",
+        "properties": {
+          "amount_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "force": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConvertLeadResponse": {
+        "type": "object",
+        "required": [
+          "lead",
+          "customer",
+          "deal"
+        ],
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/CustomerDto"
+          },
+          "deal": {
+            "$ref": "#/components/schemas/DealDto"
+          },
+          "lead": {
+            "$ref": "#/components/schemas/LeadDto"
+          }
+        }
+      },
+      "CreateActivityRequest": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "lead_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurred_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateContactRequest": {
+        "type": "object",
+        "required": [
+          "first_name",
+          "last_name"
+        ],
+        "properties": {
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "is_primary": {
+            "type": "boolean"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateCustomerRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "billing_address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateCustomerResponse": {
+        "type": "object",
+        "required": [
+          "customer"
+        ],
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/CustomerDto"
+          },
+          "duplicate_warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DuplicateMatch"
+            }
+          }
+        }
+      },
+      "CreateDealRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_close_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lead_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pipeline_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "probability": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "stage_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateLeadRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "company_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_group": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_price_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreateQuoteLineRequest": {
+        "type": "object",
+        "required": [
+          "quantity",
+          "unit_price_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "product_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CreateQuoteRequest": {
+        "type": "object",
+        "required": [
+          "customer_id"
+        ],
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateQuoteLineRequest"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quote_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_until": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CustomerDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "billing_address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CustomerListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DealDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "pipeline_id",
+          "stage_id",
+          "name",
+          "amount_minor",
+          "currency",
+          "status",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_close_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "lead_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lost_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lost_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pipeline_id": {
+            "type": "string"
+          },
+          "probability": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "stage_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "won_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "won_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DealListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DealDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DisqualifyLeadRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DuplicateCheckResponse": {
+        "type": "object",
+        "required": [
+          "matches"
+        ],
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DuplicateMatch"
+            }
+          }
+        }
+      },
+      "DuplicateMatch": {
+        "type": "object",
+        "required": [
+          "name",
+          "score",
+          "reason"
+        ],
+        "properties": {
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lead_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ImportConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "csv": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Raw CSV text \u2014 alternative to `rows`."
+          },
+          "mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportRowInput"
+            },
+            "description": "Inline rows \u2014 alternative to `csv`."
+          },
+          "skip_exact_duplicates": {
+            "type": "boolean",
+            "description": "Skip rows that look like exact-email duplicates of existing customers."
+          }
+        }
+      },
+      "ImportConfirmResponse": {
+        "type": "object",
+        "required": [
+          "job_id",
+          "imported",
+          "skipped"
+        ],
+        "properties": {
+          "imported": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ImportPreviewRequest": {
+        "type": "object",
+        "required": [
+          "csv"
+        ],
+        "properties": {
+          "csv": {
+            "type": "string",
+            "description": "Raw CSV text (header row + data rows)."
+          },
+          "mapping": {
+            "type": "object",
+            "description": "Optional header alias overrides, e.g. `{\"Company Name\": \"company\"}`.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ImportPreviewResponse": {
+        "type": "object",
+        "required": [
+          "rows",
+          "exact_duplicate_count",
+          "near_duplicate_count"
+        ],
+        "properties": {
+          "exact_duplicate_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "near_duplicate_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowPreview"
+            }
+          }
+        }
+      },
+      "ImportRowInput": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ImportRowPreview": {
+        "type": "object",
+        "required": [
+          "row_number"
+        ],
+        "properties": {
+          "company": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duplicates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DuplicateMatch"
+            }
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "row_number": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InvoiceActionResponse": {
+        "type": "object",
+        "required": [
+          "available",
+          "reason"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "LeadDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "score",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "company_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "converted_customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "converted_deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LeadListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeadDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "LoseDealRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PipelineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_default"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "PipelineListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineDto"
+            }
+          }
+        }
+      },
+      "ProductDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_group": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_price_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ProductListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductDto"
+            }
+          }
+        }
+      },
+      "QuoteDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "quote_number",
+          "status",
+          "version_number",
+          "currency",
+          "subtotal_minor",
+          "discount_minor",
+          "tax_minor",
+          "total_minor",
+          "created_at",
+          "updated_at",
+          "version",
+          "lines"
+        ],
+        "properties": {
+          "accepted_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous_quote_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quote_number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "valid_until": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version_number": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "QuoteLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "description",
+          "quantity",
+          "unit_price_minor",
+          "discount_minor",
+          "tax_rate_bps",
+          "tax_minor",
+          "line_total_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "line_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "product_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "QuoteListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RejectQuoteRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ReportSummaryResponse": {
+        "type": "object",
+        "required": [
+          "pipeline_by_stage",
+          "win_rate",
+          "activity_volume",
+          "weighted_forecast"
+        ],
+        "properties": {
+          "activity_volume": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityVolumeItem"
+            }
+          },
+          "pipeline_by_stage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageSummary"
+            }
+          },
+          "weighted_forecast": {
+            "$ref": "#/components/schemas/WeightedForecast"
+          },
+          "win_rate": {
+            "$ref": "#/components/schemas/WinRateSummary"
+          }
+        }
+      },
+      "StageDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "pipeline_id",
+          "name",
+          "position",
+          "probability",
+          "is_won",
+          "is_lost"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "is_lost": {
+            "type": "boolean"
+          },
+          "is_won": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pipeline_id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "probability": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StageSummary": {
+        "type": "object",
+        "required": [
+          "stage_id",
+          "stage_name",
+          "open_deal_count",
+          "open_amount_minor",
+          "currency"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "open_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "open_deal_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "stage_id": {
+            "type": "string"
+          },
+          "stage_name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateContactRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_primary": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "last_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateCustomerRequest": {
+        "type": "object",
+        "properties": {
+          "billing_address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateDealRequest": {
+        "type": "object",
+        "properties": {
+          "amount_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_close_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "probability": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "stage_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateLeadRequest": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "score": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateProductRequest": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_group": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_price_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "UpdateQuoteRequest": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CreateQuoteLineRequest"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_until": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "WeightedForecast": {
+        "type": "object",
+        "required": [
+          "amount_minor",
+          "currency"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          }
+        }
+      },
+      "WinDealRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "WinRateSummary": {
+        "type": "object",
+        "required": [
+          "won_count",
+          "lost_count",
+          "win_rate_pct"
+        ],
+        "properties": {
+          "lost_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "win_rate_pct": {
+            "type": "number",
+            "format": "double"
+          },
+          "won_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       }
     }
   },
@@ -1901,6 +4907,46 @@
     {
       "name": "dashboard",
       "description": "Phase 1.3 dashboard BFF widget descriptors"
+    },
+    {
+      "name": "sales-pipelines",
+      "description": "Pipelines, stages, and the kanban board"
+    },
+    {
+      "name": "sales-customers",
+      "description": "Customer accounts"
+    },
+    {
+      "name": "sales-contacts",
+      "description": "Contacts on customer accounts"
+    },
+    {
+      "name": "sales-leads",
+      "description": "Lead capture, qualification, and conversion"
+    },
+    {
+      "name": "sales-deals",
+      "description": "Deals / opportunities"
+    },
+    {
+      "name": "sales-activities",
+      "description": "Calls, meetings, emails, and notes"
+    },
+    {
+      "name": "sales-products",
+      "description": "Quotable product catalogue"
+    },
+    {
+      "name": "sales-quotes",
+      "description": "Quote drafting, versioning, and acceptance"
+    },
+    {
+      "name": "sales-imports",
+      "description": "CSV customer import"
+    },
+    {
+      "name": "sales-reports",
+      "description": "Pipeline / win-rate / forecast reports"
     }
   ]
 }
