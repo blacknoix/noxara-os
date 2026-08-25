@@ -1,21 +1,7 @@
-/** Generated / hand-maintained TypeScript types from OpenAPI hello resource. */
+/** TypeScript SDK stub for CompanyOS Phase 0. */
 
-export type Hello = {
-  /** Prefixed public id (`hel_…`). */
-  id: string;
-  /** Prefixed org id (`org_…`). */
-  org_id: string;
-  message: string;
-  created_by: string;
-};
-
-export type CreateHelloRequest = {
-  message: string;
-};
-
-export type HelloListResponse = {
-  items: Hello[];
-};
+export type { Hello, CreateHelloRequest, HelloListResponse } from './generated';
+import type { Hello, CreateHelloRequest, HelloListResponse } from './generated';
 
 export type CompanyOsClientOptions = {
   baseUrl: string;
