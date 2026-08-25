@@ -18,23 +18,25 @@ use super::{conflict, if_match_version, internal, not_found, parse_public_id, va
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
-use crate::principal::{enforce_any_scope, load_membership_scope, required_scope_for_owner_row, MembershipScope};
+use crate::principal::{
+    enforce_any_scope, load_membership_scope, required_scope_for_owner_row, MembershipScope,
+};
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::seed;
 use crate::state::AppState;
 use crate::types::{
-    CreateDealRequest, DealDto, DealListQuery, DealListResponse, LoseDealRequest, UpdateDealRequest,
-    WinDealRequest,
+    CreateDealRequest, DealDto, DealListQuery, DealListResponse, LoseDealRequest,
+    UpdateDealRequest, WinDealRequest,
 };
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/v1/sales/deals", get(list_deals).post(create_deal))
-        .route("/api/v1/sales/deals/board", get(super::pipelines::default_board))
         .route(
-            "/api/v1/sales/deals/{id}",
-            get(get_deal).patch(update_deal),
+            "/api/v1/sales/deals/board",
+            get(super::pipelines::default_board),
         )
+        .route("/api/v1/sales/deals/{id}", get(get_deal).patch(update_deal))
         .route("/api/v1/sales/deals/{id}/win", post(win_deal))
         .route("/api/v1/sales/deals/{id}/lose", post(lose_deal))
 }
@@ -72,14 +74,20 @@ impl DealRow {
             id: self.public_id,
             pipeline_id: PublicId::new(IdKind::Pipeline, self.pipeline_id).as_str(),
             stage_id: PublicId::new(IdKind::Stage, self.stage_id).as_str(),
-            customer_id: self.customer_id.map(|u| PublicId::new(IdKind::Customer, u).as_str()),
-            lead_id: self.lead_id.map(|u| PublicId::new(IdKind::Lead, u).as_str()),
+            customer_id: self
+                .customer_id
+                .map(|u| PublicId::new(IdKind::Customer, u).as_str()),
+            lead_id: self
+                .lead_id
+                .map(|u| PublicId::new(IdKind::Lead, u).as_str()),
             name: self.name,
             amount_minor: self.amount_minor,
             currency: self.currency,
             probability: self.probability,
             expected_close_date: self.expected_close_date.map(|d| d.to_string()),
-            owner_user_id: self.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+            owner_user_id: self
+                .owner_user_id
+                .map(|u| PublicId::new(IdKind::User, u).as_str()),
             status: self.status,
             won_reason: self.won_reason,
             lost_reason: self.lost_reason,
@@ -111,7 +119,9 @@ pub(crate) async fn fetch_deal_dto_by_id(
     org_id: Uuid,
     deal_id: Uuid,
 ) -> Result<Option<DealDto>, sqlx::Error> {
-    Ok(fetch_deal_row(tx, org_id, deal_id).await?.map(DealRow::into_dto))
+    Ok(fetch_deal_row(tx, org_id, deal_id)
+        .await?
+        .map(DealRow::into_dto))
 }
 
 /// GET /api/v1/sales/deals
@@ -143,7 +153,14 @@ pub async fn list_deals(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     let build_filters = |qb: &mut QueryBuilder<Postgres>| {
-        push_owner_predicate(qb, scope, org_id, actor, membership.team_id, membership.department_id);
+        push_owner_predicate(
+            qb,
+            scope,
+            org_id,
+            actor,
+            membership.team_id,
+            membership.department_id,
+        );
         if let Some(term) = q.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
             qb.push(" AND name ILIKE ");
             qb.push_bind(format!("%{term}%"));
@@ -169,8 +186,9 @@ pub async fn list_deals(
         .await
         .map_err(internal(&request_id))?;
 
-    let mut qb: QueryBuilder<Postgres> =
-        QueryBuilder::new(format!("SELECT {DEAL_COLUMNS} FROM sales_deal WHERE org_id = "));
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(format!(
+        "SELECT {DEAL_COLUMNS} FROM sales_deal WHERE org_id = "
+    ));
     qb.push_bind(org_id);
     qb.push(" AND deleted_at IS NULL");
     build_filters(&mut qb);
@@ -206,10 +224,18 @@ pub async fn create_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_deal_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_deal_create(),
+        &request_id,
+    )?;
 
     if body.name.trim().is_empty() {
         return Err(validation(&request_id, "name must not be empty"));
@@ -231,20 +257,39 @@ pub async fn create_deal(
         }
     }
 
-    let customer_id = super::parse_optional_public_id(IdKind::Customer, body.customer_id.as_deref(), &request_id)?;
-    let lead_id = super::parse_optional_public_id(IdKind::Lead, body.lead_id.as_deref(), &request_id)?;
-    let pipeline_id = match super::parse_optional_public_id(IdKind::Pipeline, body.pipeline_id.as_deref(), &request_id)? {
+    let customer_id = super::parse_optional_public_id(
+        IdKind::Customer,
+        body.customer_id.as_deref(),
+        &request_id,
+    )?;
+    let lead_id =
+        super::parse_optional_public_id(IdKind::Lead, body.lead_id.as_deref(), &request_id)?;
+    let pipeline_id = match super::parse_optional_public_id(
+        IdKind::Pipeline,
+        body.pipeline_id.as_deref(),
+        &request_id,
+    )? {
         Some(p) => p,
         None => seed::ensure_default_pipeline(&mut tx, org_id)
             .await
             .map_err(internal(&request_id))?,
     };
-    let stage_id = match super::parse_optional_public_id(IdKind::Stage, body.stage_id.as_deref(), &request_id)? {
+    let stage_id = match super::parse_optional_public_id(
+        IdKind::Stage,
+        body.stage_id.as_deref(),
+        &request_id,
+    )? {
         Some(s) => s,
         None => seed::default_open_stage(&mut tx, org_id, pipeline_id)
             .await
             .map_err(internal(&request_id))?
-            .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "no pipeline stage available"))?,
+            .ok_or_else(|| {
+                AppError::new(
+                    ErrorCode::Internal,
+                    request_id.clone(),
+                    "no pipeline stage available",
+                )
+            })?,
     };
     let owner_user_id = match body.owner_user_id.as_deref() {
         Some(s) => parse_public_id(IdKind::User, s, &request_id)?,
@@ -302,7 +347,13 @@ pub async fn create_deal(
     let dto = fetch_deal_dto_by_id(&mut tx, org_id, id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "deal missing after insert"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "deal missing after insert",
+            )
+        })?;
 
     if let Some(key) = idem_key.as_deref() {
         idempotency::put(
@@ -340,7 +391,12 @@ async fn enforce_deal_scope(
     )
     .await
     .map_err(internal(request_id))?;
-    crate::principal::enforce_scoped(&membership.principal, permission, required_scope, request_id)
+    crate::principal::enforce_scoped(
+        &membership.principal,
+        permission,
+        required_scope,
+        request_id,
+    )
 }
 
 /// GET /api/v1/sales/deals/{id}
@@ -355,9 +411,13 @@ pub async fn get_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -398,10 +458,18 @@ pub async fn update_deal(
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
     let expected_version = if_match_version(&headers);
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_deal_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_deal_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -426,7 +494,10 @@ pub async fn update_deal(
         if expected != row.version {
             return Err(conflict(
                 &request_id,
-                format!("version mismatch: expected {expected}, current {}", row.version),
+                format!(
+                    "version mismatch: expected {expected}, current {}",
+                    row.version
+                ),
             ));
         }
     }
@@ -529,9 +600,13 @@ pub async fn win_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_win(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -651,9 +726,13 @@ pub async fn lose_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_lose(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;

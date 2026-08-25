@@ -23,7 +23,9 @@ use super::{conflict, internal, not_found, parse_public_id, validation};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
-use crate::principal::{enforce_any_scope, load_membership_scope, required_scope_for_owner_row, MembershipScope};
+use crate::principal::{
+    enforce_any_scope, load_membership_scope, required_scope_for_owner_row, MembershipScope,
+};
 use crate::quotes_math::{compute_quote_totals, LineInput};
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::state::AppState;
@@ -35,11 +37,17 @@ use crate::types::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/v1/sales/quotes", get(list_quotes).post(create_quote))
-        .route("/api/v1/sales/quotes/{id}", get(get_quote).patch(update_quote))
+        .route(
+            "/api/v1/sales/quotes/{id}",
+            get(get_quote).patch(update_quote),
+        )
         .route("/api/v1/sales/quotes/{id}/send", post(send_quote))
         .route("/api/v1/sales/quotes/{id}/accept", post(accept_quote))
         .route("/api/v1/sales/quotes/{id}/reject", post(reject_quote))
-        .route("/api/v1/sales/quotes/{id}/invoice-action", get(invoice_action))
+        .route(
+            "/api/v1/sales/quotes/{id}/invoice-action",
+            get(invoice_action),
+        )
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -89,7 +97,9 @@ impl QuoteLineRow {
         QuoteLineDto {
             id: self.public_id,
             position: self.position,
-            product_id: self.product_id.map(|u| PublicId::new(IdKind::Product, u).as_str()),
+            product_id: self
+                .product_id
+                .map(|u| PublicId::new(IdKind::Product, u).as_str()),
             description: self.description,
             quantity: self.quantity,
             unit_price_minor: self.unit_price_minor,
@@ -123,7 +133,9 @@ fn assemble_dto(row: QuoteRow, lines: Vec<QuoteLineRow>) -> QuoteDto {
         quote_number: row.quote_number,
         status: row.status,
         version_number: row.version_number,
-        previous_quote_id: row.previous_quote_id.map(|u| PublicId::new(IdKind::Quote, u).as_str()),
+        previous_quote_id: row
+            .previous_quote_id
+            .map(|u| PublicId::new(IdKind::Quote, u).as_str()),
         currency: row.currency,
         subtotal_minor: row.subtotal_minor,
         discount_minor: row.discount_minor,
@@ -132,7 +144,9 @@ fn assemble_dto(row: QuoteRow, lines: Vec<QuoteLineRow>) -> QuoteDto {
         notes: row.notes,
         valid_until: row.valid_until.map(|d| d.to_string()),
         accepted_at: row.accepted_at.map(|t| t.to_rfc3339()),
-        owner_user_id: row.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+        owner_user_id: row
+            .owner_user_id
+            .map(|u| PublicId::new(IdKind::User, u).as_str()),
         created_at: row.created_at.to_rfc3339(),
         updated_at: row.updated_at.to_rfc3339(),
         version: row.version,
@@ -194,7 +208,9 @@ fn parse_line_product_ids(
 ) -> Result<Vec<Option<Uuid>>, AppError> {
     lines
         .iter()
-        .map(|l| super::parse_optional_public_id(IdKind::Product, l.product_id.as_deref(), request_id))
+        .map(|l| {
+            super::parse_optional_public_id(IdKind::Product, l.product_id.as_deref(), request_id)
+        })
         .collect()
 }
 
@@ -207,11 +223,16 @@ async fn insert_lines(
     product_ids: &[Option<Uuid>],
     computed: &[crate::quotes_math::LineTotals],
 ) -> Result<(), sqlx::Error> {
-    for (position, ((line, product_id), totals)) in
-        lines.iter().zip(product_ids.iter()).zip(computed.iter()).enumerate()
+    for (position, ((line, product_id), totals)) in lines
+        .iter()
+        .zip(product_ids.iter())
+        .zip(computed.iter())
+        .enumerate()
     {
         let line_id = new_uuid_v7();
-        let line_public = PublicId::new(IdKind::Quote, line_id).as_str().replacen("qte_", "qtl_", 1);
+        let line_public = PublicId::new(IdKind::Quote, line_id)
+            .as_str()
+            .replacen("qte_", "qtl_", 1);
         sqlx::query(
             r#"
             INSERT INTO sales_quote_line (
@@ -269,7 +290,11 @@ pub async fn list_quotes(
 
     let membership =
         load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_read(), &request_id)?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_read(),
+        &request_id,
+    )?;
     let scope = scope_for_permission(&membership.principal, &perms::sales_quote_read());
     let (limit, offset) = super::normalize_paging(q.limit, q.offset);
 
@@ -282,18 +307,35 @@ pub async fn list_quotes(
         QueryBuilder::new("SELECT COUNT(*) FROM sales_quote WHERE org_id = ");
     count_qb.push_bind(org_id);
     count_qb.push(" AND deleted_at IS NULL");
-    push_filters(&mut count_qb, scope, org_id, actor, membership.team_id, membership.department_id, q.q.as_deref());
+    push_filters(
+        &mut count_qb,
+        scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+        q.q.as_deref(),
+    );
     let total: i64 = count_qb
         .build_query_scalar()
         .fetch_one(&mut *tx)
         .await
         .map_err(internal(&request_id))?;
 
-    let mut qb: QueryBuilder<Postgres> =
-        QueryBuilder::new(format!("SELECT {QUOTE_COLUMNS} FROM sales_quote WHERE org_id = "));
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(format!(
+        "SELECT {QUOTE_COLUMNS} FROM sales_quote WHERE org_id = "
+    ));
     qb.push_bind(org_id);
     qb.push(" AND deleted_at IS NULL");
-    push_filters(&mut qb, scope, org_id, actor, membership.team_id, membership.department_id, q.q.as_deref());
+    push_filters(
+        &mut qb,
+        scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+        q.q.as_deref(),
+    );
     qb.push(" ORDER BY created_at DESC LIMIT ");
     qb.push_bind(limit);
     qb.push(" OFFSET ");
@@ -307,7 +349,9 @@ pub async fn list_quotes(
 
     let mut items = Vec::with_capacity(rows.len());
     for row in rows {
-        let lines = fetch_lines(&mut tx, org_id, row.id).await.map_err(internal(&request_id))?;
+        let lines = fetch_lines(&mut tx, org_id, row.id)
+            .await
+            .map_err(internal(&request_id))?;
         items.push(assemble_dto(row, lines));
     }
     tx.commit().await.map_err(internal(&request_id))?;
@@ -329,13 +373,22 @@ pub async fn create_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_create(),
+        &request_id,
+    )?;
 
     let customer_id = parse_public_id(IdKind::Customer, &body.customer_id, &request_id)?;
-    let deal_id = super::parse_optional_public_id(IdKind::Deal, body.deal_id.as_deref(), &request_id)?;
+    let deal_id =
+        super::parse_optional_public_id(IdKind::Deal, body.deal_id.as_deref(), &request_id)?;
     let owner_user_id = match body.owner_user_id.as_deref() {
         Some(s) => parse_public_id(IdKind::User, s, &request_id)?,
         None => auth.ctx.actor.user_id,
@@ -424,7 +477,13 @@ pub async fn create_quote(
     let dto = fetch_quote_dto(&mut tx, org_id, id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing after insert"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "quote missing after insert",
+            )
+        })?;
 
     if let Some(key) = idem_key.as_deref() {
         idempotency::put(
@@ -462,7 +521,12 @@ async fn enforce_quote_scope(
     )
     .await
     .map_err(internal(request_id))?;
-    crate::principal::enforce_scoped(&membership.principal, permission, required_scope, request_id)
+    crate::principal::enforce_scoped(
+        &membership.principal,
+        permission,
+        required_scope,
+        request_id,
+    )
 }
 
 /// GET /api/v1/sales/quotes/{id}
@@ -477,10 +541,18 @@ pub async fn get_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_read(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_read(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -500,7 +572,9 @@ pub async fn get_quote(
         &request_id,
     )
     .await?;
-    let lines = fetch_lines(&mut tx, org_id, row.id).await.map_err(internal(&request_id))?;
+    let lines = fetch_lines(&mut tx, org_id, row.id)
+        .await
+        .map_err(internal(&request_id))?;
     tx.commit().await.map_err(internal(&request_id))?;
     Ok(Json(assemble_dto(row, lines)))
 }
@@ -523,10 +597,18 @@ pub async fn update_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -547,7 +629,10 @@ pub async fn update_quote(
     )
     .await?;
 
-    let currency_code = body.currency.clone().unwrap_or_else(|| row.currency.clone());
+    let currency_code = body
+        .currency
+        .clone()
+        .unwrap_or_else(|| row.currency.clone());
     let currency = Currency::new(&currency_code)
         .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
     let notes = body.notes.clone().or(row.notes.clone());
@@ -563,14 +648,18 @@ pub async fn update_quote(
         None => row.owner_user_id,
     };
 
-    let existing_lines = fetch_lines(&mut tx, org_id, row.id).await.map_err(internal(&request_id))?;
+    let existing_lines = fetch_lines(&mut tx, org_id, row.id)
+        .await
+        .map_err(internal(&request_id))?;
     let line_requests: Vec<CreateQuoteLineRequest> = match &body.lines {
         Some(lines) => lines.clone(),
         None => existing_lines
             .iter()
             .cloned()
             .map(|l| CreateQuoteLineRequest {
-                product_id: l.product_id.map(|u| PublicId::new(IdKind::Product, u).as_str()),
+                product_id: l
+                    .product_id
+                    .map(|u| PublicId::new(IdKind::Product, u).as_str()),
                 description: l.description,
                 quantity: l.quantity,
                 unit_price_minor: l.unit_price_minor,
@@ -617,9 +706,16 @@ pub async fn update_quote(
         .await
         .map_err(internal(&request_id))?;
 
-        insert_lines(&mut tx, org_id, new_id, &line_requests, &product_ids, &computed)
-            .await
-            .map_err(internal(&request_id))?;
+        insert_lines(
+            &mut tx,
+            org_id,
+            new_id,
+            &line_requests,
+            &product_ids,
+            &computed,
+        )
+        .await
+        .map_err(internal(&request_id))?;
 
         insert_audit(
             &mut *tx,
@@ -638,7 +734,13 @@ pub async fn update_quote(
         let dto = fetch_quote_dto(&mut tx, org_id, new_id)
             .await
             .map_err(internal(&request_id))?
-            .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing after insert"))?;
+            .ok_or_else(|| {
+                AppError::new(
+                    ErrorCode::Internal,
+                    request_id.clone(),
+                    "quote missing after insert",
+                )
+            })?;
         tx.commit().await.map_err(internal(&request_id))?;
         return Ok((StatusCode::CREATED, Json(dto)));
     }
@@ -672,15 +774,28 @@ pub async fn update_quote(
             .execute(&mut *tx)
             .await
             .map_err(internal(&request_id))?;
-        insert_lines(&mut tx, org_id, row.id, &line_requests, &product_ids, &computed)
-            .await
-            .map_err(internal(&request_id))?;
+        insert_lines(
+            &mut tx,
+            org_id,
+            row.id,
+            &line_requests,
+            &product_ids,
+            &computed,
+        )
+        .await
+        .map_err(internal(&request_id))?;
     }
 
     let dto = fetch_quote_dto(&mut tx, org_id, row.id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing after update"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "quote missing after update",
+            )
+        })?;
     tx.commit().await.map_err(internal(&request_id))?;
     Ok((StatusCode::OK, Json(dto)))
 }
@@ -697,10 +812,18 @@ pub async fn send_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -722,7 +845,10 @@ pub async fn send_quote(
     .await?;
 
     if row.status == "accepted" || row.status == "rejected" {
-        return Err(conflict(&request_id, format!("quote is {}, cannot send", row.status)));
+        return Err(conflict(
+            &request_id,
+            format!("quote is {}, cannot send", row.status),
+        ));
     }
 
     // Local-only accept link — no email integration in this phase.
@@ -745,7 +871,13 @@ pub async fn send_quote(
     let dto = fetch_quote_dto(&mut tx, org_id, row.id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing after send"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "quote missing after send",
+            )
+        })?;
     tx.commit().await.map_err(internal(&request_id))?;
     Ok(Json(dto))
 }
@@ -762,10 +894,18 @@ pub async fn accept_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_accept(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_accept(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -791,7 +931,9 @@ pub async fn accept_quote(
         let dto = fetch_quote_dto(&mut tx, org_id, row.id)
             .await
             .map_err(internal(&request_id))?
-            .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing"))?;
+            .ok_or_else(|| {
+                AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing")
+            })?;
         tx.commit().await.map_err(internal(&request_id))?;
         return Ok(Json(dto));
     }
@@ -838,7 +980,13 @@ pub async fn accept_quote(
     let dto = fetch_quote_dto(&mut tx, org_id, row.id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing after accept"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "quote missing after accept",
+            )
+        })?;
     tx.commit().await.map_err(internal(&request_id))?;
     Ok(Json(dto))
 }
@@ -857,10 +1005,18 @@ pub async fn reject_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_quote_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -888,7 +1044,9 @@ pub async fn reject_quote(
         let dto = fetch_quote_dto(&mut tx, org_id, row.id)
             .await
             .map_err(internal(&request_id))?
-            .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing"))?;
+            .ok_or_else(|| {
+                AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing")
+            })?;
         tx.commit().await.map_err(internal(&request_id))?;
         return Ok(Json(dto));
     }
@@ -912,7 +1070,13 @@ pub async fn reject_quote(
     let dto = fetch_quote_dto(&mut tx, org_id, row.id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "quote missing after reject"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "quote missing after reject",
+            )
+        })?;
     tx.commit().await.map_err(internal(&request_id))?;
     Ok(Json(dto))
 }

@@ -20,7 +20,10 @@ use crate::types::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/sales/products", get(list_products).post(create_product))
+        .route(
+            "/api/v1/sales/products",
+            get(list_products).post(create_product),
+        )
         .route("/api/v1/sales/products/{id}", patch(update_product))
 }
 
@@ -62,15 +65,29 @@ pub async fn list_products(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce(&membership.principal, perms::sales_product_read(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce(
+        &membership.principal,
+        perms::sales_product_read(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let mut qb: sqlx::QueryBuilder<Postgres> = sqlx::QueryBuilder::new(format!(
         "SELECT {PRODUCT_COLUMNS} FROM sales_product WHERE org_id = "
@@ -111,10 +128,18 @@ pub async fn create_product(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce(&membership.principal, perms::sales_product_manage(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce(
+        &membership.principal,
+        perms::sales_product_manage(),
+        &request_id,
+    )?;
 
     if body.name.trim().is_empty() {
         return Err(validation(&request_id, "name must not be empty"));
@@ -130,7 +155,13 @@ pub async fn create_product(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let row: ProductRow = sqlx::query_as(&format!(
         r#"
@@ -170,15 +201,29 @@ pub async fn update_product(
     let org_id = auth.ctx.org_id.as_uuid();
     let product_id = parse_public_id(IdKind::Product, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce(&membership.principal, perms::sales_product_manage(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce(
+        &membership.principal,
+        perms::sales_product_manage(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let current: Option<ProductRow> = sqlx::query_as(&format!(
         "SELECT {PRODUCT_COLUMNS} FROM sales_product WHERE org_id = $1 AND id = $2 AND deleted_at IS NULL"

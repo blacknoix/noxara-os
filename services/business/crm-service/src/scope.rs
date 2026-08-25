@@ -77,9 +77,7 @@ pub fn push_owner_predicate(
             qb.push(" AND (owner_user_id = ");
             qb.push_bind(actor_user_id);
             if let Some(dept) = department_id {
-                qb.push(
-                    " OR owner_user_id IN (SELECT user_id FROM membership WHERE org_id = ",
-                );
+                qb.push(" OR owner_user_id IN (SELECT user_id FROM membership WHERE org_id = ");
                 qb.push_bind(org_id);
                 qb.push(" AND department_id = ");
                 qb.push_bind(dept);

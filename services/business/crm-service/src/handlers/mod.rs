@@ -58,7 +58,10 @@ pub(crate) fn parse_public_id(kind: IdKind, raw: &str, request_id: &str) -> Resu
         .parse()
         .map_err(|_| validation(request_id, format!("invalid id: {raw}")))?;
     if pid.kind() != kind {
-        return Err(validation(request_id, format!("id {raw} is not a {kind:?} id")));
+        return Err(validation(
+            request_id,
+            format!("id {raw} is not a {kind:?} id"),
+        ));
     }
     Ok(pid.uuid())
 }
@@ -97,8 +100,7 @@ pub(crate) fn if_match_version(headers: &HeaderMap) -> Option<i32> {
 pub(crate) fn is_unique_violation(err: &sqlx::Error, constraint: &str) -> bool {
     match err {
         sqlx::Error::Database(db_err) => {
-            db_err.code().as_deref() == Some("23505")
-                && db_err.constraint() == Some(constraint)
+            db_err.code().as_deref() == Some("23505") && db_err.constraint() == Some(constraint)
         }
         _ => false,
     }

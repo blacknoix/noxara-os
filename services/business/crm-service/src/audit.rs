@@ -6,6 +6,7 @@
 use uuid::Uuid;
 
 /// Insert one audit row on the caller's open transaction/executor.
+#[allow(clippy::too_many_arguments)]
 pub async fn insert_audit<'e, E>(
     executor: E,
     org_id: Uuid,

@@ -35,8 +35,14 @@ use crate::types::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/sales/imports/customers/preview", post(preview_customers))
-        .route("/api/v1/sales/imports/customers/confirm", post(confirm_customers))
+        .route(
+            "/api/v1/sales/imports/customers/preview",
+            post(preview_customers),
+        )
+        .route(
+            "/api/v1/sales/imports/customers/confirm",
+            post(confirm_customers),
+        )
 }
 
 fn field_synonyms(field: &str) -> &'static [&'static str] {
@@ -49,7 +55,11 @@ fn field_synonyms(field: &str) -> &'static [&'static str] {
     }
 }
 
-fn resolve_column(headers: &[String], mapping: &HashMap<String, String>, field: &str) -> Option<usize> {
+fn resolve_column(
+    headers: &[String],
+    mapping: &HashMap<String, String>,
+    field: &str,
+) -> Option<usize> {
     for (i, h) in headers.iter().enumerate() {
         if let Some(mapped_field) = mapping.get(h) {
             if mapped_field.eq_ignore_ascii_case(field) {
@@ -66,7 +76,10 @@ fn resolve_column(headers: &[String], mapping: &HashMap<String, String>, field: 
 /// Parse CSV text into `(name, email, phone, company)` rows using
 /// header-alias resolution (explicit `mapping` overrides, then built-in
 /// synonyms).
-fn parse_csv_rows(csv_text: &str, mapping: &HashMap<String, String>) -> Result<Vec<ImportRowInput>, String> {
+fn parse_csv_rows(
+    csv_text: &str,
+    mapping: &HashMap<String, String>,
+) -> Result<Vec<ImportRowInput>, String> {
     let mut rdr = csv::ReaderBuilder::new()
         .has_headers(true)
         .from_reader(csv_text.as_bytes());
@@ -119,10 +132,18 @@ pub async fn preview_customers(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce(&membership.principal, perms::sales_import_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce(
+        &membership.principal,
+        perms::sales_import_create(),
+        &request_id,
+    )?;
 
     let rows = parse_csv_rows(&body.csv, &body.mapping)
         .map_err(|e| validation(&request_id, format!("invalid csv: {e}")))?;
@@ -130,7 +151,13 @@ pub async fn preview_customers(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let mut previews = Vec::with_capacity(rows.len());
     let mut exact = 0usize;
@@ -186,10 +213,18 @@ pub async fn confirm_customers(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce(&membership.principal, perms::sales_import_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce(
+        &membership.principal,
+        perms::sales_import_create(),
+        &request_id,
+    )?;
 
     let rows: Vec<ImportRowInput> = if let Some(rows) = body.rows.clone() {
         rows
@@ -197,7 +232,10 @@ pub async fn confirm_customers(
         parse_csv_rows(csv_text, &body.mapping)
             .map_err(|e| validation(&request_id, format!("invalid csv: {e}")))?
     } else {
-        return Err(validation(&request_id, "one of `csv` or `rows` is required"));
+        return Err(validation(
+            &request_id,
+            "one of `csv` or `rows` is required",
+        ));
     };
     if rows.is_empty() {
         return Err(validation(&request_id, "no rows to import"));
@@ -209,7 +247,13 @@ pub async fn confirm_customers(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     sqlx::query(
         r#"

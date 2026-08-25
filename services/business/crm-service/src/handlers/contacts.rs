@@ -53,7 +53,9 @@ impl ContactRow {
             phone: self.phone,
             title: self.title,
             is_primary: self.is_primary,
-            owner_user_id: self.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+            owner_user_id: self
+                .owner_user_id
+                .map(|u| PublicId::new(IdKind::User, u).as_str()),
             created_at: self.created_at.to_rfc3339(),
             updated_at: self.updated_at.to_rfc3339(),
         }
@@ -72,16 +74,31 @@ pub async fn list_contacts(
     let org_id = auth.ctx.org_id.as_uuid();
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_contact_read(), &request_id)?;
-    let scope = crate::scope::scope_for_permission(&membership.principal, &perms::sales_contact_read());
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_contact_read(),
+        &request_id,
+    )?;
+    let scope =
+        crate::scope::scope_for_permission(&membership.principal, &perms::sales_contact_read());
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let mut qb: sqlx::QueryBuilder<Postgres> = sqlx::QueryBuilder::new(
         "SELECT public_id, customer_id, first_name, last_name, email, phone, title, is_primary, owner_user_id, created_at, updated_at FROM sales_contact WHERE org_id = ",
@@ -126,10 +143,18 @@ pub async fn create_contact(
     let org_id = auth.ctx.org_id.as_uuid();
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_contact_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_contact_create(),
+        &request_id,
+    )?;
 
     if body.first_name.trim().is_empty() && body.last_name.trim().is_empty() {
         return Err(validation(&request_id, "first_name or last_name required"));
@@ -143,15 +168,22 @@ pub async fn create_contact(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
-    let exists: Option<(Uuid,)> =
-        sqlx::query_as("SELECT id FROM sales_customer WHERE org_id = $1 AND id = $2 AND deleted_at IS NULL")
-            .bind(org_id)
-            .bind(customer_id)
-            .fetch_optional(&mut *tx)
-            .await
-            .map_err(internal(&request_id))?;
+    let exists: Option<(Uuid,)> = sqlx::query_as(
+        "SELECT id FROM sales_customer WHERE org_id = $1 AND id = $2 AND deleted_at IS NULL",
+    )
+    .bind(org_id)
+    .bind(customer_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
     if exists.is_none() {
         return Err(not_found(&request_id, "customer"));
     }
@@ -199,15 +231,29 @@ pub async fn update_contact(
     let org_id = auth.ctx.org_id.as_uuid();
     let contact_id = parse_public_id(IdKind::Contact, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_contact_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_contact_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let current: Option<ContactRow> = sqlx::query_as(
         r#"

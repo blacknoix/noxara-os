@@ -51,10 +51,18 @@ pub async fn list_pipelines(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_pipeline_read(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_pipeline_read(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -107,7 +115,10 @@ async fn open_deals_for_stage(
     qb.push(" ORDER BY created_at DESC");
 
     let rows: Vec<super::deals::DealRow> = qb.build_query_as().fetch_all(&mut **tx).await?;
-    Ok(rows.into_iter().map(super::deals::DealRow::into_dto).collect())
+    Ok(rows
+        .into_iter()
+        .map(super::deals::DealRow::into_dto)
+        .collect())
 }
 
 /// GET /api/v1/sales/pipelines/default/board — kanban view: stages + open deals.
@@ -125,7 +136,11 @@ pub async fn default_board(
 
     let membership =
         load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
-    enforce_any_scope(&membership.principal, perms::sales_pipeline_read(), &request_id)?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_pipeline_read(),
+        &request_id,
+    )?;
     enforce_any_scope(&membership.principal, perms::sales_deal_read(), &request_id)?;
     let deal_scope = scope_for_permission(&membership.principal, &perms::sales_deal_read());
 

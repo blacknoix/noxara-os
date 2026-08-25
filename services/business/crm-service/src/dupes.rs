@@ -64,7 +64,10 @@ pub async fn find_customer_duplicates(
         .fetch_all(&mut *conn)
         .await?;
         for (public_id, cname, cemail, score) in rows {
-            if out.iter().any(|m| m.customer_id.as_deref() == Some(public_id.as_str())) {
+            if out
+                .iter()
+                .any(|m| m.customer_id.as_deref() == Some(public_id.as_str()))
+            {
                 continue;
             }
             out.push(DuplicateMatch {
@@ -134,7 +137,10 @@ pub async fn find_lead_duplicates(
         .fetch_all(&mut *conn)
         .await?;
         for (public_id, lname, lemail, score) in rows {
-            if out.iter().any(|m| m.lead_id.as_deref() == Some(public_id.as_str())) {
+            if out
+                .iter()
+                .any(|m| m.lead_id.as_deref() == Some(public_id.as_str()))
+            {
                 continue;
             }
             out.push(DuplicateMatch {

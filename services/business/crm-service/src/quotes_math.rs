@@ -68,7 +68,9 @@ pub fn sum_document(lines: &[LineTotals]) -> Result<DocumentTotals, MoneyError> 
     let mut tax: i64 = 0;
     let mut total: i64 = 0;
     for l in lines {
-        subtotal = subtotal.checked_add(l.gross_minor).ok_or(MoneyError::Overflow)?;
+        subtotal = subtotal
+            .checked_add(l.gross_minor)
+            .ok_or(MoneyError::Overflow)?;
         discount = discount
             .checked_add(l.discount_minor)
             .ok_or(MoneyError::Overflow)?;
@@ -109,7 +111,10 @@ pub fn allocate_document_discount(
     if document_discount_minor == 0 || line_gross_minor.is_empty() {
         return Ok(vec![0; line_gross_minor.len()]);
     }
-    let weights: Vec<u64> = line_gross_minor.iter().map(|g| (*g).max(0) as u64).collect();
+    let weights: Vec<u64> = line_gross_minor
+        .iter()
+        .map(|g| (*g).max(0) as u64)
+        .collect();
     if weights.iter().all(|w| *w == 0) {
         return Ok(vec![0; line_gross_minor.len()]);
     }
@@ -199,7 +204,10 @@ mod tests {
         assert_eq!(sum_line_totals, doc.total_minor);
         // gross - discount + tax == total, per line and aggregated.
         for l in &computed {
-            assert_eq!(l.gross_minor - l.discount_minor + l.tax_minor, l.line_total_minor);
+            assert_eq!(
+                l.gross_minor - l.discount_minor + l.tax_minor,
+                l.line_total_minor
+            );
         }
         assert_eq!(
             doc.subtotal_minor - doc.discount_minor + doc.tax_minor,

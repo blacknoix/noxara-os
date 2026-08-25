@@ -4,7 +4,9 @@ use axum::routing::get;
 use axum::{Json, Router};
 use utoipa::OpenApi;
 
-use crate::handlers::{activities, contacts, customers, deals, imports, leads, pipelines, products, quotes, reports};
+use crate::handlers::{
+    activities, contacts, customers, deals, imports, leads, pipelines, products, quotes, reports,
+};
 use crate::state::AppState;
 use crate::types::*;
 

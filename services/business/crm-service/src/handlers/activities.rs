@@ -21,7 +21,10 @@ use crate::state::AppState;
 use crate::types::{ActivityDto, ActivityListQuery, ActivityListResponse, CreateActivityRequest};
 
 pub fn router() -> Router<AppState> {
-    Router::new().route("/api/v1/sales/activities", get(list_activities).post(create_activity))
+    Router::new().route(
+        "/api/v1/sales/activities",
+        get(list_activities).post(create_activity),
+    )
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -48,10 +51,18 @@ impl ActivityRow {
             subject: self.subject,
             body: self.body,
             occurred_at: self.occurred_at.to_rfc3339(),
-            customer_id: self.customer_id.map(|u| PublicId::new(IdKind::Customer, u).as_str()),
-            deal_id: self.deal_id.map(|u| PublicId::new(IdKind::Deal, u).as_str()),
-            lead_id: self.lead_id.map(|u| PublicId::new(IdKind::Lead, u).as_str()),
-            owner_user_id: self.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+            customer_id: self
+                .customer_id
+                .map(|u| PublicId::new(IdKind::Customer, u).as_str()),
+            deal_id: self
+                .deal_id
+                .map(|u| PublicId::new(IdKind::Deal, u).as_str()),
+            lead_id: self
+                .lead_id
+                .map(|u| PublicId::new(IdKind::Lead, u).as_str()),
+            owner_user_id: self
+                .owner_user_id
+                .map(|u| PublicId::new(IdKind::User, u).as_str()),
             created_at: self.created_at.to_rfc3339(),
         }
     }
@@ -71,7 +82,11 @@ pub async fn list_activities(
 
     let membership =
         load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
-    enforce_any_scope(&membership.principal, perms::sales_activity_read(), &request_id)?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_activity_read(),
+        &request_id,
+    )?;
     let scope = scope_for_permission(&membership.principal, &perms::sales_activity_read());
     let (limit, offset) = super::normalize_paging(q.limit, q.offset);
 
@@ -91,14 +106,27 @@ pub async fn list_activities(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let mut qb: sqlx::QueryBuilder<Postgres> = sqlx::QueryBuilder::new(format!(
         "SELECT {ACTIVITY_COLUMNS} FROM sales_activity WHERE org_id = "
     ));
     qb.push_bind(org_id);
     qb.push(" AND deleted_at IS NULL");
-    push_owner_predicate(&mut qb, scope, org_id, actor, membership.team_id, membership.department_id);
+    push_owner_predicate(
+        &mut qb,
+        scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+    );
     if let Some(c) = customer_id {
         qb.push(" AND customer_id = ");
         qb.push_bind(c);
@@ -140,10 +168,18 @@ pub async fn create_activity(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_activity_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_activity_create(),
+        &request_id,
+    )?;
 
     if !matches!(body.kind.as_str(), "note" | "call" | "meeting" | "email") {
         return Err(validation(
@@ -152,9 +188,15 @@ pub async fn create_activity(
         ));
     }
 
-    let customer_id = super::parse_optional_public_id(IdKind::Customer, body.customer_id.as_deref(), &request_id)?;
-    let deal_id = super::parse_optional_public_id(IdKind::Deal, body.deal_id.as_deref(), &request_id)?;
-    let lead_id = super::parse_optional_public_id(IdKind::Lead, body.lead_id.as_deref(), &request_id)?;
+    let customer_id = super::parse_optional_public_id(
+        IdKind::Customer,
+        body.customer_id.as_deref(),
+        &request_id,
+    )?;
+    let deal_id =
+        super::parse_optional_public_id(IdKind::Deal, body.deal_id.as_deref(), &request_id)?;
+    let lead_id =
+        super::parse_optional_public_id(IdKind::Lead, body.lead_id.as_deref(), &request_id)?;
     let owner_user_id = match body.owner_user_id.as_deref() {
         Some(s) => super::parse_public_id(IdKind::User, s, &request_id)?,
         None => auth.ctx.actor.user_id,
@@ -174,7 +216,13 @@ pub async fn create_activity(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let row: ActivityRow = sqlx::query_as(&format!(
         r#"
@@ -210,7 +258,13 @@ pub async fn create_activity(
     );
     companyos_outbox::insert_event(&mut *tx, &envelope)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     tx.commit().await.map_err(internal(&request_id))?;
     Ok((StatusCode::CREATED, Json(row.into_dto())))

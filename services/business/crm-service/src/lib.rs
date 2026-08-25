@@ -89,7 +89,8 @@ mod tests {
 
     #[test]
     fn split_sql_ignores_comment_lines_with_semicolons() {
-        let sql = "-- a comment; with a semicolon\nCREATE TABLE t (id UUID);\n-- another;\nSELECT 1;";
+        let sql =
+            "-- a comment; with a semicolon\nCREATE TABLE t (id UUID);\n-- another;\nSELECT 1;";
         let stmts = split_sql(sql);
         assert_eq!(stmts.len(), 2);
         assert!(stmts[0].starts_with("CREATE TABLE"));

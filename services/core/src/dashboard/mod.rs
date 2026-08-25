@@ -372,10 +372,7 @@ async fn build_pipeline_widget(headers: &HeaderMap, range_label: Option<&str>) -
         Err(_) => return unavailable_pipeline_placeholder(range_label),
     };
 
-    let pipeline_by_stage = body
-        .get("pipeline_by_stage")
-        .cloned()
-        .unwrap_or(json!([]));
+    let pipeline_by_stage = body.get("pipeline_by_stage").cloned().unwrap_or(json!([]));
     let open_deal_count = pipeline_by_stage
         .as_array()
         .map(|stages| {

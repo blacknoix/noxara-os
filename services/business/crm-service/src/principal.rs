@@ -47,19 +47,26 @@ pub async fn load_membership_scope(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
     #[allow(clippy::type_complexity)]
-    let mem: Option<(Uuid, String, i64, Option<Uuid>, String, Option<Uuid>, Option<Uuid>)> =
-        sqlx::query_as(
-            r#"
+    let mem: Option<(
+        Uuid,
+        String,
+        i64,
+        Option<Uuid>,
+        String,
+        Option<Uuid>,
+        Option<Uuid>,
+    )> = sqlx::query_as(
+        r#"
         SELECT id, role, policy_version, role_id, status, team_id, department_id
         FROM membership
         WHERE org_id = $1 AND user_id = $2 AND revoked_at IS NULL
         "#,
-        )
-        .bind(org_id.as_uuid())
-        .bind(user_id)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+    )
+    .bind(org_id.as_uuid())
+    .bind(user_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
     let Some((membership_id, role_key, policy_version, role_id, status, team_id, department_id)) =
         mem

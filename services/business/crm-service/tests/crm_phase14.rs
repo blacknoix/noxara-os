@@ -192,7 +192,8 @@ async fn seed_org_with_tokens(secret: &str) -> Option<Seeded> {
 
     let (owner_mem_id, owner_policy) = membership_role_and_policy(&pool, org, owner_id).await;
     let (sales_mem_id, sales_policy) = membership_role_and_policy(&pool, org, sales_user_id).await;
-    let (member_mem_id, member_policy) = membership_role_and_policy(&pool, org, member_user_id).await;
+    let (member_mem_id, member_policy) =
+        membership_role_and_policy(&pool, org, member_user_id).await;
 
     let mut tx = pool.begin().await.unwrap();
     let owner_issued = companyos_core::auth::sessions::create_session_with_tokens(
@@ -262,10 +263,10 @@ async fn call(
     token: &str,
     body: Option<Value>,
 ) -> (StatusCode, Value) {
-    let mut req = Request::builder().method(method).uri(uri).header(
-        "authorization",
-        format!("Bearer {token}"),
-    );
+    let mut req = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header("authorization", format!("Bearer {token}"));
     let body = match body {
         Some(v) => {
             req = req.header("content-type", "application/json");
@@ -345,7 +346,10 @@ async fn idempotency_key_dedupes_deal_creation() {
     )
     .await;
     assert_eq!(status2, StatusCode::CREATED, "{second:?}");
-    assert_eq!(first["id"], second["id"], "same Idempotency-Key must replay the original response");
+    assert_eq!(
+        first["id"], second["id"],
+        "same Idempotency-Key must replay the original response"
+    );
 
     let mut tx = seeded.pool.begin().await.unwrap();
     set_session_org_id(&mut tx, seeded.org).await.unwrap();
@@ -357,7 +361,10 @@ async fn idempotency_key_dedupes_deal_creation() {
     .await
     .unwrap();
     tx.commit().await.unwrap();
-    assert_eq!(count.0, 1, "retried POST with the same key must not create a second deal");
+    assert_eq!(
+        count.0, 1,
+        "retried POST with the same key must not create a second deal"
+    );
 }
 
 #[tokio::test]
@@ -520,7 +527,11 @@ async fn accepted_quote_edit_creates_new_version() {
         })),
     )
     .await;
-    assert_eq!(status, StatusCode::CREATED, "PATCH on an accepted quote must fork a new draft: {forked:?}");
+    assert_eq!(
+        status,
+        StatusCode::CREATED,
+        "PATCH on an accepted quote must fork a new draft: {forked:?}"
+    );
     let new_id = forked["id"].as_str().unwrap().to_string();
     assert_ne!(new_id, original_id, "forked quote must have a new id");
     assert_eq!(forked["status"], "draft");
@@ -635,7 +646,10 @@ async fn tenant_isolation_customers_and_deals() {
             .fetch_all(&mut *tx)
             .await
             .unwrap();
-    assert!(foreign.is_empty(), "RLS must hide org B's sales_customer rows");
+    assert!(
+        foreign.is_empty(),
+        "RLS must hide org B's sales_customer rows"
+    );
     tx.commit().await.unwrap();
 }
 
@@ -842,7 +856,10 @@ async fn quote_money_totals_sum() {
     let doc_tax = quote["tax_minor"].as_i64().unwrap();
     let doc_total = quote["total_minor"].as_i64().unwrap();
 
-    assert_eq!(sum_line_totals, doc_total, "document total must equal the exact sum of line totals");
+    assert_eq!(
+        sum_line_totals, doc_total,
+        "document total must equal the exact sum of line totals"
+    );
     assert_eq!(doc_subtotal - doc_discount + doc_tax, doc_total);
 
     // Re-fetch and confirm totals are stable (not re-derived/rounded again).

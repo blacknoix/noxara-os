@@ -32,10 +32,7 @@ use crate::types::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/v1/sales/leads", get(list_leads).post(create_lead))
-        .route(
-            "/api/v1/sales/leads/{id}",
-            get(get_lead).patch(update_lead),
-        )
+        .route("/api/v1/sales/leads/{id}", get(get_lead).patch(update_lead))
         .route("/api/v1/sales/leads/{id}/qualify", post(qualify_lead))
         .route("/api/v1/sales/leads/{id}/disqualify", post(disqualify_lead))
         .route("/api/v1/sales/leads/{id}/convert", post(convert_lead))
@@ -71,7 +68,9 @@ impl LeadRow {
             source: self.source,
             status: self.status,
             score: self.score,
-            owner_user_id: self.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+            owner_user_id: self
+                .owner_user_id
+                .map(|u| PublicId::new(IdKind::User, u).as_str()),
             notes: self.notes,
             converted_customer_id: self
                 .converted_customer_id
@@ -112,7 +111,14 @@ pub async fn list_leads(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     let build_filters = |qb: &mut QueryBuilder<Postgres>| {
-        push_owner_predicate(qb, scope, org_id, actor, membership.team_id, membership.department_id);
+        push_owner_predicate(
+            qb,
+            scope,
+            org_id,
+            actor,
+            membership.team_id,
+            membership.department_id,
+        );
         if let Some(term) = q.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
             let pattern = format!("%{term}%");
             qb.push(" AND (name ILIKE ");
@@ -136,8 +142,9 @@ pub async fn list_leads(
         .await
         .map_err(internal(&request_id))?;
 
-    let mut qb: QueryBuilder<Postgres> =
-        QueryBuilder::new(format!("SELECT {LEAD_COLUMNS} FROM sales_lead WHERE org_id = "));
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(format!(
+        "SELECT {LEAD_COLUMNS} FROM sales_lead WHERE org_id = "
+    ));
     qb.push_bind(org_id);
     qb.push(" AND deleted_at IS NULL");
     build_filters(&mut qb);
@@ -171,10 +178,18 @@ pub async fn create_lead(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_lead_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_lead_create(),
+        &request_id,
+    )?;
 
     if body.name.trim().is_empty() {
         return Err(validation(&request_id, "name must not be empty"));
@@ -282,7 +297,12 @@ async fn enforce_lead_scope(
     )
     .await
     .map_err(internal(request_id))?;
-    crate::principal::enforce_scoped(&membership.principal, permission, required_scope, request_id)
+    crate::principal::enforce_scoped(
+        &membership.principal,
+        permission,
+        required_scope,
+        request_id,
+    )
 }
 
 /// GET /api/v1/sales/leads/{id}
@@ -297,9 +317,13 @@ pub async fn get_lead(
     let org_id = auth.ctx.org_id.as_uuid();
     let lead_id = parse_public_id(IdKind::Lead, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
     enforce_any_scope(&membership.principal, perms::sales_lead_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -340,10 +364,18 @@ pub async fn update_lead(
     let lead_id = parse_public_id(IdKind::Lead, &id, &request_id)?;
     let expected_version = if_match_version(&headers);
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_lead_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_lead_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -368,7 +400,10 @@ pub async fn update_lead(
         if expected != row.version {
             return Err(conflict(
                 &request_id,
-                format!("version mismatch: expected {expected}, current {}", row.version),
+                format!(
+                    "version mismatch: expected {expected}, current {}",
+                    row.version
+                ),
             ));
         }
     }
@@ -425,10 +460,18 @@ async fn transition_status(
     let org_id = auth.ctx.org_id.as_uuid();
     let lead_id = parse_public_id(IdKind::Lead, lead_id_str, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_lead_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_lead_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -556,10 +599,18 @@ pub async fn convert_lead(
     let lead_id = parse_public_id(IdKind::Lead, &id, &request_id)?;
     let idem_key = idempotency::header_key(&headers);
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_lead_convert(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_lead_convert(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -621,22 +672,23 @@ pub async fn convert_lead(
         .unwrap_or_else(|| row.name.clone());
 
     if !body.force {
-        let duplicates = find_lead_duplicates(&mut tx, org_id, &customer_name, row.email.as_deref())
-            .await
-            .map_err(internal(&request_id))?
-            .into_iter()
-            .filter(|m| m.lead_id.as_deref() != Some(row.public_id.as_str()))
-            .chain(
-                crate::dupes::find_customer_duplicates(
-                    &mut tx,
-                    org_id,
-                    &customer_name,
-                    row.email.as_deref(),
-                )
+        let duplicates =
+            find_lead_duplicates(&mut tx, org_id, &customer_name, row.email.as_deref())
                 .await
-                .map_err(internal(&request_id))?,
-            )
-            .collect::<Vec<_>>();
+                .map_err(internal(&request_id))?
+                .into_iter()
+                .filter(|m| m.lead_id.as_deref() != Some(row.public_id.as_str()))
+                .chain(
+                    crate::dupes::find_customer_duplicates(
+                        &mut tx,
+                        org_id,
+                        &customer_name,
+                        row.email.as_deref(),
+                    )
+                    .await
+                    .map_err(internal(&request_id))?,
+                )
+                .collect::<Vec<_>>();
         if !duplicates.is_empty() {
             return Ok(duplicates_response(&request_id, duplicates));
         }
@@ -689,7 +741,13 @@ pub async fn convert_lead(
     let stage_id = seed::default_open_stage(&mut tx, org_id, pipeline_id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "no pipeline stage available"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "no pipeline stage available",
+            )
+        })?;
 
     let deal_id = new_uuid_v7();
     let deal_public = PublicId::new(IdKind::Deal, deal_id);
@@ -785,11 +843,23 @@ pub async fn convert_lead(
     let deal_dto = fetch_deal_dto(&mut tx, org_id, deal_id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "deal missing after insert"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "deal missing after insert",
+            )
+        })?;
     let customer_dto = fetch_customer_dto(&mut tx, org_id, customer_id)
         .await
         .map_err(internal(&request_id))?
-        .ok_or_else(|| AppError::new(ErrorCode::Internal, request_id.clone(), "customer missing after insert"))?;
+        .ok_or_else(|| {
+            AppError::new(
+                ErrorCode::Internal,
+                request_id.clone(),
+                "customer missing after insert",
+            )
+        })?;
 
     let response = ConvertLeadResponse {
         lead: lead_updated.into_dto(),
@@ -851,7 +921,9 @@ async fn fetch_customer_dto(
         website: r.website,
         billing_address: r.billing_address,
         notes: r.notes,
-        owner_user_id: r.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+        owner_user_id: r
+            .owner_user_id
+            .map(|u| PublicId::new(IdKind::User, u).as_str()),
         created_at: r.created_at.to_rfc3339(),
         updated_at: r.updated_at.to_rfc3339(),
         version: r.version,

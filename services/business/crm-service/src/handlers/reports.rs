@@ -38,14 +38,24 @@ pub async fn report_summary(
 
     let membership =
         load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
-    enforce_any_scope(&membership.principal, perms::sales_report_read(), &request_id)?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_report_read(),
+        &request_id,
+    )?;
     let deal_scope = scope_for_permission(&membership.principal, &perms::sales_deal_read());
     let activity_scope = scope_for_permission(&membership.principal, &perms::sales_activity_read());
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     // --- pipeline_by_stage: open deals grouped by stage, scoped to the caller.
     #[derive(sqlx::FromRow)]
@@ -71,7 +81,14 @@ pub async fn report_summary(
     // deals don't suppress stages with zero visible deals.
     if !matches!(deal_scope, companyos_authz::Scope::Organization) {
         qb.push(" AND (");
-        push_owner_predicate_join(&mut qb, deal_scope, org_id, actor, membership.team_id, membership.department_id);
+        push_owner_predicate_join(
+            &mut qb,
+            deal_scope,
+            org_id,
+            actor,
+            membership.team_id,
+            membership.department_id,
+        );
         qb.push(")");
     }
     qb.push(" WHERE s.org_id = ");
@@ -100,7 +117,14 @@ pub async fn report_summary(
         sqlx::QueryBuilder::new("SELECT COUNT(*) FROM sales_deal WHERE org_id = ");
     won_qb.push_bind(org_id);
     won_qb.push(" AND status = 'won' AND deleted_at IS NULL");
-    push_owner_predicate(&mut won_qb, deal_scope, org_id, actor, membership.team_id, membership.department_id);
+    push_owner_predicate(
+        &mut won_qb,
+        deal_scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+    );
     let won_count: i64 = won_qb
         .build_query_scalar()
         .fetch_one(&mut *tx)
@@ -111,7 +135,14 @@ pub async fn report_summary(
         sqlx::QueryBuilder::new("SELECT COUNT(*) FROM sales_deal WHERE org_id = ");
     lost_qb.push_bind(org_id);
     lost_qb.push(" AND status = 'lost' AND deleted_at IS NULL");
-    push_owner_predicate(&mut lost_qb, deal_scope, org_id, actor, membership.team_id, membership.department_id);
+    push_owner_predicate(
+        &mut lost_qb,
+        deal_scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+    );
     let lost_count: i64 = lost_qb
         .build_query_scalar()
         .fetch_one(&mut *tx)
@@ -131,11 +162,19 @@ pub async fn report_summary(
         kind: String,
         count: i64,
     }
-    let mut act_qb: sqlx::QueryBuilder<Postgres> =
-        sqlx::QueryBuilder::new("SELECT kind, COUNT(*) AS count FROM sales_activity WHERE org_id = ");
+    let mut act_qb: sqlx::QueryBuilder<Postgres> = sqlx::QueryBuilder::new(
+        "SELECT kind, COUNT(*) AS count FROM sales_activity WHERE org_id = ",
+    );
     act_qb.push_bind(org_id);
     act_qb.push(" AND deleted_at IS NULL");
-    push_owner_predicate(&mut act_qb, activity_scope, org_id, actor, membership.team_id, membership.department_id);
+    push_owner_predicate(
+        &mut act_qb,
+        activity_scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+    );
     act_qb.push(" GROUP BY kind ORDER BY kind ASC");
     let activity_rows: Vec<ActivityAgg> = act_qb
         .build_query_as()
@@ -144,7 +183,10 @@ pub async fn report_summary(
         .map_err(internal(&request_id))?;
     let activity_volume: Vec<ActivityVolumeItem> = activity_rows
         .into_iter()
-        .map(|r| ActivityVolumeItem { kind: r.kind, count: r.count })
+        .map(|r| ActivityVolumeItem {
+            kind: r.kind,
+            count: r.count,
+        })
         .collect();
 
     // --- weighted_forecast: sum(amount_minor * probability / 100) for open
@@ -155,7 +197,14 @@ pub async fn report_summary(
     );
     fc_qb.push_bind(org_id);
     fc_qb.push(" AND status = 'open' AND deleted_at IS NULL AND currency = 'USD'");
-    push_owner_predicate(&mut fc_qb, deal_scope, org_id, actor, membership.team_id, membership.department_id);
+    push_owner_predicate(
+        &mut fc_qb,
+        deal_scope,
+        org_id,
+        actor,
+        membership.team_id,
+        membership.department_id,
+    );
     let forecast_rows: Vec<(i64, i32)> = fc_qb
         .build_query_as()
         .fetch_all(&mut *tx)
@@ -167,10 +216,22 @@ pub async fn report_summary(
     for (amount_minor, probability) in forecast_rows {
         let weighted = Money::new(amount_minor, usd)
             .scale_half_up(probability as i64, 100)
-            .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+            .map_err(|e| {
+                AppError::new(
+                    companyos_errors::ErrorCode::Internal,
+                    request_id.clone(),
+                    e.to_string(),
+                )
+            })?;
         weighted_total = weighted_total
             .checked_add(weighted.amount_minor)
-            .ok_or_else(|| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), "forecast overflow"))?;
+            .ok_or_else(|| {
+                AppError::new(
+                    companyos_errors::ErrorCode::Internal,
+                    request_id.clone(),
+                    "forecast overflow",
+                )
+            })?;
     }
 
     tx.commit().await.map_err(internal(&request_id))?;

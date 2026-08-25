@@ -13,7 +13,10 @@ use companyos_tenancy::set_session_org_id;
 use sqlx::{Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use super::{conflict, if_match_version, internal, is_unique_violation, not_found, parse_public_id, validation};
+use super::{
+    conflict, if_match_version, internal, is_unique_violation, not_found, parse_public_id,
+    validation,
+};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::dupes::find_customer_duplicates;
@@ -27,10 +30,15 @@ use crate::types::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/sales/customers", get(list_customers).post(create_customer))
+        .route(
+            "/api/v1/sales/customers",
+            get(list_customers).post(create_customer),
+        )
         .route(
             "/api/v1/sales/customers/{id}",
-            get(get_customer).patch(update_customer).delete(delete_customer),
+            get(get_customer)
+                .patch(update_customer)
+                .delete(delete_customer),
         )
 }
 
@@ -59,7 +67,9 @@ impl CustomerRow {
             website: self.website,
             billing_address: self.billing_address,
             notes: self.notes,
-            owner_user_id: self.owner_user_id.map(|u| PublicId::new(IdKind::User, u).as_str()),
+            owner_user_id: self
+                .owner_user_id
+                .map(|u| PublicId::new(IdKind::User, u).as_str()),
             created_at: self.created_at.to_rfc3339(),
             updated_at: self.updated_at.to_rfc3339(),
             version: self.version,
@@ -102,7 +112,11 @@ pub async fn list_customers(
 
     let membership =
         load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
-    enforce_any_scope(&membership.principal, perms::sales_customer_read(), &request_id)?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_customer_read(),
+        &request_id,
+    )?;
     let scope = scope_for_permission(&membership.principal, &perms::sales_customer_read());
 
     let (limit, offset) = super::normalize_paging(q.limit, q.offset);
@@ -110,7 +124,13 @@ pub async fn list_customers(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let mut count_qb: QueryBuilder<Postgres> =
         QueryBuilder::new("SELECT COUNT(*) FROM sales_customer WHERE org_id = ");
@@ -182,10 +202,18 @@ pub async fn create_customer(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_customer_create(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_customer_create(),
+        &request_id,
+    )?;
 
     if body.name.trim().is_empty() {
         return Err(validation(&request_id, "name must not be empty"));
@@ -202,7 +230,13 @@ pub async fn create_customer(
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     let duplicates = find_customer_duplicates(&mut tx, org_id, &body.name, body.email.as_deref())
         .await
@@ -259,7 +293,13 @@ pub async fn create_customer(
     );
     companyos_outbox::insert_event(&mut *tx, &envelope)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
 
     insert_audit(
         &mut *tx,
@@ -330,15 +370,29 @@ pub async fn get_customer(
     let org_id = auth.ctx.org_id.as_uuid();
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_customer_read(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_customer_read(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
     let row = fetch_customer_row(&mut tx, org_id, customer_id)
         .await
         .map_err(internal(&request_id))?
@@ -381,15 +435,29 @@ pub async fn update_customer(
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
     let expected_version = if_match_version(&headers);
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_customer_update(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_customer_update(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
     let row = fetch_customer_row(&mut tx, org_id, customer_id)
         .await
         .map_err(internal(&request_id))?
@@ -416,7 +484,10 @@ pub async fn update_customer(
         if expected != row.version {
             return Err(conflict(
                 &request_id,
-                format!("version mismatch: expected {expected}, current {}", row.version),
+                format!(
+                    "version mismatch: expected {expected}, current {}",
+                    row.version
+                ),
             ));
         }
     }
@@ -484,15 +555,29 @@ pub async fn delete_customer(
     let org_id = auth.ctx.org_id.as_uuid();
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, auth.ctx.actor.user_id, &request_id)
-            .await?;
-    enforce_any_scope(&membership.principal, perms::sales_customer_delete(), &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_customer_delete(),
+        &request_id,
+    )?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+        .map_err(|e| {
+            AppError::new(
+                companyos_errors::ErrorCode::Internal,
+                request_id.clone(),
+                e.to_string(),
+            )
+        })?;
     let row = fetch_customer_row(&mut tx, org_id, customer_id)
         .await
         .map_err(internal(&request_id))?

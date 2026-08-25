@@ -71,13 +71,7 @@ pub async fn ensure_default_pipeline(
     for (name, position) in &stages {
         let is_won = name.eq_ignore_ascii_case("won");
         let is_lost = name.eq_ignore_ascii_case("lost");
-        let probability: i32 = if is_won {
-            100
-        } else if is_lost {
-            0
-        } else {
-            0
-        };
+        let probability: i32 = if is_won { 100 } else { 0 };
         let stage_id = new_uuid_v7();
         let stage_public = PublicId::new(IdKind::Stage, stage_id);
         sqlx::query(
