@@ -47,7 +47,7 @@ use crate::types::*;
         CreateCommentRequest,
         CreateAttachmentRequest,
         BoardColumnDto,
-        BoardResponse,
+        TaskBoardResponse,
         CalendarEventDto,
         CalendarResponse,
         MyWorkResponse,

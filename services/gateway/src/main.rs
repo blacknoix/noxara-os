@@ -365,15 +365,7 @@ async fn proxy_operations(State(state): State<GatewayState>, req: Request) -> Re
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     // Coarse auth: authenticate only; Operations enforces operations.* permissions.
-    proxy_to(
-        &state,
-        req,
-        &upstream,
-        &state.project_url,
-        true,
-        "project",
-    )
-    .await
+    proxy_to(&state, req, &upstream, &state.project_url, true, "project").await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {

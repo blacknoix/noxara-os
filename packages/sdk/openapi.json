@@ -2443,7 +2443,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BoardResponse"
+                  "$ref": "#/components/schemas/TaskBoardResponse"
                 }
               }
             }
@@ -4363,20 +4363,18 @@
       "BoardResponse": {
         "type": "object",
         "required": [
-          "columns"
+          "pipeline",
+          "stages"
         ],
         "properties": {
-          "columns": {
+          "pipeline": {
+            "$ref": "#/components/schemas/PipelineDto"
+          },
+          "stages": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/BoardColumnDto"
+              "$ref": "#/components/schemas/BoardStage"
             }
-          },
-          "project_id": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         }
       },
@@ -7865,6 +7863,26 @@
           },
           "url": {
             "type": "string"
+          }
+        }
+      },
+      "TaskBoardResponse": {
+        "type": "object",
+        "required": [
+          "columns"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardColumnDto"
+            }
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

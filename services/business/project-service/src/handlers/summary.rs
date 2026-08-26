@@ -51,9 +51,8 @@ pub async fn get_summary(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
-    let mut open_qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        "SELECT COUNT(*) FROM operations_task WHERE org_id = ",
-    );
+    let mut open_qb: QueryBuilder<Postgres> =
+        QueryBuilder::new("SELECT COUNT(*) FROM operations_task WHERE org_id = ");
     open_qb.push_bind(org_id);
     open_qb.push(" AND deleted_at IS NULL AND status <> 'done'");
     push_owner_predicate(
@@ -84,9 +83,8 @@ pub async fn get_summary(
     .await
     .map_err(internal(&request_id))?;
 
-    let mut proj_qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        "SELECT COUNT(*) FROM operations_project WHERE org_id = ",
-    );
+    let mut proj_qb: QueryBuilder<Postgres> =
+        QueryBuilder::new("SELECT COUNT(*) FROM operations_project WHERE org_id = ");
     proj_qb.push_bind(org_id);
     proj_qb.push(" AND deleted_at IS NULL AND status = 'active'");
     push_owner_predicate(
@@ -103,9 +101,8 @@ pub async fn get_summary(
         .await
         .map_err(internal(&request_id))?;
 
-    let mut overdue_qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        "SELECT COUNT(*) FROM operations_task WHERE org_id = ",
-    );
+    let mut overdue_qb: QueryBuilder<Postgres> =
+        QueryBuilder::new("SELECT COUNT(*) FROM operations_task WHERE org_id = ");
     overdue_qb.push_bind(org_id);
     overdue_qb.push(
         " AND deleted_at IS NULL AND status <> 'done' AND due_at IS NOT NULL AND due_at < now()",

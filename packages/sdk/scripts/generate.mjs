@@ -123,7 +123,11 @@ const emit = [
   'WebhookAck',
   'ProjectDto',
   'TaskDto',
-  'BoardResponse',
+  'TaskBoardResponse',
+  'BoardColumnDto',
+  'ChecklistItemDto',
+  'TaskAttachmentDto',
+  'TaskCommentDto',
   'MyWorkResponse',
   'SummaryResponse',
 ];

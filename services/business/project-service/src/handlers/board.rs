@@ -15,7 +15,7 @@ use crate::auth::AuthCtx;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::state::AppState;
-use crate::types::{BoardColumnDto, BoardResponse, ListQuery, TASK_STATUSES};
+use crate::types::{BoardColumnDto, ListQuery, TaskBoardResponse, TASK_STATUSES};
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/api/v1/operations/board", get(get_board))
@@ -24,12 +24,12 @@ pub fn router() -> Router<AppState> {
 /// GET /api/v1/operations/board
 #[utoipa::path(get, path = "/api/v1/operations/board", tag = "operations-board",
     params(("project_id" = Option<String>, Query)),
-    responses((status = 200, body = BoardResponse)))]
+    responses((status = 200, body = TaskBoardResponse)))]
 pub async fn get_board(
     State(state): State<AppState>,
     auth: AuthCtx,
     Query(q): Query<ListQuery>,
-) -> Result<Json<BoardResponse>, AppError> {
+) -> Result<Json<TaskBoardResponse>, AppError> {
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
     let actor = auth.ctx.actor.user_id;
@@ -101,7 +101,7 @@ pub async fn get_board(
 
     tx.commit().await.map_err(internal(&request_id))?;
 
-    Ok(Json(BoardResponse {
+    Ok(Json(TaskBoardResponse {
         project_id: q.project_id.clone(),
         columns,
     }))

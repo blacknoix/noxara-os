@@ -47,11 +47,7 @@ pub fn parse_mention_user_ids(body: &str) -> Vec<Uuid> {
 
 /// Whether `principal` may read a task owned by `owner_user_id` / assigned to
 /// `assignee_id` given their membership scope.
-pub fn can_read_task(
-    principal: &Principal,
-    permission: &PermissionId,
-    required: Scope,
-) -> bool {
+pub fn can_read_task(principal: &Principal, permission: &PermissionId, required: Scope) -> bool {
     decide_with_scope(principal, permission, required).decision == Decision::Allow
 }
 
@@ -100,11 +96,13 @@ pub async fn filter_mention_recipients(
             *uid,
             scope.team_id,
             scope.department_id,
-            Some(if *uid == task_owner_user_id || Some(*uid) == task_assignee_id {
-                *uid
-            } else {
-                owner_for_scope
-            }),
+            Some(
+                if *uid == task_owner_user_id || Some(*uid) == task_assignee_id {
+                    *uid
+                } else {
+                    owner_for_scope
+                },
+            ),
         )
         .await
         .map_err(|e| {

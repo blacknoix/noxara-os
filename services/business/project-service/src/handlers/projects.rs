@@ -80,12 +80,10 @@ impl ProjectRow {
             description: self.description,
             status: self.status,
             owner_user_id: user_public(self.owner_user_id),
-            customer_id: self
-                .customer_public_id
-                .or_else(|| {
-                    self.customer_id
-                        .map(|u| PublicId::new(IdKind::Customer, u).as_str())
-                }),
+            customer_id: self.customer_public_id.or_else(|| {
+                self.customer_id
+                    .map(|u| PublicId::new(IdKind::Customer, u).as_str())
+            }),
             deal_id: self.deal_public_id.or_else(|| {
                 self.deal_id
                     .map(|u| PublicId::new(IdKind::Deal, u).as_str())

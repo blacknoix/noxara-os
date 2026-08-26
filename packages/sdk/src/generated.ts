@@ -354,8 +354,8 @@ export type LeadDto = {
 };
 
 export type BoardResponse = {
-  columns: BoardColumnDto[];
-  project_id?: string;
+  pipeline: PipelineDto;
+  stages: BoardStage[];
 };
 
 export type BoardStage = {
@@ -692,9 +692,38 @@ export type TaskDto = {
   version: number;
 };
 
-export type BoardResponse = {
+export type TaskBoardResponse = {
   columns: BoardColumnDto[];
   project_id?: string;
+};
+
+export type BoardColumnDto = {
+  status: string;
+  tasks: TaskDto[];
+};
+
+export type ChecklistItemDto = {
+  id: string;
+  is_done: boolean;
+  position: number;
+  title: string;
+};
+
+export type TaskAttachmentDto = {
+  byte_size?: string;
+  content_type?: string;
+  created_at: string;
+  file_name: string;
+  id: string;
+  url: string;
+};
+
+export type TaskCommentDto = {
+  author_user_id: string;
+  body: string;
+  created_at: string;
+  id: string;
+  mentioned_user_ids: string[];
 };
 
 export type MyWorkResponse = {

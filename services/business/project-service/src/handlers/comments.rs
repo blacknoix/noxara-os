@@ -203,10 +203,9 @@ pub async fn create_comment(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status_code, stored)) =
-            idempotency::get(&mut *tx, org_id, "task.comment", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status_code, stored)) = idempotency::get(&mut *tx, org_id, "task.comment", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status_code as u16).unwrap_or(StatusCode::CREATED);

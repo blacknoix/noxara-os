@@ -16,8 +16,8 @@ use uuid::Uuid;
 
 use super::projects::project_exists;
 use super::{
-    conflict, internal, not_found, parse_public_id, parse_user_ref, require_if_match, user_public,
-    validation, normalize_paging,
+    conflict, internal, normalize_paging, not_found, parse_public_id, parse_user_ref,
+    require_if_match, user_public, validation,
 };
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
@@ -30,7 +30,8 @@ use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::state::AppState;
 use crate::types::{
     ChecklistItemDto, CreateAttachmentRequest, CreateTaskRequest, ListQuery, MoveTaskRequest,
-    TaskAttachmentDto, TaskDto, TaskListResponse, UpdateTaskRequest, TASK_PRIORITIES, TASK_STATUSES,
+    TaskAttachmentDto, TaskDto, TaskListResponse, UpdateTaskRequest, TASK_PRIORITIES,
+    TASK_STATUSES,
 };
 
 pub fn router() -> Router<AppState> {
@@ -43,7 +44,10 @@ pub fn router() -> Router<AppState> {
             "/api/v1/operations/tasks/{id}",
             get(get_task).patch(update_task).delete(delete_task),
         )
-        .route("/api/v1/operations/tasks/{id}/move", axum::routing::post(move_task))
+        .route(
+            "/api/v1/operations/tasks/{id}/move",
+            axum::routing::post(move_task),
+        )
         .route(
             "/api/v1/operations/tasks/{id}/attachments",
             axum::routing::post(create_attachment),
@@ -178,19 +182,26 @@ async fn load_attachments(
     org_id: Uuid,
     task_id: Uuid,
 ) -> Result<Vec<TaskAttachmentDto>, sqlx::Error> {
-    let rows: Vec<(Uuid, String, Option<String>, Option<i64>, String, DateTime<Utc>)> =
-        sqlx::query_as(
-            r#"
+    type AttachmentRow = (
+        Uuid,
+        String,
+        Option<String>,
+        Option<i64>,
+        String,
+        DateTime<Utc>,
+    );
+    let rows: Vec<AttachmentRow> = sqlx::query_as(
+        r#"
             SELECT id, file_name, content_type, byte_size, url, created_at
             FROM operations_task_attachment
             WHERE org_id = $1 AND task_id = $2 AND deleted_at IS NULL
             ORDER BY created_at ASC
             "#,
-        )
-        .bind(org_id)
-        .bind(task_id)
-        .fetch_all(&mut **tx)
-        .await?;
+    )
+    .bind(org_id)
+    .bind(task_id)
+    .fetch_all(&mut **tx)
+    .await?;
     Ok(rows
         .into_iter()
         .map(
@@ -558,10 +569,9 @@ pub async fn create_task(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status_code, stored)) =
-            idempotency::get(&mut *tx, org_id, "task.create", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status_code, stored)) = idempotency::get(&mut *tx, org_id, "task.create", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status_code as u16).unwrap_or(StatusCode::CREATED);
@@ -1027,10 +1037,9 @@ pub async fn move_task(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status_code, stored)) =
-            idempotency::get(&mut *tx, org_id, "task.move", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status_code, stored)) = idempotency::get(&mut *tx, org_id, "task.move", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status_code as u16).unwrap_or(StatusCode::OK);

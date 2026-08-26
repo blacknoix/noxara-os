@@ -747,7 +747,10 @@ async fn build_operations_widgets(
         }
     };
 
-    let my_open = body.get("my_open_tasks").and_then(|v| v.as_i64()).unwrap_or(0);
+    let my_open = body
+        .get("my_open_tasks")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0);
     let open_tasks = body.get("open_tasks").and_then(|v| v.as_i64()).unwrap_or(0);
     let overdue = body.get("overdue").and_then(|v| v.as_i64()).unwrap_or(0);
 

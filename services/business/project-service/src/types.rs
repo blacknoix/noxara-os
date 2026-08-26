@@ -175,7 +175,7 @@ pub struct BoardColumnDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct BoardResponse {
+pub struct TaskBoardResponse {
     pub project_id: Option<String>,
     pub columns: Vec<BoardColumnDto>,
 }

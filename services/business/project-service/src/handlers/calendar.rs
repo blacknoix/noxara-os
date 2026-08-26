@@ -58,10 +58,9 @@ pub async fn get_calendar(
         .from
         .as_deref()
         .ok_or_else(|| validation(&request_id, "from is required"))?;
-    let to_raw = q
-        .to
-        .as_deref()
-        .ok_or_else(|| validation(&request_id, "to is required"))?;
+    let to_raw =
+        q.to.as_deref()
+            .ok_or_else(|| validation(&request_id, "to is required"))?;
     let from = parse_range_bound(from_raw, "from", &request_id)?;
     let to = parse_range_bound(to_raw, "to", &request_id)?;
     if to < from {

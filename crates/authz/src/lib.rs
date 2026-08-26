@@ -162,7 +162,6 @@ impl Role {
                 perms::finance_report_read(),
                 perms::finance_customer_read(),
                 perms::finance_ledger_read(),
-                // Finance has no operations.* by default (mentions/authz isolation).
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),

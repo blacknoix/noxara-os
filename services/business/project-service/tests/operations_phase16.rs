@@ -829,7 +829,9 @@ async fn task_events_outbox() {
 
     let joined: Vec<&str> = subjects.iter().map(|(s,)| s.as_str()).collect();
     assert!(
-        joined.iter().any(|s| s.contains("operations.task.created.v1")),
+        joined
+            .iter()
+            .any(|s| s.contains("operations.task.created.v1")),
         "missing created: {joined:?}"
     );
     assert!(
