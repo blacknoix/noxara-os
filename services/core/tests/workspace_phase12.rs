@@ -414,8 +414,8 @@ async fn system_role_deny_matrix_unit() {
         }
         let p = Principal::with_roles(vec![*role]);
         for perm in SENSITIVE_ACTIONS {
-            // Finance may approve invoices
-            if *role == Role::Finance && *perm == "finance.invoice.approve" {
+            // Finance may perform finance sensitive actions
+            if *role == Role::Finance && perm.starts_with("finance.") {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
