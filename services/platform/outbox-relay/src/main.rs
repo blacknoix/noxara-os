@@ -12,7 +12,10 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
-#[command(name = "companyos-outbox-relay", about = "Outbox → NATS JetStream relay")]
+#[command(
+    name = "companyos-outbox-relay",
+    about = "Outbox → NATS JetStream relay"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,

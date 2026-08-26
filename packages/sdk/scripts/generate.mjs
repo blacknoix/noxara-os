@@ -130,6 +130,12 @@ const emit = [
   'TaskCommentDto',
   'MyWorkResponse',
   'SummaryResponse',
+  'NotificationItemDto',
+  'FeedResponse',
+  'SearchHit',
+  'PresignUploadRequest',
+  'PresignUploadResponse',
+  'FileMetaResponse',
 ];
 
 const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Run pnpm generate:sdk */\n`;

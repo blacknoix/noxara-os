@@ -25,9 +25,10 @@ pub async fn reindex(
     Json(body): Json<ReindexRequest>,
 ) -> Result<Json<ReindexResponse>, AppError> {
     let request_id = auth.ctx.request_id.clone();
-    let org_public: PublicId = body.org_id.parse().map_err(|_| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid org_id")
-    })?;
+    let org_public: PublicId = body
+        .org_id
+        .parse()
+        .map_err(|_| AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid org_id"))?;
     let org_id = OrgId::from_public(&org_public).map_err(|_| {
         AppError::new(
             ErrorCode::ValidationFailed,
@@ -47,11 +48,7 @@ pub async fn reindex(
     if !auth.local_bypass {
         let (principal, _, _) =
             load_principal(&state.pool, org_id, auth.ctx.actor.user_id, &request_id).await?;
-        enforce(
-            &principal,
-            perms::platform_search_reindex(),
-            &request_id,
-        )?;
+        enforce(&principal, perms::platform_search_reindex(), &request_id)?;
     }
 
     let job_id = new_uuid_v7();

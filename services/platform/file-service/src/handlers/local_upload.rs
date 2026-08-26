@@ -16,9 +16,7 @@ use crate::auth::AuthCtx;
 use crate::state::AppState;
 
 fn storage_root() -> PathBuf {
-    PathBuf::from(
-        std::env::var("FILE_LOCAL_ROOT").unwrap_or_else(|_| ".tmp/files".into()),
-    )
+    PathBuf::from(std::env::var("FILE_LOCAL_ROOT").unwrap_or_else(|_| ".tmp/files".into()))
 }
 
 #[utoipa::path(
@@ -46,14 +44,13 @@ pub async fn local_upload(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    let row: Option<(String,)> = sqlx::query_as(
-        "SELECT object_key FROM file_object WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id.as_uuid())
-    .bind(&id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    let row: Option<(String,)> =
+        sqlx::query_as("SELECT object_key FROM file_object WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id.as_uuid())
+            .bind(&id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
     tx.commit()
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;

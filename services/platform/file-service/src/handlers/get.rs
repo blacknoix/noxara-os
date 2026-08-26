@@ -71,7 +71,9 @@ pub async fn get_file(
             urlencoding::encode(&object_key)
         )
     } else {
-        format!("http://127.0.0.1:8089/api/v1/files/local-download/{file_id}?disposition=attachment")
+        format!(
+            "http://127.0.0.1:8089/api/v1/files/local-download/{file_id}?disposition=attachment"
+        )
     };
 
     Ok(Json(FileMetaResponse {

@@ -1,8 +1,8 @@
 //! SSE token for gateway proxy (stub).
 
 use axum::Json;
-use companyos_ids::new_uuid_v7;
 use companyos_errors::AppError;
+use companyos_ids::new_uuid_v7;
 
 use crate::auth::AuthCtx;
 use crate::types::SseTokenResponse;

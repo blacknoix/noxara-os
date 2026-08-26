@@ -36,18 +36,17 @@ pub async fn invoice_issued(
             "org_id query parameter is required",
         )
     })?;
-    let org = OrgId::from_public(
-        &org_raw
-            .parse::<PublicId>()
-            .map_err(|_| AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid org_id"))?,
-    )
-    .map_err(|_| {
-        AppError::new(
-            ErrorCode::ValidationFailed,
-            &request_id,
-            "org_id must be org_…",
-        )
-    })?;
+    let org =
+        OrgId::from_public(&org_raw.parse::<PublicId>().map_err(|_| {
+            AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid org_id")
+        })?)
+        .map_err(|_| {
+            AppError::new(
+                ErrorCode::ValidationFailed,
+                &request_id,
+                "org_id must be org_…",
+            )
+        })?;
 
     if auth.ctx.org_id != org {
         return Err(AppError::new(
@@ -60,11 +59,7 @@ pub async fn invoice_issued(
     if !auth.local_bypass {
         let (principal, _, _) =
             load_principal(&state.pool, org, auth.ctx.actor.user_id, &request_id).await?;
-        enforce(
-            &principal,
-            perms::platform_analytics_read(),
-            &request_id,
-        )?;
+        enforce(&principal, perms::platform_analytics_read(), &request_id)?;
     }
 
     let mut tx = state

@@ -155,6 +155,7 @@ async fn seed(secret: &str) -> Option<Seeded> {
     let finance_id = insert_member_with_role(&pool, org, "finance", "Finance").await;
 
     let mut tx = pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, org).await.unwrap();
     let (owner_mem, owner_pol): (Uuid, i64) = sqlx::query_as(
         "SELECT id, policy_version FROM membership WHERE org_id = $1 AND user_id = $2",
     )

@@ -2,8 +2,8 @@
 
 use axum::extract::State;
 use axum::Json;
-use companyos_events::EventEnvelope;
 use companyos_errors::{AppError, ErrorCode};
+use companyos_events::EventEnvelope;
 use companyos_ids::new_uuid_v7;
 
 use crate::mapping::doc_type_from_aggregate;

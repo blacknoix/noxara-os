@@ -18,7 +18,9 @@ impl AppState {
         Self {
             pool,
             keyring,
-            minio_endpoint: std::env::var("MINIO_ENDPOINT").ok().filter(|s| !s.is_empty()),
+            minio_endpoint: std::env::var("MINIO_ENDPOINT")
+                .ok()
+                .filter(|s| !s.is_empty()),
             minio_access_key: std::env::var("MINIO_ACCESS_KEY")
                 .unwrap_or_else(|_| "minioadmin".into()),
             minio_secret_key: std::env::var("MINIO_SECRET_KEY")

@@ -456,6 +456,7 @@ async fn proxy_auth(State(state): State<GatewayState>, req: Request) -> Response
 ///
 /// Subscribes to Redis `companyos:notifications:{org_id}:{user_id}` when
 /// `REDIS_URL` is set; otherwise polls the notification feed / sends keepalives.
+#[allow(clippy::result_large_err)]
 async fn notifications_stream(
     State(state): State<GatewayState>,
     req: Request,

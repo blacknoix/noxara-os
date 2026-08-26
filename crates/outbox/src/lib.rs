@@ -118,7 +118,15 @@ pub async fn migrate(pool: &sqlx::PgPool) -> Result<(), OutboxError> {
         include_str!("../migrations/002_outbox_relay.sql"),
     ] {
         for stmt in split_sql(sql) {
-            sqlx::query(&stmt).execute(pool).await?;
+            // Concurrent `CREATE TABLE IF NOT EXISTS` can race on pg_type;
+            // treat duplicate_object / unique_violation as success.
+            match sqlx::query(&stmt).execute(pool).await {
+                Ok(_) => {}
+                Err(sqlx::Error::Database(e))
+                    if e.code().as_deref() == Some("23505")
+                        || e.code().as_deref() == Some("42710") => {}
+                Err(e) => return Err(OutboxError::Db(e)),
+            }
         }
     }
     Ok(())

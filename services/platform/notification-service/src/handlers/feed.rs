@@ -28,11 +28,7 @@ pub async fn feed(
 
     if !auth.local_bypass {
         let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
-        enforce(
-            &principal,
-            perms::platform_notification_read(),
-            &request_id,
-        )?;
+        enforce(&principal, perms::platform_notification_read(), &request_id)?;
     }
 
     let mut tx = state
@@ -120,11 +116,7 @@ pub async fn mark_read(
 
     if !auth.local_bypass {
         let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
-        enforce(
-            &principal,
-            perms::platform_notification_read(),
-            &request_id,
-        )?;
+        enforce(&principal, perms::platform_notification_read(), &request_id)?;
     }
 
     let mut tx = state

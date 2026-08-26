@@ -3342,6 +3342,327 @@
           }
         }
       }
+    },
+    "/api/v1/notifications/feed": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "operationId": "feed",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/internal/ingest": {
+      "post": {
+        "tags": [
+          "notifications-internal"
+        ],
+        "operationId": "ingest",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/preferences": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "operationId": "get_preferences",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "operationId": "put_preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutPreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/sse-token": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "operationId": "sse_token",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "operationId": "mark_read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "notification public id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/internal/ingest": {
+      "post": {
+        "tags": [
+          "search-internal"
+        ],
+        "operationId": "ingest",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/query": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "query",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "search text",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "org_id",
+            "in": "query",
+            "description": "required tenant org public id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/reindex": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "reindex",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReindexRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReindexResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/presign-upload": {
+      "post": {
+        "tags": [
+          "files"
+        ],
+        "operationId": "presign_upload",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignUploadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/{id}": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "operationId": "get_file",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "file public id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileMetaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/{id}/complete": {
+      "post": {
+        "tags": [
+          "files"
+        ],
+        "operationId": "complete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "file public id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9163,6 +9484,302 @@
             ]
           }
         }
+      },
+      "FeedResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationItemDto"
+            }
+          }
+        }
+      },
+      "IngestResponse": {
+        "type": "object",
+        "required": [
+          "upserted"
+        ],
+        "properties": {
+          "upserted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationItemDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "body",
+          "created_at"
+        ],
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "read_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resource_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resource_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "PreferenceDto": {
+        "type": "object",
+        "required": [
+          "channel",
+          "enabled"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "digest_cron": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "quiet_hours_end": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quiet_hours_start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PreferencesResponse": {
+        "type": "object",
+        "required": [
+          "preferences"
+        ],
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferenceDto"
+            }
+          }
+        }
+      },
+      "PutPreferencesRequest": {
+        "type": "object",
+        "required": [
+          "preferences"
+        ],
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferenceDto"
+            }
+          }
+        }
+      },
+      "SseTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "expires_in_secs"
+        ],
+        "properties": {
+          "expires_in_secs": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "token": {
+            "type": "string",
+            "description": "Opaque token for gateway SSE proxy (Phase 1.8 stub)."
+          }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "required": [
+          "hits"
+        ],
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            }
+          }
+        }
+      },
+      "ReindexRequest": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ReindexResponse": {
+        "type": "object",
+        "required": [
+          "job_id",
+          "status"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "SearchHit": {
+        "type": "object",
+        "required": [
+          "doc_id",
+          "doc_type",
+          "title",
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "doc_id": {
+            "type": "string"
+          },
+          "doc_type": {
+            "type": "string"
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "FileMetaResponse": {
+        "type": "object",
+        "required": [
+          "file_id",
+          "content_type",
+          "size_bytes",
+          "status",
+          "download_url"
+        ],
+        "properties": {
+          "content_type": {
+            "type": "string"
+          },
+          "download_url": {
+            "type": "string",
+            "description": "Download URL. Clients SHOULD set `Content-Disposition: attachment`\nwhen proxying to force download rather than inline render."
+          },
+          "file_id": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PresignUploadRequest": {
+        "type": "object",
+        "required": [
+          "filename",
+          "content_type",
+          "size_bytes"
+        ],
+        "properties": {
+          "content_type": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PresignUploadResponse": {
+        "type": "object",
+        "required": [
+          "upload_url",
+          "file_id",
+          "headers"
+        ],
+        "properties": {
+          "file_id": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "upload_url": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -9294,6 +9911,26 @@
     {
       "name": "operations-approvals",
       "description": "Approval engine (Phase 1.7)"
+    },
+    {
+      "name": "notifications",
+      "description": "In-app notification feed and preferences"
+    },
+    {
+      "name": "notifications-internal",
+      "description": "Event ingest (service-to-service)"
+    },
+    {
+      "name": "search",
+      "description": "Tenant-scoped search"
+    },
+    {
+      "name": "search-internal",
+      "description": "Event ingest"
+    },
+    {
+      "name": "files",
+      "description": "Presigned upload and file metadata"
     }
   ]
 }

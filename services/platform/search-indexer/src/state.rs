@@ -30,7 +30,9 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(pool: PgPool, keyring: KeyRing) -> Self {
-        let opensearch_url = std::env::var("OPENSEARCH_URL").ok().filter(|s| !s.is_empty());
+        let opensearch_url = std::env::var("OPENSEARCH_URL")
+            .ok()
+            .filter(|s| !s.is_empty());
         Self {
             pool,
             keyring,

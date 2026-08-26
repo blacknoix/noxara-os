@@ -39,14 +39,13 @@ pub async fn complete(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    let result = sqlx::query(
-        "UPDATE file_object SET status = 'ready' WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id.as_uuid())
-    .bind(&id)
-    .execute(&mut *tx)
-    .await
-    .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    let result =
+        sqlx::query("UPDATE file_object SET status = 'ready' WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id.as_uuid())
+            .bind(&id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     if result.rows_affected() == 0 {
         return Err(AppError::new(

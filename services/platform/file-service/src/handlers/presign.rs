@@ -34,9 +34,8 @@ pub async fn presign_upload(
         enforce(&principal, perms::platform_file_create(), &request_id)?;
     }
 
-    validate_upload(&body.content_type, body.size_bytes).map_err(|e| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, e)
-    })?;
+    validate_upload(&body.content_type, body.size_bytes)
+        .map_err(|e| AppError::new(ErrorCode::ValidationFailed, &request_id, e))?;
 
     let id = new_uuid_v7();
     let public_id = format!("fil_{}", id.simple());
@@ -95,9 +94,7 @@ pub async fn presign_upload(
             900,
         ) {
             Ok(url) => url,
-            Err(_) => format!(
-                "http://127.0.0.1:8089/api/v1/files/local-upload/{public_id}"
-            ),
+            Err(_) => format!("http://127.0.0.1:8089/api/v1/files/local-upload/{public_id}"),
         }
     } else {
         format!("http://127.0.0.1:8089/api/v1/files/local-upload/{public_id}")

@@ -9,10 +9,7 @@ use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/api/v1/analytics/internal/ingest",
-            post(ingest::ingest),
-        )
+        .route("/api/v1/analytics/internal/ingest", post(ingest::ingest))
         .route(
             "/api/v1/analytics/facts/invoice-issued",
             get(facts::invoice_issued),

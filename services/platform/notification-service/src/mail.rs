@@ -20,9 +20,6 @@ pub async fn send_email(to: &str, subject: &str, body: &str) -> Result<(), Strin
         to.replace('@', "_at_")
     );
     let path = dir.join(name);
-    let _ = fs::write(
-        &path,
-        format!("To: {to}\nSubject: {subject}\n\n{body}\n"),
-    );
+    let _ = fs::write(&path, format!("To: {to}\nSubject: {subject}\n\n{body}\n"));
     Ok(())
 }

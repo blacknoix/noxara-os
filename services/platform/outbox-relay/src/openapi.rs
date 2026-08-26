@@ -4,7 +4,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use utoipa::OpenApi;
 
-use crate::metrics_api::{MetricsResponse, HttpState};
+use crate::metrics_api::{HttpState, MetricsResponse};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -20,10 +20,7 @@ use crate::metrics_api::{MetricsResponse, HttpState};
 pub struct ApiDoc;
 
 pub fn router() -> Router<HttpState> {
-    Router::new().route(
-        "/openapi.json",
-        get(|| async { Json(ApiDoc::openapi()) }),
-    )
+    Router::new().route("/openapi.json", get(|| async { Json(ApiDoc::openapi()) }))
 }
 
 pub fn openapi_json() -> String {

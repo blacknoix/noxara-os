@@ -131,11 +131,10 @@ pub async fn claim_unpublished(
 pub async fn unpublished_lag(pool: &PgPool) -> Result<u64, OutboxError> {
     let mut tx = pool.begin().await?;
     set_relay_session(&mut tx).await?;
-    let (count,): (i64,) = sqlx::query_as(
-        "SELECT COUNT(*)::bigint FROM outbox_event WHERE published_at IS NULL",
-    )
-    .fetch_one(&mut *tx)
-    .await?;
+    let (count,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*)::bigint FROM outbox_event WHERE published_at IS NULL")
+            .fetch_one(&mut *tx)
+            .await?;
     tx.commit().await?;
     Ok(count as u64)
 }
@@ -207,10 +206,7 @@ pub struct DlqRow {
     pub replayed_at: Option<DateTime<Utc>>,
 }
 
-pub async fn list_unreplayed_dlq(
-    pool: &PgPool,
-    limit: i64,
-) -> Result<Vec<DlqRow>, OutboxError> {
+pub async fn list_unreplayed_dlq(pool: &PgPool, limit: i64) -> Result<Vec<DlqRow>, OutboxError> {
     let mut tx = pool.begin().await?;
     set_relay_session(&mut tx).await?;
     let rows: Vec<DlqRow> = sqlx::query_as(
@@ -246,7 +242,9 @@ pub async fn replay_dlq_row(pool: &PgPool, dlq_id: Uuid) -> Result<Uuid, OutboxE
         return Err(OutboxError::Relay(format!("dlq row {dlq_id} not found")));
     };
     if row.replayed_at.is_some() {
-        return Err(OutboxError::Relay(format!("dlq row {dlq_id} already replayed")));
+        return Err(OutboxError::Relay(format!(
+            "dlq row {dlq_id} already replayed"
+        )));
     }
     let new_id = companyos_ids::new_uuid_v7();
     sqlx::query(
@@ -287,8 +285,8 @@ pub async fn publish_batch(
     // Hold locks while publishing (at-least-once: crash before commit → retry).
     let mut published = 0usize;
     for event in &batch {
-        let bytes = serde_json::to_vec(&event.payload)
-            .map_err(|e| OutboxError::Relay(e.to_string()))?;
+        let bytes =
+            serde_json::to_vec(&event.payload).map_err(|e| OutboxError::Relay(e.to_string()))?;
         let mut last_err = None;
         for attempt in 1..=max_attempts_before_dlq {
             match publisher.publish(&event.subject, &bytes).await {

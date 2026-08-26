@@ -10,7 +10,10 @@ use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/files/presign-upload", post(presign::presign_upload))
+        .route(
+            "/api/v1/files/presign-upload",
+            post(presign::presign_upload),
+        )
         .route(
             "/api/v1/files/local-upload/{id}",
             put(local_upload::local_upload),

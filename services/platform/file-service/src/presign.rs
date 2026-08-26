@@ -47,10 +47,21 @@ pub fn presign_put_object(
     let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
     let credential = format!("{access_key}/{credential_scope}");
 
-    let canonical_uri = format!("/{}/{}", bucket, object_key.split('/').map(urlencoding::encode).collect::<Vec<_>>().join("/"));
+    let canonical_uri = format!(
+        "/{}/{}",
+        bucket,
+        object_key
+            .split('/')
+            .map(urlencoding::encode)
+            .collect::<Vec<_>>()
+            .join("/")
+    );
 
-    let mut query = vec![
-        ("X-Amz-Algorithm".to_string(), "AWS4-HMAC-SHA256".to_string()),
+    let mut query = [
+        (
+            "X-Amz-Algorithm".to_string(),
+            "AWS4-HMAC-SHA256".to_string(),
+        ),
         ("X-Amz-Credential".to_string(), credential),
         ("X-Amz-Date".to_string(), amz_date.clone()),
         ("X-Amz-Expires".to_string(), expires_secs.to_string()),

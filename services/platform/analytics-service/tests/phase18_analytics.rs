@@ -3,8 +3,8 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::Router;
-use companyos_auth_token::KeyRing;
 use companyos_analytics::state::AppState;
+use companyos_auth_token::KeyRing;
 use companyos_events::{Context, EventEnvelope};
 use companyos_ids::new_uuid_v7;
 use companyos_tenancy::{Actor, OrgId};
@@ -43,7 +43,8 @@ async fn facts_only_from_events_and_reconcile() {
     let org_pub = org.to_public().as_str();
     let user = format!("usr_{}", new_uuid_v7().simple());
     // Use a proper usr_ public id for local auth.
-    let user_pub = companyos_ids::PublicId::new(companyos_ids::IdKind::User, new_uuid_v7()).as_str();
+    let user_pub =
+        companyos_ids::PublicId::new(companyos_ids::IdKind::User, new_uuid_v7()).as_str();
 
     // Non-invoice event must not create a fact.
     let other = EventEnvelope::new(
@@ -68,7 +69,8 @@ async fn facts_only_from_events_and_reconcile() {
         .await
         .unwrap();
     assert_eq!(r.status(), StatusCode::OK);
-    let b: Value = serde_json::from_slice(&r.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let b: Value =
+        serde_json::from_slice(&r.into_body().collect().await.unwrap().to_bytes()).unwrap();
     assert_eq!(b["accepted"], false);
 
     // Two invoice.issued events → two facts.

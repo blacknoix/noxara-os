@@ -43,13 +43,13 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
             "message": "hi"
         }),
         ("customer", "created") => serde_json::json!({ "customer_id": "cus_test" }),
-        ("deal", "created") => serde_json::json!({ "deal_id": "dea_test" }),
-        ("invoice", "issued") => serde_json::json!({ "invoice_id": "inv_test" }),
+        ("deal", "created" | "won") => serde_json::json!({ "deal_id": "dea_test" }),
+        ("invoice", "issued" | "paid") => serde_json::json!({ "invoice_id": "inv_test" }),
         ("expense", "submitted") => serde_json::json!({ "expense_id": "exp_test" }),
         ("project", "created") => serde_json::json!({ "project_id": "prj_test" }),
-        ("task", "created") => serde_json::json!({ "task_id": "tsk_test" }),
-        ("approval", "requested") => serde_json::json!({ "approval_id": "apr_test" }),
-        _ => serde_json::json!({}),
+        ("task", "created" | "completed") => serde_json::json!({ "task_id": "tsk_test" }),
+        ("approval", "requested" | "decided") => serde_json::json!({ "approval_id": "apr_test" }),
+        _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }
 
@@ -73,13 +73,13 @@ fn assert_envelope_matches_schema(schema: &Value, envelope: &EventEnvelope) {
         .expect("schema.required");
     for key in required {
         let k = key.as_str().expect("required key string");
-        assert!(
-            wire.get(k).is_some(),
-            "envelope missing required field {k}"
-        );
+        assert!(wire.get(k).is_some(), "envelope missing required field {k}");
     }
 
-    if let Some(ctx) = schema.pointer("/properties/context/const").and_then(|v| v.as_str()) {
+    if let Some(ctx) = schema
+        .pointer("/properties/context/const")
+        .and_then(|v| v.as_str())
+    {
         assert_eq!(envelope.context.as_str(), ctx);
     }
     if let Some(agg) = schema
@@ -171,6 +171,26 @@ fn contract_operations_task_created_v1() {
 #[test]
 fn contract_operations_approval_requested_v1() {
     load_and_check("operations.approval.requested.v1");
+}
+
+#[test]
+fn contract_sales_deal_won_v1() {
+    load_and_check("sales.deal.won.v1");
+}
+
+#[test]
+fn contract_finance_invoice_paid_v1() {
+    load_and_check("finance.invoice.paid.v1");
+}
+
+#[test]
+fn contract_operations_approval_decided_v1() {
+    load_and_check("operations.approval.decided.v1");
+}
+
+#[test]
+fn contract_operations_task_completed_v1() {
+    load_and_check("operations.task.completed.v1");
 }
 
 #[test]

@@ -3,8 +3,8 @@
 use axum::extract::State;
 use axum::Json;
 use chrono::{NaiveTime, Timelike, Utc};
-use companyos_events::EventEnvelope;
 use companyos_errors::{AppError, ErrorCode};
+use companyos_events::EventEnvelope;
 use companyos_ids::new_uuid_v7;
 use companyos_tenancy::{set_session_org_id, OrgId};
 use sqlx::{Postgres, Transaction};
@@ -62,12 +62,13 @@ pub async fn ingest(
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     // Idempotency: skip if already processed.
-    let existing: Option<(String,)> =
-        sqlx::query_as("SELECT idempotency_key FROM notification_processed WHERE idempotency_key = $1")
-            .bind(&envelope.idempotency_key)
-            .fetch_optional(&mut *tx)
-            .await
-            .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    let existing: Option<(String,)> = sqlx::query_as(
+        "SELECT idempotency_key FROM notification_processed WHERE idempotency_key = $1",
+    )
+    .bind(&envelope.idempotency_key)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     if existing.is_some() {
         tx.commit()

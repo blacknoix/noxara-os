@@ -24,10 +24,7 @@ pub struct ApiDoc;
 fn health_doc() {}
 
 pub fn router() -> Router {
-    Router::new().route(
-        "/openapi.json",
-        get(|| async { Json(ApiDoc::openapi()) }),
-    )
+    Router::new().route("/openapi.json", get(|| async { Json(ApiDoc::openapi()) }))
 }
 
 pub fn openapi_json() -> String {

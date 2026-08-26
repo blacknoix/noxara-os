@@ -4,8 +4,8 @@
 
 use axum::extract::State;
 use axum::Json;
-use companyos_events::{Context, EventEnvelope};
 use companyos_errors::{AppError, ErrorCode};
+use companyos_events::{Context, EventEnvelope};
 use companyos_tenancy::set_session_org_id;
 use sqlx::{Postgres, Transaction};
 

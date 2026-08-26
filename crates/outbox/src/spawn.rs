@@ -30,15 +30,7 @@ pub fn spawn_embedded_relay_if_configured(pool: PgPool) -> bool {
     let metrics = Arc::new(RelayMetrics::default());
     let publisher: Arc<dyn relay::EventPublisher> = Arc::new(MemoryPublisher::new());
     tokio::spawn(async move {
-        relay::run_relay_loop(
-            pool,
-            publisher,
-            metrics,
-            Duration::from_secs(2),
-            50,
-            100,
-        )
-        .await;
+        relay::run_relay_loop(pool, publisher, metrics, Duration::from_secs(2), 50, 100).await;
     });
     true
 }

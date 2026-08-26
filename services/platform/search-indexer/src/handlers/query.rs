@@ -49,9 +49,9 @@ pub async fn query(
             )
         })?;
 
-    let org_public: PublicId = org_raw.parse().map_err(|_| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid org_id")
-    })?;
+    let org_public: PublicId = org_raw
+        .parse()
+        .map_err(|_| AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid org_id"))?;
     let org_id = OrgId::from_public(&org_public).map_err(|_| {
         AppError::new(
             ErrorCode::ValidationFailed,
@@ -72,13 +72,8 @@ pub async fn query(
     let principal = if auth.local_bypass {
         companyos_authz::Principal::with_roles(vec![companyos_authz::Role::Owner])
     } else {
-        let (principal, _, _) =
-            load_principal(&state.pool, org_id, user_id, &request_id).await?;
-        enforce(
-            &principal,
-            perms::platform_search_read(),
-            &request_id,
-        )?;
+        let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
+        enforce(&principal, perms::platform_search_read(), &request_id)?;
         principal
     };
 

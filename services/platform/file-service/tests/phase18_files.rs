@@ -106,10 +106,7 @@ async fn reject_bad_content_type_and_tenant_isolation() {
             Request::builder()
                 .method("GET")
                 .uri(format!("/api/v1/files/{file_id}"))
-                .header(
-                    "x-companyos-dev-org-id",
-                    org_b.to_public().as_str(),
-                )
+                .header("x-companyos-dev-org-id", org_b.to_public().as_str())
                 .header("x-companyos-dev-user-id", &user_b)
                 .header("x-request-id", "cross")
                 .body(Body::empty())

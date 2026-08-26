@@ -16,7 +16,9 @@ impl AppState {
         Self {
             pool,
             keyring,
-            clickhouse_url: std::env::var("CLICKHOUSE_URL").ok().filter(|s| !s.is_empty()),
+            clickhouse_url: std::env::var("CLICKHOUSE_URL")
+                .ok()
+                .filter(|s| !s.is_empty()),
             http: reqwest::Client::new(),
         }
     }

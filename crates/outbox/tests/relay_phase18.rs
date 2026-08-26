@@ -2,12 +2,13 @@
 //!
 //! Skips when `TEST_DATABASE_URL` / `DATABASE_URL` is unset.
 
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use companyos_events::{Context, EventEnvelope};
 use companyos_outbox::relay::{self, MemoryPublisher, RelayMetrics};
 use companyos_outbox::{insert_event, migrate};
 use companyos_tenancy::{set_session_org_id, Actor, OrgId};
+use tokio::sync::Mutex;
 use uuid::Uuid;
 
 fn test_db_url() -> Option<String> {
@@ -25,13 +26,23 @@ async fn connect() -> Option<sqlx::PgPool> {
         .ok()
 }
 
+fn migrate_lock() -> &'static Mutex<()> {
+    static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    LOCK.get_or_init(|| Mutex::new(()))
+}
+
+async fn migrate_serial(pool: &sqlx::PgPool) {
+    let _g = migrate_lock().lock().await;
+    migrate(pool).await.expect("migrate");
+}
+
 #[tokio::test]
 async fn relay_once_publishes_with_memory_publisher() {
     let Some(pool) = connect().await else {
         eprintln!("skip relay_once_publishes — no TEST_DATABASE_URL");
         return;
     };
-    migrate(&pool).await.expect("migrate");
+    migrate_serial(&pool).await;
 
     let org = OrgId::generate();
     let mut tx = pool.begin().await.unwrap();
@@ -97,7 +108,7 @@ async fn force_fail_moves_to_dlq_then_replay() {
         eprintln!("skip force_fail_moves_to_dlq_then_replay — no TEST_DATABASE_URL");
         return;
     };
-    migrate(&pool).await.expect("migrate");
+    migrate_serial(&pool).await;
 
     let org = OrgId::generate();
     let mut tx = pool.begin().await.unwrap();
@@ -147,8 +158,6 @@ async fn spawn_helper_respects_env_flag() {
     let Some(pool) = connect().await else {
         return;
     };
-    assert!(!companyos_outbox::spawn::spawn_embedded_relay_if_configured(
-        pool
-    ));
+    assert!(!companyos_outbox::spawn::spawn_embedded_relay_if_configured(pool));
     let _: Arc<dyn relay::EventPublisher> = Arc::new(MemoryPublisher::new());
 }
