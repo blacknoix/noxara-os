@@ -2,13 +2,13 @@
 
 use axum::extract::{Path, State};
 use axum::Json;
-use companyos_authz::PermissionId;
+use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_tenancy::set_session_org_id;
 use uuid::Uuid;
 
 use crate::auth::AuthCtx;
-use crate::principal::{enforce_platform_or_member, load_principal};
+use crate::principal::{enforce, load_principal};
 use crate::state::AppState;
 use crate::types::{FeedResponse, MessageResponse, NotificationItemDto};
 
@@ -28,9 +28,9 @@ pub async fn feed(
 
     if !auth.local_bypass {
         let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
-        enforce_platform_or_member(
+        enforce(
             &principal,
-            PermissionId::from("platform.notification.read"),
+            perms::platform_notification_read(),
             &request_id,
         )?;
     }
@@ -117,6 +117,15 @@ pub async fn mark_read(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id;
     let user_id = auth.ctx.actor.user_id;
+
+    if !auth.local_bypass {
+        let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
+        enforce(
+            &principal,
+            perms::platform_notification_read(),
+            &request_id,
+        )?;
+    }
 
     let mut tx = state
         .pool

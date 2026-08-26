@@ -5,8 +5,12 @@
 //!
 //! Phase 1.8 adds a **relay** (`relay` module): claim unpublished rows with
 //! `SKIP LOCKED`, publish, mark published, or move to `outbox_dlq`.
+//!
+//! Optional embedded MemoryPublisher loop: [`spawn::spawn_embedded_relay_if_configured`].
+//! Production publishing is the dedicated `companyos-outbox-relay` binary.
 
 pub mod relay;
+pub mod spawn;
 
 use chrono::{DateTime, Utc};
 use companyos_events::EventEnvelope;

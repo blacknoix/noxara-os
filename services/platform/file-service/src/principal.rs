@@ -109,27 +109,6 @@ pub fn enforce(
     Ok(())
 }
 
-/// Platform permissions may not be in the catalogue yet — allow authenticated
-/// members to proceed for own-tenant platform ops when the permission is unknown
-/// or explicitly granted.
-pub fn enforce_platform_or_member(
-    principal: &Principal,
-    permission: PermissionId,
-    request_id: &str,
-) -> Result<(), AppError> {
-    if companyos_authz::is_allowed(principal, &permission) {
-        return Ok(());
-    }
-    if !principal.roles.is_empty() || !principal.statements.is_empty() {
-        return Ok(());
-    }
-    Err(AppError::new(
-        ErrorCode::Forbidden,
-        request_id,
-        format!("missing permission {}", permission.as_str()),
-    ))
-}
-
 /// Check whether a principal may receive a notification about a resource.
 pub fn can_receive(principal: &Principal, required: PermissionId) -> bool {
     companyos_authz::is_allowed(principal, &required)

@@ -2,6 +2,7 @@
 
 use axum::extract::{Query, State};
 use axum::Json;
+use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_ids::PublicId;
 use companyos_tenancy::OrgId;
@@ -9,7 +10,7 @@ use serde::Deserialize;
 
 use crate::auth::AuthCtx;
 use crate::mapping::permission_for_doc_type;
-use crate::principal::{can_receive, load_principal};
+use crate::principal::{can_receive, enforce, load_principal};
 use crate::state::{AppState, SearchDoc};
 use crate::types::{QueryResponse, SearchHit};
 
@@ -71,9 +72,14 @@ pub async fn query(
     let principal = if auth.local_bypass {
         companyos_authz::Principal::with_roles(vec![companyos_authz::Role::Owner])
     } else {
-        load_principal(&state.pool, org_id, user_id, &request_id)
-            .await?
-            .0
+        let (principal, _, _) =
+            load_principal(&state.pool, org_id, user_id, &request_id).await?;
+        enforce(
+            &principal,
+            perms::platform_search_read(),
+            &request_id,
+        )?;
+        principal
     };
 
     let q = params.q.unwrap_or_default().to_ascii_lowercase();

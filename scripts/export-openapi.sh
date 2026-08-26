@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Export OpenAPI from core + CRM + Finance + Operations (offline cargo examples) and merge into packages/sdk.
+# Export OpenAPI from core + CRM + Finance + Operations + platform services
+# (offline cargo examples) and merge into packages/sdk.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/packages/sdk/openapi.json"
@@ -7,6 +8,9 @@ CORE_TMP="/tmp/companyos-core-openapi.json"
 CRM_TMP="/tmp/companyos-crm-openapi.json"
 FIN_TMP="/tmp/companyos-finance-openapi.json"
 OPS_TMP="/tmp/companyos-project-openapi.json"
+NOTIF_TMP="/tmp/companyos-notification-openapi.json"
+SEARCH_TMP="/tmp/companyos-search-openapi.json"
+FILE_TMP="/tmp/companyos-file-openapi.json"
 
 cd "$ROOT"
 
@@ -22,6 +26,15 @@ cargo run -p companyos-finance --example export_openapi >"$FIN_TMP"
 echo "==> Exporting Operations OpenAPI (offline)..."
 cargo run -p companyos-project --example export_openapi >"$OPS_TMP"
 
+echo "==> Exporting Notification OpenAPI (offline)..."
+cargo run -p companyos-notification --example export_openapi >"$NOTIF_TMP"
+
+echo "==> Exporting Search OpenAPI (offline)..."
+cargo run -p companyos-search --example export_openapi >"$SEARCH_TMP"
+
+echo "==> Exporting File OpenAPI (offline)..."
+cargo run -p companyos-file --example export_openapi >"$FILE_TMP"
+
 export ROOT_OVERRIDE="$ROOT"
 python3 <<'PY'
 import json
@@ -34,6 +47,9 @@ docs = [
     json.loads(Path("/tmp/companyos-crm-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-finance-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-project-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-notification-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-search-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-file-openapi.json").read_text()),
 ]
 
 merged = dict(docs[0])

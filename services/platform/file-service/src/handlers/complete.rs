@@ -1,9 +1,11 @@
 use axum::extract::{Path, State};
 use axum::Json;
+use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_tenancy::set_session_org_id;
 
 use crate::auth::AuthCtx;
+use crate::principal::{enforce, load_principal};
 use crate::state::AppState;
 use crate::types::MessageResponse;
 
@@ -21,6 +23,12 @@ pub async fn complete(
 ) -> Result<Json<MessageResponse>, AppError> {
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id;
+    let user_id = auth.ctx.actor.user_id;
+
+    if !auth.local_bypass {
+        let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
+        enforce(&principal, perms::platform_file_create(), &request_id)?;
+    }
 
     let mut tx = state
         .pool

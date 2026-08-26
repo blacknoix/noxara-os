@@ -36,6 +36,7 @@ utoipa = { workspace = true }
 anyhow = { workspace = true }
 http = { workspace = true }
 thiserror = { workspace = true }
+redis = { workspace = true }
 
 [dev-dependencies]
 companyos-testkit = { workspace = true }

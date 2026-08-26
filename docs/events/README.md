@@ -2,6 +2,21 @@
 
 Subject format: `companyos.{org_id}.{context}.{aggregate}.{event}.v{n}`
 
+## Schema registry
+
+JSON Schema contracts live under [`schemas/`](./schemas/). Each file is named
+`{context}.{aggregate}.{event}.v{n}.json` and validates the wire
+[`EventEnvelope`](../../crates/events/src/lib.rs) (required envelope fields +
+payload keys).
+
+Contract tests in `crates/events` (`contracts` module / `tests/contract_schemas.rs`)
+load every schema, build a sample envelope via `EventEnvelope::new`, and assert
+required fields match. Run:
+
+```bash
+cargo test -p companyos-events
+```
+
 ## Core (Phase 0+)
 
 - `companyos.{org_}.core.hello.created.v1` via the transactional outbox
@@ -44,3 +59,11 @@ Operations **projects** `sales.deal.won` via `POST /api/v1/operations/events/sal
 - `companyos.{org_}.operations.approval.decided.v1`
 
 Emitted in the same transaction as the approval write. Finance/CRM call the Operations approval API (no cross-context table reads); Temporal activities call service APIs with `on_behalf_of` recorded on decisions.
+
+## Platform consumers (Phase 1.8)
+
+- Outbox → NATS via `companyos-outbox-relay` (`scripts/nats-bootstrap.sh` creates
+  `COMPANYOS_EVENTS` + `COMPANYOS_EVENTS_DLQ` + durable `platform-consumers`)
+- Notification fan-out, search indexer, and analytics facts ingest envelopes
+  with consumer-side idempotency on `idempotency_key`
+- Lag / DLQ runbook: [`docs/runbooks/outbox-lag.md`](../runbooks/outbox-lag.md)

@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use axum::extract::State;
 use axum::Json;
-use companyos_authz::PermissionId;
+use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_ids::new_uuid_v7;
 use companyos_tenancy::set_session_org_id;
 
 use crate::auth::AuthCtx;
-use crate::principal::{enforce_platform_or_member, load_principal};
+use crate::principal::{enforce, load_principal};
 use crate::state::AppState;
 use crate::types::{PresignUploadRequest, PresignUploadResponse};
 use crate::validate::validate_upload;
@@ -31,11 +31,7 @@ pub async fn presign_upload(
 
     if !auth.local_bypass {
         let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
-        enforce_platform_or_member(
-            &principal,
-            PermissionId::from("platform.file.create"),
-            &request_id,
-        )?;
+        enforce(&principal, perms::platform_file_create(), &request_id)?;
     }
 
     validate_upload(&body.content_type, body.size_bytes).map_err(|e| {
@@ -86,14 +82,25 @@ pub async fn presign_upload(
     headers.insert("Content-Type".into(), body.content_type.clone());
 
     let upload_url = if let Some(ep) = &state.minio_endpoint {
-        format!(
-            "{}/{}/{}?X-Amz-Expires=900&X-Amz-Signature=local-stub",
-            ep.trim_end_matches('/'),
-            state.bucket,
-            urlencoding::encode(&object_key)
-        )
+        // Prefer gateway/local-upload path that works without SigV4 clients.
+        // When MinIO is set we still expose a signed-looking URL for path-style PUT,
+        // and clients may also use PUT /api/v1/files/local-upload/{id} via gateway.
+        match crate::presign::presign_put_object(
+            ep,
+            &state.bucket,
+            &object_key,
+            &state.minio_access_key,
+            &state.minio_secret_key,
+            &body.content_type,
+            900,
+        ) {
+            Ok(url) => url,
+            Err(_) => format!(
+                "http://127.0.0.1:8089/api/v1/files/local-upload/{public_id}"
+            ),
+        }
     } else {
-        format!("http://127.0.0.1:8089/local-upload/{public_id}")
+        format!("http://127.0.0.1:8089/api/v1/files/local-upload/{public_id}")
     };
 
     Ok(Json(PresignUploadResponse {

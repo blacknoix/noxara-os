@@ -1,3 +1,4 @@
+pub mod digest_run;
 pub mod feed;
 pub mod ingest;
 pub mod preferences;
@@ -19,6 +20,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/notifications/internal/ingest",
             post(ingest::ingest),
+        )
+        .route(
+            "/api/v1/notifications/internal/digest/run",
+            post(digest_run::run),
         )
         .route("/api/v1/notifications/sse-token", get(sse::sse_token))
 }

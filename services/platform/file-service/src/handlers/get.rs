@@ -1,11 +1,11 @@
 use axum::extract::{Path, State};
 use axum::Json;
-use companyos_authz::PermissionId;
+use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_tenancy::set_session_org_id;
 
 use crate::auth::AuthCtx;
-use crate::principal::{enforce_platform_or_member, load_principal};
+use crate::principal::{enforce, load_principal};
 use crate::state::AppState;
 use crate::types::FileMetaResponse;
 
@@ -27,11 +27,7 @@ pub async fn get_file(
 
     if !auth.local_bypass {
         let (principal, _, _) = load_principal(&state.pool, org_id, user_id, &request_id).await?;
-        enforce_platform_or_member(
-            &principal,
-            PermissionId::from("platform.file.read"),
-            &request_id,
-        )?;
+        enforce(&principal, perms::platform_file_read(), &request_id)?;
     }
 
     let mut tx = state
@@ -75,7 +71,7 @@ pub async fn get_file(
             urlencoding::encode(&object_key)
         )
     } else {
-        format!("http://127.0.0.1:8089/local-download/{file_id}?disposition=attachment")
+        format!("http://127.0.0.1:8089/api/v1/files/local-download/{file_id}?disposition=attachment")
     };
 
     Ok(Json(FileMetaResponse {

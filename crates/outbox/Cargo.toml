@@ -22,3 +22,10 @@ tokio = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+companyos-testkit = { workspace = true }
+companyos-ids = { workspace = true }
+companyos-tenancy = { workspace = true }
+companyos-events = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+sqlx = { workspace = true }

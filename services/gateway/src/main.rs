@@ -1,9 +1,10 @@
-//! CompanyOS gateway / BFF — Phase 1.6.
+//! CompanyOS gateway / BFF — Phase 1.8.
 //!
 //! Authenticates access JWTs (org-scoped), resolves tenant, runs a coarse authz
-//! pre-check, attaches request context headers, and proxies to core (auth,
-//! workspace, dashboard), CRM (sales), Finance, and Operations (projects/tasks).
+//! pre-check, attaches request context headers, and proxies to core, CRM,
+//! Finance, Operations, plus platform notification / search / analytics / file.
 
+use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -11,6 +12,7 @@ use std::time::{Duration, Instant};
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{any, get};
 use axum::{Json, Router};
@@ -18,10 +20,11 @@ use companyos_auth_token::{decode_jwk_k, verify_access_token, AccessClaims, KeyR
 use companyos_authz::{self as authz, perms, Principal, Role};
 use companyos_errors::{AppError, ErrorCode};
 use companyos_telemetry::init_tracing;
+use futures::stream::Stream;
 use tokio::sync::RwLock;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use tracing::{info, warn};
 
 #[derive(Clone)]
 struct GatewayState {
@@ -29,6 +32,11 @@ struct GatewayState {
     crm_url: String,
     finance_url: String,
     project_url: String,
+    notification_url: String,
+    search_url: String,
+    analytics_url: String,
+    file_url: String,
+    redis_url: Option<String>,
     client: reqwest::Client,
     keyring: KeyRing,
     jwks_cache: Arc<RwLock<JwksCache>>,
@@ -51,6 +59,15 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("FINANCE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8083".into());
     let project_url =
         std::env::var("PROJECT_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8084".into());
+    let notification_url = std::env::var("NOTIFICATION_SERVICE_URL")
+        .unwrap_or_else(|_| "http://127.0.0.1:8085".into());
+    let search_url =
+        std::env::var("SEARCH_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8086".into());
+    let analytics_url =
+        std::env::var("ANALYTICS_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8087".into());
+    let file_url =
+        std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8089".into());
+    let redis_url = std::env::var("REDIS_URL").ok().filter(|s| !s.is_empty());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
     let local_auth = matches!(
@@ -63,6 +80,11 @@ async fn main() -> anyhow::Result<()> {
         crm_url,
         finance_url,
         project_url,
+        notification_url,
+        search_url,
+        analytics_url,
+        file_url,
+        redis_url,
         client: reqwest::Client::new(),
         keyring,
         jwks_cache: Arc::new(RwLock::new(JwksCache { fetched_at: None })),
@@ -96,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "1.6"
+                    "phase": "1.8"
                 }))
             }),
         )
@@ -109,6 +131,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/sales/{*rest}", any(proxy_sales))
         .route("/api/v1/finance/{*rest}", any(proxy_finance))
         .route("/api/v1/operations/{*rest}", any(proxy_operations))
+        // Platform (Phase 1.8) — SSE stream registered before the catch-all.
+        .route("/api/v1/notifications/stream", get(notifications_stream))
+        .route("/api/v1/notifications/{*rest}", any(proxy_notifications))
+        .route("/api/v1/search/{*rest}", any(proxy_search))
+        .route("/api/v1/analytics/{*rest}", any(proxy_analytics))
+        .route("/api/v1/files/{*rest}", any(proxy_files))
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
@@ -350,22 +378,59 @@ async fn proxy_workspace(State(state): State<GatewayState>, req: Request) -> Res
 async fn proxy_sales(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
-    // Coarse auth: authenticate only; CRM enforces sales.* permissions.
     proxy_to(&state, req, &upstream, &state.crm_url, true, "crm").await
 }
 
 async fn proxy_finance(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
-    // Coarse auth: authenticate only; Finance enforces finance.* permissions.
     proxy_to(&state, req, &upstream, &state.finance_url, true, "finance").await
 }
 
 async fn proxy_operations(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
-    // Coarse auth: authenticate only; Operations enforces operations.* permissions.
     proxy_to(&state, req, &upstream, &state.project_url, true, "project").await
+}
+
+async fn proxy_notifications(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.notification_url,
+        true,
+        "notification",
+    )
+    .await
+}
+
+async fn proxy_search(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.search_url, true, "search").await
+}
+
+async fn proxy_analytics(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.analytics_url,
+        true,
+        "analytics",
+    )
+    .await
+}
+
+async fn proxy_files(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.file_url, true, "file").await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {
@@ -385,4 +450,122 @@ async fn proxy_auth(State(state): State<GatewayState>, req: Request) -> Response
     let upstream = with_query(&req, &path);
     // Some auth admin routes require auth — core enforces; gateway lets Bearer through.
     proxy_to(&state, req, &upstream, &state.core_url, false, "core").await
+}
+
+/// GET /api/v1/notifications/stream — authenticated SSE.
+///
+/// Subscribes to Redis `companyos:notifications:{org_id}:{user_id}` when
+/// `REDIS_URL` is set; otherwise polls the notification feed / sends keepalives.
+async fn notifications_stream(
+    State(state): State<GatewayState>,
+    req: Request,
+) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, Response> {
+    let request_id = req
+        .headers()
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string();
+
+    let claims = match authenticate(
+        &state,
+        req.headers(),
+        "/api/v1/notifications/stream",
+        &request_id,
+    )
+    .await
+    {
+        Ok(Some(c)) => c,
+        Ok(None) => {
+            return Err(AppError::new(
+                ErrorCode::Unauthorized,
+                request_id,
+                "Bearer access token required for SSE",
+            )
+            .into_response());
+        }
+        Err(e) => return Err(e.into_response()),
+    };
+
+    let org_id = claims.org_id.clone();
+    let user_id = claims.sub.clone();
+    let channel = format!("companyos:notifications:{org_id}:{user_id}");
+    let auth_header = req
+        .headers()
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    let notification_url = state.notification_url.clone();
+    let client = state.client.clone();
+    let redis_url = state.redis_url.clone();
+
+    let stream = async_stream::stream! {
+        yield Ok(Event::default().comment("connected"));
+
+        if let Some(url) = redis_url {
+            match redis::Client::open(url.as_str()) {
+                Ok(redis_client) => {
+                    match redis_client.get_async_pubsub().await {
+                        Ok(mut pubsub) => {
+                            if let Err(e) = pubsub.subscribe(&channel).await {
+                                warn!(error = %e, "redis subscribe failed; falling back to poll");
+                            } else {
+                                info!(%channel, "sse subscribed to redis");
+                                let mut msg_stream = pubsub.on_message();
+                                use futures::StreamExt;
+                                while let Some(msg) = msg_stream.next().await {
+                                    let payload: String = msg.get_payload().unwrap_or_default();
+                                    yield Ok(Event::default().event("notification").data(payload));
+                                }
+                                // If the pubsub stream ends, fall through to poll below.
+                            }
+                        }
+                        Err(e) => warn!(error = %e, "redis pubsub unavailable"),
+                    }
+                }
+                Err(e) => warn!(error = %e, "invalid REDIS_URL"),
+            }
+        }
+
+        // Fallback / keep-alive: poll notification feed periodically.
+        let mut last_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let mut tick = tokio::time::interval(Duration::from_secs(15));
+        loop {
+            tick.tick().await;
+            let feed_url = format!(
+                "{}/api/v1/notifications/feed",
+                notification_url.trim_end_matches('/')
+            );
+            let mut req = client.get(&feed_url);
+            if let Some(ref auth) = auth_header {
+                req = req.header(axum::http::header::AUTHORIZATION, auth);
+            }
+            match req.send().await {
+                Ok(resp) if resp.status().is_success() => {
+                    if let Ok(body) = resp.json::<serde_json::Value>().await {
+                        if let Some(items) = body.get("items").and_then(|i| i.as_array()) {
+                            for item in items {
+                                let id = item
+                                    .get("id")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                if id.is_empty() || last_ids.contains(&id) {
+                                    continue;
+                                }
+                                last_ids.insert(id);
+                                let data = item.to_string();
+                                yield Ok(Event::default().event("notification").data(data));
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    yield Ok(Event::default().comment("keepalive"));
+                }
+            }
+        }
+    };
+
+    Ok(Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(20))))
 }

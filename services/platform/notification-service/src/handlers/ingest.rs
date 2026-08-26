@@ -146,7 +146,7 @@ pub async fn ingest(
         }
 
         match deliver_to_user(
-            &state.pool,
+            &state,
             org_id,
             user_id,
             &title,
@@ -177,7 +177,7 @@ pub async fn ingest(
 
 #[allow(clippy::too_many_arguments)]
 async fn deliver_to_user(
-    pool: &sqlx::PgPool,
+    state: &AppState,
     org_id: OrgId,
     user_id: Uuid,
     title: &str,
@@ -187,6 +187,7 @@ async fn deliver_to_user(
     resource_id: Option<&str>,
     request_id: &str,
 ) -> Result<bool, AppError> {
+    let pool = &state.pool;
     let mut tx = pool
         .begin()
         .await
@@ -310,5 +311,24 @@ async fn deliver_to_user(
     tx.commit()
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+
+    if in_app_enabled {
+        let payload = serde_json::json!({
+            "id": public_id,
+            "title": title,
+            "body": body,
+            "href": href,
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+        });
+        crate::state::publish_notification_event(
+            state.redis_url.as_deref(),
+            &org_id.to_public().as_str(),
+            user_id,
+            &payload,
+        )
+        .await;
+    }
+
     Ok(true)
 }

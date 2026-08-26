@@ -164,6 +164,11 @@ impl Role {
                 perms::finance_ledger_read(),
                 perms::operations_approval_read(),
                 perms::operations_approval_decide(),
+                perms::platform_notification_read(),
+                perms::platform_search_read(),
+                perms::platform_file_read(),
+                perms::platform_file_create(),
+                perms::platform_analytics_read(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -209,6 +214,10 @@ impl Role {
                 perms::operations_task_update(),
                 perms::operations_task_comment(),
                 perms::operations_approval_read(),
+                perms::platform_notification_read(),
+                perms::platform_search_read(),
+                perms::platform_file_read(),
+                perms::platform_file_create(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -247,6 +256,12 @@ impl Role {
                 perms::operations_task_comment(),
                 perms::operations_approval_read(),
                 perms::operations_approval_decide(),
+                perms::platform_notification_read(),
+                perms::platform_search_read(),
+                perms::platform_search_reindex(),
+                perms::platform_file_read(),
+                perms::platform_file_create(),
+                perms::platform_analytics_read(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -271,6 +286,10 @@ impl Role {
                 perms::operations_task_create(),
                 perms::operations_task_comment(),
                 perms::operations_approval_read(),
+                perms::platform_notification_read(),
+                perms::platform_search_read(),
+                perms::platform_file_read(),
+                perms::platform_file_create(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -294,6 +313,10 @@ impl Role {
                 perms::operations_project_read(),
                 perms::operations_task_read(),
                 perms::operations_approval_read(),
+                perms::platform_notification_read(),
+                perms::platform_search_read(),
+                perms::platform_file_read(),
+                perms::platform_analytics_read(),
             ]),
         }
     }

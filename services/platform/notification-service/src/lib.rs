@@ -1,6 +1,7 @@
 //! CompanyOS notification service (library) — Phase 1.8.
 
 pub mod auth;
+pub mod digest;
 pub mod handlers;
 pub mod mail;
 pub mod mapping;

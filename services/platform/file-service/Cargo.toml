@@ -35,6 +35,9 @@ utoipa = { workspace = true }
 anyhow = { workspace = true }
 http = { workspace = true }
 urlencoding = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
 
 [dev-dependencies]
 companyos-testkit = { workspace = true }

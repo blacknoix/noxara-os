@@ -2,11 +2,13 @@
 
 use axum::extract::State;
 use axum::Json;
+use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_ids::{new_uuid_v7, PublicId};
 use companyos_tenancy::{set_session_org_id, OrgId};
 
 use crate::auth::AuthCtx;
+use crate::principal::{enforce, load_principal};
 use crate::state::AppState;
 use crate::types::{ReindexRequest, ReindexResponse};
 
@@ -40,6 +42,16 @@ pub async fn reindex(
             &request_id,
             "org_id does not match authenticated tenant",
         ));
+    }
+
+    if !auth.local_bypass {
+        let (principal, _, _) =
+            load_principal(&state.pool, org_id, auth.ctx.actor.user_id, &request_id).await?;
+        enforce(
+            &principal,
+            perms::platform_search_reindex(),
+            &request_id,
+        )?;
     }
 
     let job_id = new_uuid_v7();

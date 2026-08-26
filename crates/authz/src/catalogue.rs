@@ -634,6 +634,63 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Create and publish versioned approval policies (policy.manage)",
         sensitive: true,
     },
+    // --- Platform (Phase 1.8) ---
+    PermissionDef {
+        id: "platform.notification.read",
+        context: "platform",
+        resource: "notification",
+        action: "read",
+        description: "Read own in-app notification feed and preferences",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "platform.notification.manage",
+        context: "platform",
+        resource: "notification",
+        action: "manage",
+        description: "Manage notification templates and org-wide delivery settings",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "platform.search.read",
+        context: "platform",
+        resource: "search",
+        action: "read",
+        description: "Query the tenant search index",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "platform.search.reindex",
+        context: "platform",
+        resource: "search",
+        action: "reindex",
+        description: "Request a reindex job for the organization",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "platform.file.read",
+        context: "platform",
+        resource: "file",
+        action: "read",
+        description: "Read file metadata and download URLs",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "platform.file.create",
+        context: "platform",
+        resource: "file",
+        action: "create",
+        description: "Presign uploads and complete file objects",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "platform.analytics.read",
+        context: "platform",
+        resource: "analytics",
+        action: "read",
+        description: "Read analytics facts derived from the event stream",
+        sensitive: false,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -892,6 +949,27 @@ pub mod perms {
     pub fn operations_approval_policy_manage() -> PermissionId {
         PermissionId::from("operations.approval.manage")
     }
+    pub fn platform_notification_read() -> PermissionId {
+        PermissionId::from("platform.notification.read")
+    }
+    pub fn platform_notification_manage() -> PermissionId {
+        PermissionId::from("platform.notification.manage")
+    }
+    pub fn platform_search_read() -> PermissionId {
+        PermissionId::from("platform.search.read")
+    }
+    pub fn platform_search_reindex() -> PermissionId {
+        PermissionId::from("platform.search.reindex")
+    }
+    pub fn platform_file_read() -> PermissionId {
+        PermissionId::from("platform.file.read")
+    }
+    pub fn platform_file_create() -> PermissionId {
+        PermissionId::from("platform.file.create")
+    }
+    pub fn platform_analytics_read() -> PermissionId {
+        PermissionId::from("platform.analytics.read")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -921,7 +999,12 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "finance.ledger.read"
         | "operations.project.read"
         | "operations.task.read"
-        | "operations.approval.read" => Scope::Organization,
+        | "operations.approval.read"
+        | "platform.notification.read"
+        | "platform.search.read"
+        | "platform.file.read"
+        | "platform.file.create"
+        | "platform.analytics.read" => Scope::Organization,
         _ => Scope::Organization,
     }
 }

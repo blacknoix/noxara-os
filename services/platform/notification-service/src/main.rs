@@ -1,8 +1,9 @@
 //! CompanyOS notification service — Phase 1.8.
 
 use std::net::SocketAddr;
+use std::time::Duration;
 
-use companyos_notification::{auth, build_router, migrate, state::AppState};
+use companyos_notification::{auth, build_router, digest, migrate, state::AppState};
 use companyos_telemetry::init_tracing;
 use tracing::info;
 
@@ -22,8 +23,22 @@ async fn main() -> anyhow::Result<()> {
 
     let ring = auth::build_keyring();
     let _ = auth::load_rotated_keys(&pool, &ring).await;
-    let state = AppState::new(pool, ring);
+    let state = AppState::new(pool.clone(), ring);
     let app = build_router(state);
+
+    // Background digest flusher (quiet-hours deferred email).
+    let digest_pool = pool.clone();
+    tokio::spawn(async move {
+        let mut tick = tokio::time::interval(Duration::from_secs(300));
+        loop {
+            tick.tick().await;
+            match digest::run_deferred_digest(&digest_pool).await {
+                Ok(n) if n > 0 => tracing::info!(processed = n, "notification digest flushed"),
+                Ok(_) => {}
+                Err(e) => tracing::warn!(error = %e.detail, "notification digest failed"),
+            }
+        }
+    });
 
     let addr: SocketAddr = std::env::var("NOTIFICATION_BIND")
         .unwrap_or_else(|_| "0.0.0.0:8085".into())

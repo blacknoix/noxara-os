@@ -21,6 +21,10 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     migrate(&pool).await?;
+    // Ensure outbox + DLQ schema exists (shared DB). Production publishing is
+    // companyos-outbox-relay; optional MemoryPublisher when OUTBOX_EMBEDDED_RELAY=1.
+    companyos_outbox::migrate(&pool).await?;
+    companyos_outbox::spawn::spawn_embedded_relay_if_configured(pool.clone());
 
     let ring = auth::build_keyring();
     auth::load_rotated_keys(&pool, &ring).await?;
