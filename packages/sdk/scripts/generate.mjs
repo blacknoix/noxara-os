@@ -101,6 +101,21 @@ const emit = [
   'WinRateSummary',
   'WeightedForecast',
   'ActivityVolumeItem',
+  'InvoiceDto',
+  'InvoiceLineDto',
+  'InvoiceListResponse',
+  'CreateInvoiceRequest',
+  'CreateInvoiceFromQuoteRequest',
+  'IssueInvoiceRequest',
+  'PaymentDto',
+  'RecordPaymentRequest',
+  'CreditNoteDto',
+  'CreateCreditNoteRequest',
+  'ExpenseDto',
+  'SubmitExpenseRequest',
+  'ReportSummaryDto',
+  'FinanceCustomerDto',
+  'WebhookAck',
 ];
 
 const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Run pnpm generate:sdk */\n`;

@@ -457,3 +457,169 @@ export type ActivityVolumeItem = {
   count: number;
   kind: string;
 };
+
+export type InvoiceDto = {
+  amount_credited_minor: number;
+  amount_paid_minor: number;
+  balance_minor: number;
+  base_currency: string;
+  base_total_minor: number;
+  created_at: string;
+  currency: string;
+  customer_id: string;
+  discount_minor: number;
+  due_date?: string;
+  fx_rate_date?: string;
+  fx_rate_den?: string;
+  fx_rate_num?: string;
+  id: string;
+  invoice_number?: string;
+  issue_date?: string;
+  lines: InvoiceLineDto[];
+  notes?: string;
+  payment_url?: string;
+  source_quote_id?: string;
+  status: string;
+  subtotal_minor: number;
+  tax_minor: number;
+  terms?: string;
+  total_minor: number;
+  updated_at: string;
+  version: number;
+};
+
+export type InvoiceLineDto = {
+  description: string;
+  discount_minor: number;
+  id: string;
+  line_total_minor: number;
+  quantity: number;
+  tax_minor: number;
+  tax_rate_bps: number;
+  unit_price_minor: number;
+};
+
+export type InvoiceListResponse = {
+  items: InvoiceDto[];
+  total: number;
+};
+
+export type CreateInvoiceRequest = {
+  base_currency?: string;
+  currency: string;
+  /** Finance customer public id (`cus_…` projection) or sales customer id. */
+  customer_id: string;
+  due_date?: string;
+  lines: InvoiceLineInput[];
+  notes?: string;
+  terms?: string;
+};
+
+export type CreateInvoiceFromQuoteRequest = {
+  currency: string;
+  customer_id: string;
+  customer_name: string;
+  lines: QuoteLineSnapshot[];
+  notes?: string;
+  quote_id: string;
+  terms?: string;
+  total_minor?: string;
+};
+
+export type IssueInvoiceRequest = {
+  due_date?: string;
+  fx_rate_date?: string;
+  fx_rate_den?: number;
+  /** FX rate as rational num/den captured at issue (document currency → base). */
+  fx_rate_num?: number;
+  issue_date?: string;
+};
+
+export type PaymentDto = {
+  amount_allocated_minor: number;
+  amount_minor: number;
+  amount_unapplied_minor: number;
+  currency: string;
+  customer_id: string;
+  id: string;
+  method: string;
+  notes?: string;
+  provider?: string;
+  received_at: string;
+};
+
+export type RecordPaymentRequest = {
+  amount_minor: number;
+  currency: string;
+  customer_id: string;
+  invoice_id?: string;
+  notes?: string;
+  received_at?: string;
+};
+
+export type CreditNoteDto = {
+  credit_number: string;
+  currency: string;
+  customer_id: string;
+  id: string;
+  invoice_id: string;
+  issued_at: string;
+  reason?: string;
+  subtotal_minor: number;
+  tax_minor: number;
+  total_minor: number;
+};
+
+export type CreateCreditNoteRequest = {
+  invoice_id: string;
+  lines: InvoiceLineInput[];
+  reason?: string;
+};
+
+export type ExpenseDto = {
+  amount_minor: number;
+  category_code?: string;
+  created_at: string;
+  currency: string;
+  description: string;
+  id: string;
+  incurred_at: string;
+  receipt_url?: string;
+  status: string;
+};
+
+export type SubmitExpenseRequest = {
+  amount_minor: number;
+  category_code?: string;
+  currency: string;
+  description: string;
+  incurred_at?: string;
+  receipt_url?: string;
+};
+
+export type ReportSummaryDto = {
+  ageing: AgeingBucket[];
+  as_of: string;
+  cash_flow: CashFlowPoint[];
+  cash_minor: number;
+  currency: string;
+  expenses_by_category: CategoryAmount[];
+  expenses_minor: number;
+  receivables_minor: number;
+  revenue_minor: number;
+};
+
+export type FinanceCustomerDto = {
+  currency: string;
+  email?: string;
+  id: string;
+  name: string;
+  outstanding_balance_minor: number;
+  sales_customer_id: string;
+};
+
+export type WebhookAck = {
+  duplicate: boolean;
+  payment_id?: string;
+  received: boolean;
+};
