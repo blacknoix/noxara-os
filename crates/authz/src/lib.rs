@@ -278,7 +278,6 @@ impl Role {
                 perms::ai_proposal_create(),
                 perms::ai_proposal_commit(),
                 perms::ai_settings_read(),
-                perms::ai_settings_manage(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
             ]),

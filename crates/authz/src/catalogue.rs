@@ -765,7 +765,6 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "finance.expense.approve",
     "operations.approval.decide",
     "operations.approval.manage",
-    "ai.proposal.commit",
     "ai.settings.manage",
 ];
 
