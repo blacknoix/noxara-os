@@ -14,6 +14,8 @@ import {
   Widget,
 } from '@companyos/design-system';
 import { authFetch, getAccessToken } from '../lib/auth-client';
+import { fetchInsights } from '../lib/ai-api';
+import { citationHref, type InsightObservation } from '../lib/ai-types';
 
 type ChecklistItem = {
   id: string;
@@ -64,6 +66,11 @@ const PERIODS = [
 export default function DashboardPage() {
   const [period, setPeriod] = useState('30d');
   const [state, setState] = useState<LoadState>({ status: 'loading' });
+  const [insights, setInsights] = useState<{
+    status: 'idle' | 'loading' | 'ready' | 'empty' | 'denied';
+    observations: InsightObservation[];
+    emptyReason?: string;
+  }>({ status: 'idle', observations: [] });
 
   const load = useCallback(async (selectedPeriod: string) => {
     if (!getAccessToken()) {
@@ -100,9 +107,35 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const loadInsights = useCallback(async () => {
+    if (!getAccessToken()) {
+      setInsights({ status: 'idle', observations: [] });
+      return;
+    }
+    setInsights((prev) => ({ ...prev, status: 'loading' }));
+    const data = await fetchInsights();
+    if (!data) {
+      setInsights({ status: 'empty', observations: [], emptyReason: 'Could not load insights' });
+      return;
+    }
+    if (data.empty_reason) {
+      setInsights({
+        status: data.empty_reason.includes('denied') ? 'denied' : 'empty',
+        observations: [],
+        emptyReason: data.empty_reason,
+      });
+      return;
+    }
+    setInsights({ status: 'ready', observations: data.observations.slice(0, 5) });
+  }, []);
+
   useEffect(() => {
     void load(period);
   }, [load, period]);
+
+  useEffect(() => {
+    void loadInsights();
+  }, [loadInsights]);
 
   return (
     <section>
@@ -167,6 +200,17 @@ export default function DashboardPage() {
         <ErrorState message={state.message} requestId={state.requestId} />
       ) : null}
 
+      {insights.status !== 'idle' ? (
+        <div style={{ ...widgetFrame, marginBottom: '1.25rem' }}>
+          <AiInsightsWidget
+            status={insights.status === 'loading' ? 'loading' : insights.status}
+            observations={insights.observations}
+            emptyReason={insights.emptyReason}
+            onRefresh={() => void loadInsights()}
+          />
+        </div>
+      ) : null}
+
       {state.status === 'ready' ? (
         <div
           style={{
@@ -183,6 +227,104 @@ export default function DashboardPage() {
         </div>
       ) : null}
     </section>
+  );
+}
+
+function AiInsightsWidget({
+  status,
+  observations,
+  emptyReason,
+  onRefresh,
+}: {
+  status: 'loading' | 'ready' | 'empty' | 'denied';
+  observations: InsightObservation[];
+  emptyReason?: string;
+  onRefresh: () => void;
+}) {
+  if (status === 'loading') {
+    return <Widget title="AI Insights" loading />;
+  }
+
+  if (status === 'denied') {
+    return (
+      <Widget
+        title="AI Insights"
+        empty={
+          <EmptyState
+            title="Insights unavailable"
+            description="You need ai.insights.read to view observations."
+          />
+        }
+      />
+    );
+  }
+
+  if (status === 'empty' || observations.length === 0) {
+    return (
+      <Widget
+        title="AI Insights"
+        menu={
+          <button type="button" onClick={onRefresh} style={linkBtn}>
+            Refresh
+          </button>
+        }
+        empty={
+          <EmptyState
+            title="No insights yet"
+            description={emptyReason ?? 'When the insights module finds patterns, they appear here.'}
+          />
+        }
+      />
+    );
+  }
+
+  return (
+    <Widget
+      title="AI Insights"
+      menu={
+        <button type="button" onClick={onRefresh} style={linkBtn}>
+          Refresh
+        </button>
+      }
+    >
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 12 }}>
+        {observations.map((obs) => (
+          <li
+            key={obs.id}
+            style={{
+              padding: '0.65rem 0.75rem',
+              border: '1px solid var(--cos-color-border)',
+              borderRadius: 'var(--cos-radius-sm)',
+              background: 'var(--cos-color-bg)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
+              <strong style={{ fontSize: '0.95rem' }}>{obs.title}</strong>
+              {obs.estimate ? <Badge tone="neutral">Estimate</Badge> : null}
+            </div>
+            <p style={{ margin: '0.35rem 0', fontSize: '0.88rem', color: 'var(--cos-color-fg-muted)' }}>
+              {obs.body}
+            </p>
+            {obs.evidence.length > 0 ? (
+              <ul style={{ listStyle: 'none', margin: '0.35rem 0 0', padding: 0, fontSize: '0.8rem' }}>
+                {obs.evidence.map((e) => (
+                  <li key={`${e.record_type}-${e.record_id}`}>
+                    <Link href={citationHref(e)} style={linkBtn}>
+                      {e.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {obs.suggested_action ? (
+              <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--cos-color-fg-muted)' }}>
+                Suggested: <code>{obs.suggested_action}</code>
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </Widget>
   );
 }
 

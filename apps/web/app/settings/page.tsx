@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import Link from 'next/link';
 import { Button, EmptyState, ErrorState, Input, Table } from '@companyos/design-system';
 import { authFetch, getAccessToken } from '../../lib/auth-client';
 import { useCapabilities } from '../../lib/capabilities';
@@ -313,6 +314,9 @@ export default function SettingsPage() {
         <a href="/onboarding" style={{ ...tabBtn, marginLeft: 'auto' }}>
           New org
         </a>
+        <Link href="/settings/ai" style={tabBtn}>
+          AI settings
+        </Link>
       </nav>
 
       {error ? <ErrorState title="Something went wrong" message={error} /> : null}

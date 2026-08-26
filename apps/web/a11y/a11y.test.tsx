@@ -9,6 +9,7 @@ import {
   StatusCell,
   Table,
   Tabs,
+  Textarea,
   Timeline,
   Widget,
 } from '@companyos/design-system';
@@ -281,6 +282,52 @@ describe('a11y', () => {
             <button type="button">Reject</button>
           </li>
         </ul>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('copilot panel structure has no serious/critical violations', async () => {
+    const { container } = render(
+      <div style={{ display: 'flex', height: 480 }}>
+        <main style={{ flex: 1 }}>
+          <h1>Dashboard</h1>
+        </main>
+        <aside aria-label="Copilot" style={{ width: 380, borderLeft: '1px solid #ccc' }}>
+          <header>
+            <h2>Copilot</h2>
+          </header>
+          <div role="log" aria-live="polite">
+            <p>Ask anything about your workspace.</p>
+          </div>
+          <form>
+            <Textarea label="Message Copilot" name="copilot-message" />
+            <button type="submit">Send</button>
+          </form>
+        </aside>
+      </div>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('AI settings form structure has no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>AI settings</h1>
+        <form>
+          <fieldset>
+            <legend>Modules</legend>
+            <label>
+              <input type="checkbox" defaultChecked /> Copilot
+            </label>
+            <label>
+              <input type="checkbox" defaultChecked /> Insights
+            </label>
+          </fieldset>
+          <Input label="Model preference" name="model" defaultValue="mock" />
+          <Input label="Monthly token budget" name="budget" type="number" defaultValue="100000" />
+          <button type="submit">Save AI settings</button>
+        </form>
       </main>,
     );
     await expectNoSeriousAxeViolations(container);

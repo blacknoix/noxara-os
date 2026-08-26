@@ -1,8 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { CommandBar, type CommandItem, useToast } from '@companyos/design-system';
+import {
+  Button,
+  CommandBar,
+  Input,
+  Modal,
+  Textarea,
+  type CommandItem,
+  useToast,
+} from '@companyos/design-system';
+import { askAi, confirmProposal, sendChat } from '../lib/ai-api';
+import type { AskForm, AskFormField, Citation } from '../lib/ai-types';
+import { isUuid } from '../lib/ai-types';
 import { authFetch, getAccessToken } from '../lib/auth-client';
 import { useCapabilities } from '../lib/capabilities';
 import { type CosTheme } from '../lib/theme';
@@ -63,6 +74,10 @@ export function CommandBarHost({
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
+  const [askForm, setAskForm] = useState<AskForm | null>(null);
+  const [askQuery, setAskQuery] = useState('');
+  const [formFields, setFormFields] = useState<AskFormField[]>([]);
+  const [askBusy, setAskBusy] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -232,33 +247,145 @@ export function CommandBarHost({
       });
     }
 
-    const askLabel = 'Ask AI (comes in phase 1.9)';
-    if (!q || askLabel.toLowerCase().includes(q) || 'ask'.includes(q)) {
+    const askText = query.trim().replace(/^ask\s+/i, '').trim() || query.trim();
+    const looksLikeQuestion =
+      askText.length > 2 &&
+      (/^(ask\s+)/i.test(query.trim()) ||
+        askText.endsWith('?') ||
+        /^(what|who|when|where|why|how|which|show|list|find)\b/i.test(askText));
+
+    if (looksLikeQuestion && getAccessToken()) {
       list.push({
         id: 'ask-ai',
-        label: askLabel,
+        label: `Ask: ${askText}`,
         group: 'Ask',
-        onSelect: () => {
-          toast({
-            title: 'AI arrives in phase 1.9',
-            description: 'Ask and copilot features are not available yet.',
-          });
-        },
+        onSelect: () => void runAsk(askText),
       });
     }
 
     return list;
   }, [members, memberships, searchHits, query, can, router, theme, setTheme, onToggleSidebar, toast]);
 
+  async function runAsk(askText: string) {
+    onOpenChange(false);
+    setAskQuery(askText);
+    const response = await askAi(askText);
+    if (!response) {
+      toast({ title: 'Ask failed', description: 'Could not reach AI. Sign in or try again.' });
+      return;
+    }
+
+    if (response.kind === 'form' && response.form) {
+      setFormFields(response.form.fields.map((f) => ({ ...f })));
+      setAskForm(response.form);
+      return;
+    }
+
+    if (response.kind === 'read') {
+      const citations = response.citations ?? [];
+      toast({
+        title: response.message ?? 'Answer',
+        description: formatCitations(citations),
+      });
+    }
+  }
+
+  function formatCitations(citations: Citation[]): string {
+    if (citations.length === 0) return 'No matching records found.';
+    return citations.map((c) => c.title).join(' · ');
+  }
+
+  async function submitAskForm(e: FormEvent) {
+    e.preventDefault();
+    if (!askForm) return;
+    setAskBusy(true);
+    try {
+      const preview = askForm.proposal_preview;
+      if (preview && isUuid(preview)) {
+        const result = await confirmProposal(preview);
+        if (result) {
+          toast({ title: 'Proposal confirmed', description: result.rendered_diff });
+          setAskForm(null);
+          return;
+        }
+      }
+
+      const summary = formFields.map((f) => `${f.label}: ${f.value}`).join(', ');
+      const message = `${askForm.action_type} — ${summary}`;
+      const chat = await sendChat({ message });
+      if (chat?.proposals.length) {
+        const proposal = chat.proposals[0]!;
+        const confirmed = await confirmProposal(proposal.id);
+        toast({
+          title: confirmed ? 'Created' : 'Proposal ready',
+          description: confirmed?.rendered_diff ?? proposal.rendered_diff,
+        });
+      } else {
+        toast({ title: 'Submitted', description: chat?.content ?? message });
+      }
+      setAskForm(null);
+    } finally {
+      setAskBusy(false);
+    }
+  }
+
   return (
-    <CommandBar
-      open={open}
-      onOpenChange={onOpenChange}
-      query={query}
-      onQueryChange={setQuery}
-      items={items}
-      placeholder="Search members, run a command, or ask…"
-      emptyMessage="No matching results"
-    />
+    <>
+      <CommandBar
+        open={open}
+        onOpenChange={onOpenChange}
+        query={query}
+        onQueryChange={setQuery}
+        items={items}
+        placeholder="Search members, run a command, or ask…"
+        emptyMessage="No matching results"
+      />
+      <Modal
+        open={askForm !== null}
+        onClose={() => setAskForm(null)}
+        title={`Ask: ${askQuery}`}
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={() => setAskForm(null)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="ask-form" disabled={askBusy}>
+              {askBusy ? 'Submitting…' : 'Submit'}
+            </Button>
+          </>
+        }
+      >
+        <form id="ask-form" onSubmit={(e) => void submitAskForm(e)} style={{ display: 'grid', gap: 12 }}>
+          {formFields.map((field, idx) => (
+            <label
+              key={field.name}
+              style={{ display: 'grid', gap: 4, fontSize: '0.85rem', color: 'var(--cos-color-fg-muted)' }}
+            >
+              {field.label}
+              {field.type === 'textarea' ? (
+                <Textarea
+                  value={field.value}
+                  onChange={(e) => {
+                    const next = [...formFields];
+                    next[idx] = { ...field, value: e.target.value };
+                    setFormFields(next);
+                  }}
+                />
+              ) : (
+                <Input
+                  type={field.type === 'number' ? 'number' : 'text'}
+                  value={field.value}
+                  onChange={(e) => {
+                    const next = [...formFields];
+                    next[idx] = { ...field, value: e.target.value };
+                    setFormFields(next);
+                  }}
+                />
+              )}
+            </label>
+          ))}
+        </form>
+      </Modal>
+    </>
   );
 }

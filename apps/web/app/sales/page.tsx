@@ -15,6 +15,7 @@ import {
 } from '@companyos/design-system';
 import { authFetch, getAccessToken } from '../../lib/auth-client';
 import { useCapabilities } from '../../lib/capabilities';
+import { AiSuggestionChips } from '../../components/AiSuggestionChips';
 
 type StageDto = {
   id: string;
@@ -216,6 +217,8 @@ export default function SalesPipelinePage() {
           ))}
         </nav>
       </header>
+
+      <AiSuggestionChips pageScope="deal" />
 
       {capsLoading ? (
         <p style={{ color: 'var(--cos-color-fg-muted)' }}>Loading workspace…</p>
