@@ -40,20 +40,26 @@ cp -n .env.example .env 2>/dev/null || true
 echo "==> Seeding one org + two users..."
 bash "$ROOT/scripts/seed-dev.sh"
 
-echo "==> Starting core (8081), CRM (8082), Finance (8083), Project (8084), and gateway (8080) in background..."
+echo "==> Starting core (8081), CRM (8082), Finance (8083), Project (8084), Project worker, and gateway (8080) in background..."
 mkdir -p "$ROOT/.tmp"
 cargo build -p companyos-core -p companyos-crm -p companyos-finance -p companyos-project -p companyos-gateway
 pkill -f "target/debug/companyos-core" 2>/dev/null || true
 pkill -f "target/debug/companyos-crm" 2>/dev/null || true
 pkill -f "target/debug/companyos-finance" 2>/dev/null || true
+pkill -f "target/debug/companyos-project-worker" 2>/dev/null || true
 pkill -f "target/debug/companyos-project" 2>/dev/null || true
 pkill -f "target/debug/companyos-gateway" 2>/dev/null || true
 nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
   PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-core" >"$ROOT/.tmp/core.log" 2>&1 &
 nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" "$ROOT/target/debug/companyos-crm" >"$ROOT/.tmp/crm.log" 2>&1 &
-nohup env FINANCE_BIND="${FINANCE_BIND:-0.0.0.0:8083}" "$ROOT/target/debug/companyos-finance" >"$ROOT/.tmp/finance.log" 2>&1 &
-nohup env PROJECT_BIND="${PROJECT_BIND:-0.0.0.0:8084}" "$ROOT/target/debug/companyos-project" >"$ROOT/.tmp/project.log" 2>&1 &
+nohup env FINANCE_BIND="${FINANCE_BIND:-0.0.0.0:8083}" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
+  "$ROOT/target/debug/companyos-finance" >"$ROOT/.tmp/finance.log" 2>&1 &
+nohup env PROJECT_BIND="${PROJECT_BIND:-0.0.0.0:8084}" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
+  CRM_SERVICE_URL="$CRM_SERVICE_URL" TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" \
+  "$ROOT/target/debug/companyos-project" >"$ROOT/.tmp/project.log" 2>&1 &
+nohup env TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
+  "$ROOT/target/debug/companyos-project-worker" >"$ROOT/.tmp/project-worker.log" 2>&1 &
 nohup env CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
   FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-gateway" >"$ROOT/.tmp/gateway.log" 2>&1 &
@@ -73,6 +79,7 @@ echo "  Core:     http://127.0.0.1:8081"
 echo "  CRM:      http://127.0.0.1:8082"
 echo "  Finance:  http://127.0.0.1:8083"
 echo "  Project:  http://127.0.0.1:8084"
+echo "  Worker:   companyos-project-worker (ApprovalProcess / Temporal)"
 echo "  Web:      pnpm --filter @companyos/web dev"
 echo "  Temporal: http://127.0.0.1:8088"
 echo "  MinIO:    http://127.0.0.1:9001 (minioadmin/minioadmin)"

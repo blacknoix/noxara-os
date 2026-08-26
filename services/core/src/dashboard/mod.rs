@@ -625,6 +625,15 @@ async fn build_operations_widgets(
                     range_label,
                     json!({ "module": "operations", "message": "Tasks unavailable" }),
                 ),
+                empty_widget(
+                    "approvals",
+                    "Approvals",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Approvals unavailable" }),
+                ),
             ];
         }
     };
@@ -671,6 +680,15 @@ async fn build_operations_widgets(
                     range_label,
                     json!({ "module": "operations", "message": "Tasks unavailable" }),
                 ),
+                empty_widget(
+                    "approvals",
+                    "Approvals",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Approvals unavailable" }),
+                ),
             ];
         }
     };
@@ -695,6 +713,15 @@ async fn build_operations_widgets(
                 "no_data",
                 range_label,
                 json!({ "count": 0, "message": "No task access" }),
+            ),
+            empty_widget(
+                "approvals",
+                "Approvals",
+                "stat",
+                "empty",
+                "no_data",
+                range_label,
+                json!({ "count": 0, "message": "No approval access" }),
             ),
         ];
     }
@@ -743,6 +770,15 @@ async fn build_operations_widgets(
                     range_label,
                     json!({ "module": "operations", "message": "Tasks unavailable" }),
                 ),
+                empty_widget(
+                    "approvals",
+                    "Approvals",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Approvals unavailable" }),
+                ),
             ];
         }
     };
@@ -753,6 +789,10 @@ async fn build_operations_widgets(
         .unwrap_or(0);
     let open_tasks = body.get("open_tasks").and_then(|v| v.as_i64()).unwrap_or(0);
     let overdue = body.get("overdue").and_then(|v| v.as_i64()).unwrap_or(0);
+    let pending_approvals = body
+        .get("pending_approvals_for_me")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0);
 
     vec![
         DashboardWidget {
@@ -781,6 +821,25 @@ async fn build_operations_widgets(
                 "count": open_tasks,
                 "overdue": overdue,
                 "href": "/ops/tasks",
+            }),
+        },
+        DashboardWidget {
+            id: "approvals".into(),
+            title: "Approvals".into(),
+            kind: "stat".into(),
+            status: if pending_approvals == 0 {
+                "empty"
+            } else {
+                "ready"
+            }
+            .into(),
+            reason_code: None,
+            stale: false,
+            range_label: range_label.map(|s| s.to_string()),
+            payload: json!({
+                "count": pending_approvals,
+                "href": "/approvals",
+                "items": [],
             }),
         },
     ]

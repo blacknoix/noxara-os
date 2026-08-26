@@ -15,6 +15,7 @@ use companyos_errors::{AppError, ErrorCode};
 use companyos_ids::{IdKind, PublicId};
 use uuid::Uuid;
 
+use crate::approvals;
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -27,6 +28,7 @@ pub fn router() -> Router<AppState> {
         .merge(calendar::router())
         .merge(summary::router())
         .merge(events::router())
+        .merge(approvals::handlers::router())
 }
 
 pub(crate) fn internal(request_id: &str) -> impl Fn(sqlx::Error) -> AppError + '_ {

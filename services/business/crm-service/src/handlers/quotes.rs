@@ -45,6 +45,14 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/sales/quotes/{id}/accept", post(accept_quote))
         .route("/api/v1/sales/quotes/{id}/reject", post(reject_quote))
         .route(
+            "/api/v1/sales/quotes/{id}/approval-complete",
+            post(approval_complete),
+        )
+        .route(
+            "/api/v1/sales/quotes/{id}/approval-reject",
+            post(approval_reject),
+        )
+        .route(
             "/api/v1/sales/quotes/{id}/invoice-action",
             get(invoice_action),
         )
@@ -72,9 +80,10 @@ struct QuoteRow {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
     version: i32,
+    approval_id: Option<String>,
 }
 
-const QUOTE_COLUMNS: &str = "id, public_id, deal_id, customer_id, quote_number, status, version_number, previous_quote_id, currency, subtotal_minor, discount_minor, tax_minor, total_minor, notes, valid_until, accepted_at, owner_user_id, created_at, updated_at, version";
+const QUOTE_COLUMNS: &str = "id, public_id, deal_id, customer_id, quote_number, status, version_number, previous_quote_id, currency, subtotal_minor, discount_minor, tax_minor, total_minor, notes, valid_until, accepted_at, owner_user_id, created_at, updated_at, version, approval_id";
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 struct QuoteLineRow {
@@ -151,6 +160,7 @@ fn assemble_dto(row: QuoteRow, lines: Vec<QuoteLineRow>) -> QuoteDto {
         updated_at: row.updated_at.to_rfc3339(),
         version: row.version,
         lines: lines.into_iter().map(QuoteLineRow::into_dto).collect(),
+        approval_id: row.approval_id,
     }
 }
 
@@ -844,11 +854,64 @@ pub async fn send_quote(
     )
     .await?;
 
-    if row.status == "accepted" || row.status == "rejected" {
+    if row.status == "accepted" || row.status == "rejected" || row.status == "pending_approval" {
         return Err(conflict(
             &request_id,
             format!("quote is {}, cannot send", row.status),
         ));
+    }
+
+    // Phase 1.7: discount above org threshold (default 10% = 1000 bps) → approval hold.
+    let discount_bps = if row.subtotal_minor > 0 {
+        (row.discount_minor.saturating_mul(10_000)) / row.subtotal_minor
+    } else {
+        0
+    };
+    let threshold_bps: i64 = std::env::var("QUOTE_DISCOUNT_APPROVAL_THRESHOLD_BPS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1_000);
+
+    if discount_bps >= threshold_bps && row.discount_minor > 0 {
+        let apr = request_quote_discount_approval(
+            &auth,
+            &row.public_id,
+            discount_bps,
+            row.discount_minor,
+            &row.currency,
+        )
+        .await;
+        sqlx::query(
+            r#"
+            UPDATE sales_quote SET
+                status = 'pending_approval',
+                approval_id = $3,
+                discount_approval_threshold_bps = $4,
+                version = version + 1,
+                updated_at = now()
+            WHERE org_id = $1 AND id = $2
+            "#,
+        )
+        .bind(org_id)
+        .bind(row.id)
+        .bind(apr.as_deref())
+        .bind(threshold_bps as i32)
+        .execute(&mut *tx)
+        .await
+        .map_err(internal(&request_id))?;
+
+        let dto = fetch_quote_dto(&mut tx, org_id, row.id)
+            .await
+            .map_err(internal(&request_id))?
+            .ok_or_else(|| {
+                AppError::new(
+                    ErrorCode::Internal,
+                    request_id.clone(),
+                    "quote missing after hold",
+                )
+            })?;
+        tx.commit().await.map_err(internal(&request_id))?;
+        return Ok(Json(dto));
     }
 
     // Local-only accept link — no email integration in this phase.
@@ -878,6 +941,164 @@ pub async fn send_quote(
                 "quote missing after send",
             )
         })?;
+    tx.commit().await.map_err(internal(&request_id))?;
+    Ok(Json(dto))
+}
+
+async fn request_quote_discount_approval(
+    auth: &AuthCtx,
+    quote_public_id: &str,
+    discount_bps: i64,
+    discount_minor: i64,
+    currency: &str,
+) -> Option<String> {
+    let project_url =
+        std::env::var("PROJECT_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8084".into());
+    let url = format!(
+        "{}/api/v1/operations/approvals",
+        project_url.trim_end_matches('/')
+    );
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .ok()?;
+    let mut req = client.post(&url).json(&serde_json::json!({
+        "subject_type": "quote_discount",
+        "subject_id": quote_public_id,
+        "title": format!("Quote discount {discount_bps} bps"),
+        "summary": format!("discount_bps:{discount_bps}"),
+        "amount_minor": discount_minor,
+        "currency": currency,
+        "category": format!("bps:{discount_bps}"),
+    }));
+    req = req
+        .header(
+            "x-companyos-dev-org-id",
+            auth.ctx.org_id.to_public().as_str(),
+        )
+        .header(
+            "x-companyos-dev-user-id",
+            PublicId::new(IdKind::User, auth.ctx.actor.user_id).as_str(),
+        );
+    let resp = req.send().await.ok()?;
+    if !resp.status().is_success() {
+        return None;
+    }
+    let body: serde_json::Value = resp.json().await.ok()?;
+    body.get("id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+}
+
+/// Called by Operations approval engine when a quote discount is approved.
+pub async fn approval_complete(
+    State(state): State<AppState>,
+    auth: AuthCtx,
+    Path(id): Path<String>,
+) -> Result<Json<QuoteDto>, AppError> {
+    let request_id = auth.ctx.request_id.clone();
+    let org_id = auth.ctx.org_id.as_uuid();
+    let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_update(),
+        &request_id,
+    )?;
+
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, auth.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+    let row = fetch_quote_row(&mut tx, org_id, quote_id)
+        .await
+        .map_err(internal(&request_id))?
+        .ok_or_else(|| not_found(&request_id, "quote"))?;
+    if row.status != "pending_approval" {
+        let dto = fetch_quote_dto(&mut tx, org_id, row.id)
+            .await
+            .map_err(internal(&request_id))?
+            .ok_or_else(|| not_found(&request_id, "quote"))?;
+        tx.commit().await.map_err(internal(&request_id))?;
+        return Ok(Json(dto));
+    }
+    let accept_link = format!("/api/v1/sales/quotes/{}/accept", row.public_id);
+    let notes = match &row.notes {
+        Some(existing) => format!("{existing}\n[approved] accept link: {accept_link}"),
+        None => format!("[approved] accept link: {accept_link}"),
+    };
+    sqlx::query(
+        "UPDATE sales_quote SET status = 'sent', notes = $3, version = version + 1, updated_at = now() WHERE org_id = $1 AND id = $2",
+    )
+    .bind(org_id)
+    .bind(row.id)
+    .bind(&notes)
+    .execute(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
+    let dto = fetch_quote_dto(&mut tx, org_id, row.id)
+        .await
+        .map_err(internal(&request_id))?
+        .ok_or_else(|| not_found(&request_id, "quote"))?;
+    tx.commit().await.map_err(internal(&request_id))?;
+    Ok(Json(dto))
+}
+
+pub async fn approval_reject(
+    State(state): State<AppState>,
+    auth: AuthCtx,
+    Path(id): Path<String>,
+) -> Result<Json<QuoteDto>, AppError> {
+    let request_id = auth.ctx.request_id.clone();
+    let org_id = auth.ctx.org_id.as_uuid();
+    let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
+    let membership = load_membership_scope(
+        &state.pool,
+        auth.ctx.org_id,
+        auth.ctx.actor.user_id,
+        &request_id,
+    )
+    .await?;
+    enforce_any_scope(
+        &membership.principal,
+        perms::sales_quote_update(),
+        &request_id,
+    )?;
+
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, auth.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+    let row = fetch_quote_row(&mut tx, org_id, quote_id)
+        .await
+        .map_err(internal(&request_id))?
+        .ok_or_else(|| not_found(&request_id, "quote"))?;
+    if row.status != "pending_approval" {
+        let dto = fetch_quote_dto(&mut tx, org_id, row.id)
+            .await
+            .map_err(internal(&request_id))?
+            .ok_or_else(|| not_found(&request_id, "quote"))?;
+        tx.commit().await.map_err(internal(&request_id))?;
+        return Ok(Json(dto));
+    }
+    sqlx::query(
+        "UPDATE sales_quote SET status = 'rejected', version = version + 1, updated_at = now() WHERE org_id = $1 AND id = $2",
+    )
+    .bind(org_id)
+    .bind(row.id)
+    .execute(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
+    let dto = fetch_quote_dto(&mut tx, org_id, row.id)
+        .await
+        .map_err(internal(&request_id))?
+        .ok_or_else(|| not_found(&request_id, "quote"))?;
     tx.commit().await.map_err(internal(&request_id))?;
     Ok(Json(dto))
 }
@@ -939,6 +1160,12 @@ pub async fn accept_quote(
     }
     if row.status == "rejected" {
         return Err(conflict(&request_id, "quote already rejected"));
+    }
+    if row.status == "pending_approval" {
+        return Err(conflict(
+            &request_id,
+            "quote discount is pending approval; cannot accept yet",
+        ));
     }
 
     sqlx::query(

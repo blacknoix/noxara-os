@@ -377,19 +377,15 @@ async fn dashboard_happy_path_widgets_and_reason_codes() {
         assert_eq!(w["payload"]["module"], "finance", "{id}");
     }
 
-    // Phase 1.6: my_work + tasks fetch project-service summary. Without it,
-    // expect operations_unreachable.
-    for id in ["my_work", "tasks"] {
+    // Phase 1.6/1.7: my_work + tasks + approvals fetch project-service summary.
+    // Without it, expect operations_unreachable.
+    for id in ["my_work", "tasks", "approvals"] {
         let w = by_id(id);
         assert_eq!(w["status"], "unavailable", "{id}");
         assert_eq!(w["reason_code"], "operations_unreachable", "{id}");
         assert_eq!(w["kind"], "stat", "{id}");
         assert_eq!(w["payload"]["module"], "operations", "{id}");
     }
-
-    let approvals = by_id("approvals");
-    assert_eq!(approvals["status"], "empty");
-    assert_eq!(approvals["reason_code"], "coming_in_later_phase");
 
     let inbox = by_id("inbox");
     assert_eq!(inbox["reason_code"], "no_data");

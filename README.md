@@ -16,7 +16,9 @@ Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@c
 - **Phase 1.5** (merged): Finance service (`companyos-finance`), invoices/payments/journal, quote→invoice, dashboard finance widgets.
 - **Phase 1.6** (this line of work): Projects & Tasks (`companyos-project`), `/api/v1/operations/*`, board/my-work, DealWon → project.
 
-Not in scope yet: Temporal dunning/approvals (1.7), real AI copilot (1.9), full SSO IdP, Flutter/Tauri, live payment provider keys, PDF/email.
+Not in scope yet: InvoiceDunning (later), real AI copilot (1.9), full SSO IdP, Flutter/Tauri, live payment provider keys, PDF/email.
+
+Phase 1.7 ships the Temporal-hosted **ApprovalProcess** worker (`companyos-project-worker`) alongside `companyos-project`. Compose already runs Temporal; `scripts/dev-up` starts the worker.
 
 ## Non-negotiable invariants
 

@@ -419,6 +419,13 @@ async fn system_role_deny_matrix_unit() {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
+            // Finance/Manager may decide approvals (Phase 1.7); policy.manage stays Owner/Admin.
+            if (*role == Role::Finance || *role == Role::Manager)
+                && *perm == "operations.approval.decide"
+            {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
             // Manager may invite
             if *role == Role::Manager && *perm == "workspace.member.invite" {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));

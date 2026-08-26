@@ -1,6 +1,6 @@
 [package]
 name = "companyos-project"
-description = "CompanyOS Projects & Tasks service — Phase 1.6 (business / operations)"
+description = "CompanyOS Projects & Tasks + Approval engine — Phase 1.6/1.7 (business / operations)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,6 +13,10 @@ path = "src/lib.rs"
 [[bin]]
 name = "companyos-project"
 path = "src/main.rs"
+
+[[bin]]
+name = "companyos-project-worker"
+path = "src/bin/worker.rs"
 
 [dependencies]
 companyos-ids = { workspace = true }

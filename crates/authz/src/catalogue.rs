@@ -609,6 +609,31 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Comment on tasks (including @mentions)",
         sensitive: false,
     },
+    // --- Operations / Approvals (Phase 1.7) ---
+    PermissionDef {
+        id: "operations.approval.read",
+        context: "operations",
+        resource: "approval",
+        action: "read",
+        description: "Read approval requests and inbox",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.approval.decide",
+        context: "operations",
+        resource: "approval",
+        action: "decide",
+        description: "Approve or reject pending approvals",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "operations.approval.manage",
+        context: "operations",
+        resource: "approval",
+        action: "manage",
+        description: "Create and publish versioned approval policies (policy.manage)",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -624,6 +649,8 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "finance.payment.allocate",
     "finance.credit_note.create",
     "finance.expense.approve",
+    "operations.approval.decide",
+    "operations.approval.manage",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -856,6 +883,15 @@ pub mod perms {
     pub fn operations_task_comment() -> PermissionId {
         PermissionId::from("operations.task.comment")
     }
+    pub fn operations_approval_read() -> PermissionId {
+        PermissionId::from("operations.approval.read")
+    }
+    pub fn operations_approval_decide() -> PermissionId {
+        PermissionId::from("operations.approval.decide")
+    }
+    pub fn operations_approval_policy_manage() -> PermissionId {
+        PermissionId::from("operations.approval.manage")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -884,7 +920,8 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "finance.customer.read"
         | "finance.ledger.read"
         | "operations.project.read"
-        | "operations.task.read" => Scope::Organization,
+        | "operations.task.read"
+        | "operations.approval.read" => Scope::Organization,
         _ => Scope::Organization,
     }
 }
