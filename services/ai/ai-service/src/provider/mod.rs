@@ -41,13 +41,22 @@ impl MockProvider {
     fn detect_tools(message: &str) -> Vec<String> {
         let lower = message.to_ascii_lowercase();
         let mut tools = Vec::new();
-        if lower.contains("create invoice") || lower.contains("new invoice") {
+        if lower.contains("create invoice")
+            || lower.contains("create_invoice")
+            || lower.contains("new invoice")
+        {
             tools.push("create_invoice".into());
         }
-        if lower.contains("create task") || lower.contains("new task") {
+        if lower.contains("create task")
+            || lower.contains("create_task")
+            || lower.contains("new task")
+        {
             tools.push("create_task".into());
         }
-        if lower.contains("create expense") || lower.contains("new expense") {
+        if lower.contains("create expense")
+            || lower.contains("create_expense")
+            || lower.contains("new expense")
+        {
             tools.push("create_expense".into());
         }
         if lower.contains("follow up") || lower.contains("follow-up") {

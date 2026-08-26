@@ -70,7 +70,7 @@ pub async fn hybrid_retrieve(
         )
     };
 
-    let resp = state
+    let resp = match state
         .http
         .get(&url)
         .header(
@@ -79,7 +79,14 @@ pub async fn hybrid_retrieve(
         )
         .send()
         .await
-        .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, &request_id, e.to_string()))?;
+    {
+        Ok(r) => r,
+        Err(e) => {
+            // Search may be offline in local/CI; degrade to no hits rather than failing chat.
+            tracing::warn!(error = %e, "search unreachable; returning empty retrieval");
+            return Ok(Vec::new());
+        }
+    };
 
     if !resp.status().is_success() {
         return Ok(Vec::new());
