@@ -73,7 +73,10 @@ pub async fn hybrid_retrieve(
     let resp = state
         .http
         .get(&url)
-        .header(axum::http::header::AUTHORIZATION, format!("Bearer {bearer}"))
+        .header(
+            axum::http::header::AUTHORIZATION,
+            format!("Bearer {bearer}"),
+        )
         .send()
         .await
         .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, &request_id, e.to_string()))?;
@@ -96,7 +99,10 @@ pub async fn hybrid_retrieve(
     let citations = hits
         .into_iter()
         .filter_map(|hit| {
-            let doc_type = hit.get("doc_type").and_then(|v| v.as_str()).unwrap_or("record");
+            let doc_type = hit
+                .get("doc_type")
+                .and_then(|v| v.as_str())
+                .unwrap_or("record");
             let doc_id = hit.get("doc_id").and_then(|v| v.as_str()).unwrap_or("");
             let title = hit.get("title").and_then(|v| v.as_str()).unwrap_or(doc_id);
             let href = hit.get("href").and_then(|v| v.as_str()).map(String::from);

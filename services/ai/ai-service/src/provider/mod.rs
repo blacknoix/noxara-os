@@ -100,7 +100,11 @@ impl LlmProvider for MockProvider {
 
     async fn stream_tokens(&self, req: CompletionRequest) -> Result<Vec<String>, String> {
         let result = self.complete(req).await?;
-        Ok(result.content.split_whitespace().map(|w| format!("{w} ")).collect())
+        Ok(result
+            .content
+            .split_whitespace()
+            .map(|w| format!("{w} "))
+            .collect())
     }
 }
 
@@ -159,7 +163,9 @@ impl LlmProvider for OpenAiCompatibleProvider {
             messages: vec![
                 ChatMessage {
                     role: "system".into(),
-                    content: "You are CompanyOS copilot. Cite retrieved records. Never execute writes.".into(),
+                    content:
+                        "You are CompanyOS copilot. Cite retrieved records. Never execute writes."
+                            .into(),
                 },
                 ChatMessage {
                     role: "user".into(),
@@ -171,7 +177,10 @@ impl LlmProvider for OpenAiCompatibleProvider {
         let resp = self
             .client
             .post(&url)
-            .header(axum::http::header::AUTHORIZATION, format!("Bearer {}", self.api_key))
+            .header(
+                axum::http::header::AUTHORIZATION,
+                format!("Bearer {}", self.api_key),
+            )
             .json(&body)
             .send()
             .await
@@ -187,7 +196,11 @@ impl LlmProvider for OpenAiCompatibleProvider {
             .map(|c| c.message.content.clone())
             .unwrap_or_default();
         let input_tokens = parsed.usage.as_ref().map(|u| u.prompt_tokens).unwrap_or(0);
-        let output_tokens = parsed.usage.as_ref().map(|u| u.completion_tokens).unwrap_or(0);
+        let output_tokens = parsed
+            .usage
+            .as_ref()
+            .map(|u| u.completion_tokens)
+            .unwrap_or(0);
         let suggested_tools = MockProvider::detect_tools(&req.user_message);
         Ok(CompletionResult {
             content,
@@ -202,7 +215,11 @@ impl LlmProvider for OpenAiCompatibleProvider {
 
     async fn stream_tokens(&self, req: CompletionRequest) -> Result<Vec<String>, String> {
         let result = self.complete(req).await?;
-        Ok(result.content.split_whitespace().map(|w| format!("{w} ")).collect())
+        Ok(result
+            .content
+            .split_whitespace()
+            .map(|w| format!("{w} "))
+            .collect())
     }
 }
 
@@ -221,8 +238,8 @@ pub fn build_provider() -> Arc<dyn LlmProvider> {
     if api_key.is_empty() {
         Arc::new(MockProvider)
     } else {
-        let base = std::env::var("AI_API_BASE")
-            .unwrap_or_else(|_| "https://api.openai.com/v1".into());
+        let base =
+            std::env::var("AI_API_BASE").unwrap_or_else(|_| "https://api.openai.com/v1".into());
         let model = std::env::var("AI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".into());
         Arc::new(OpenAiCompatibleProvider {
             base_url: base,
@@ -234,7 +251,5 @@ pub fn build_provider() -> Arc<dyn LlmProvider> {
 }
 
 pub fn wrap_untrusted(content: &str) -> String {
-    format!(
-        "<<<UNTRUSTED_DOCUMENT>>>\n{content}\n<<<END_UNTRUSTED_DOCUMENT>>>"
-    )
+    format!("<<<UNTRUSTED_DOCUMENT>>>\n{content}\n<<<END_UNTRUSTED_DOCUMENT>>>")
 }

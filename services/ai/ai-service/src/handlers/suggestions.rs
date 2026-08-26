@@ -1,15 +1,15 @@
 //! Inline suggestion chips for page context.
 
 use axum::extract::{Query, State};
-use axum::{Json, Router};
 use axum::routing::get;
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_ids::new_uuid_v7;
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::auth::AuthCtx;
-use crate::handlers::common::{resolve_principal, enforce_perm};
+use crate::handlers::common::{enforce_perm, resolve_principal};
 use crate::state::AppState;
 use crate::tools::{persist_proposal, ProposalDraft};
 use crate::types::{SuggestionChip, SuggestionsResponse};
@@ -70,15 +70,8 @@ pub async fn get_suggestions(
                 "deal_id": record_id,
             }),
         };
-        let proposal_id = persist_proposal(
-            &state,
-            org_id.as_uuid(),
-            user_id,
-            None,
-            &draft,
-            &request_id,
-        )
-        .await?;
+        let proposal_id =
+            persist_proposal(&state, org_id.as_uuid(), user_id, None, &draft, &request_id).await?;
         chips.push(SuggestionChip {
             id: new_uuid_v7().to_string(),
             label: "Draft follow-up".into(),
@@ -102,15 +95,8 @@ pub async fn get_suggestions(
                 "subject": "Payment reminder",
             }),
         };
-        let proposal_id = persist_proposal(
-            &state,
-            org_id.as_uuid(),
-            user_id,
-            None,
-            &draft,
-            &request_id,
-        )
-        .await?;
+        let proposal_id =
+            persist_proposal(&state, org_id.as_uuid(), user_id, None, &draft, &request_id).await?;
         chips.push(SuggestionChip {
             id: new_uuid_v7().to_string(),
             label: "Send payment reminder".into(),
@@ -134,15 +120,8 @@ pub async fn get_suggestions(
                 "title": "Subtask from brief",
             }),
         };
-        let proposal_id = persist_proposal(
-            &state,
-            org_id.as_uuid(),
-            user_id,
-            None,
-            &draft,
-            &request_id,
-        )
-        .await?;
+        let proposal_id =
+            persist_proposal(&state, org_id.as_uuid(), user_id, None, &draft, &request_id).await?;
         chips.push(SuggestionChip {
             id: new_uuid_v7().to_string(),
             label: "Break down task".into(),

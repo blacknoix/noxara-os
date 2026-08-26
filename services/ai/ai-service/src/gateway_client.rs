@@ -21,23 +21,17 @@ pub async fn forward_user_request(
     on_behalf_of: Uuid,
     request_id: &str,
 ) -> Result<(StatusCode, Value), AppError> {
-    let url = format!(
-        "{}{}",
-        state.gateway_url.trim_end_matches('/'),
-        path
+    let url = format!("{}{}", state.gateway_url.trim_end_matches('/'), path);
+    let mut req = state.http.request(method, url).header(
+        axum::http::header::AUTHORIZATION,
+        format!("Bearer {bearer}"),
     );
-    let mut req = state
-        .http
-        .request(method, url)
-        .header(axum::http::header::AUTHORIZATION, format!("Bearer {bearer}"));
 
     if as_ai {
-        req = req
-            .header(AI_ACTOR_HEADER, "true")
-            .header(
-                ON_BEHALF_HEADER,
-                PublicId::new(IdKind::User, on_behalf_of).as_str(),
-            );
+        req = req.header(AI_ACTOR_HEADER, "true").header(
+            ON_BEHALF_HEADER,
+            PublicId::new(IdKind::User, on_behalf_of).as_str(),
+        );
     }
 
     if let Some(b) = body {
@@ -50,10 +44,7 @@ pub async fn forward_user_request(
         .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, request_id, e.to_string()))?;
 
     let status = resp.status();
-    let v: Value = resp
-        .json()
-        .await
-        .unwrap_or(Value::Null);
+    let v: Value = resp.json().await.unwrap_or(Value::Null);
 
     Ok((status, v))
 }

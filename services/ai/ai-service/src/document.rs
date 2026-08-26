@@ -97,7 +97,10 @@ fn heuristic_amount(lower: &str) -> Option<i64> {
     None
 }
 
-pub fn build_proposal_command(kind: &str, fields: &ExtractedFields) -> (String, serde_json::Value, String) {
+pub fn build_proposal_command(
+    kind: &str,
+    fields: &ExtractedFields,
+) -> (String, serde_json::Value, String) {
     match kind {
         "invoice" => {
             let cmd = json!({

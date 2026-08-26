@@ -2,13 +2,13 @@
 
 use axum::extract::State;
 use axum::http::HeaderMap;
-use axum::{Json, Router};
 use axum::routing::post;
+use axum::{Json, Router};
 use companyos_authz::perms;
 use serde_json::json;
 
 use crate::auth::AuthCtx;
-use crate::handlers::common::{extract_bearer, resolve_principal, enforce_perm};
+use crate::handlers::common::{enforce_perm, extract_bearer, resolve_principal};
 use crate::retrieval::{hybrid_retrieve, RetrievalQuery};
 use crate::state::AppState;
 use crate::tools::{run_tool, ToolOutcome};

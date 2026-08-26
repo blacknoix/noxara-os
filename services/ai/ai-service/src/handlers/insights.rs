@@ -1,13 +1,13 @@
 //! GET /api/v1/ai/insights
 
 use axum::extract::State;
-use axum::{Json, Router};
 use axum::routing::get;
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_ids::new_uuid_v7;
 
 use crate::auth::AuthCtx;
-use crate::handlers::common::{extract_bearer, load_settings, resolve_principal, enforce_perm};
+use crate::handlers::common::{enforce_perm, extract_bearer, load_settings, resolve_principal};
 use crate::retrieval::{hybrid_retrieve, RetrievalQuery};
 use crate::state::AppState;
 use crate::types::{Citation, InsightObservation, InsightsResponse};
@@ -48,7 +48,9 @@ pub async fn get_insights(
         Vec::new()
     } else {
         let query = RetrievalQuery::new(Some(&org_public), "overdue invoice open deal")?;
-        hybrid_retrieve(&state, &auth, query, &bearer).await.unwrap_or_default()
+        hybrid_retrieve(&state, &auth, query, &bearer)
+            .await
+            .unwrap_or_default()
     };
 
     if citations.is_empty() {

@@ -22,10 +22,10 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(pool: PgPool, keyring: KeyRing) -> Self {
-        let gateway_url = std::env::var("GATEWAY_URL")
-            .unwrap_or_else(|_| "http://127.0.0.1:8080".into());
-        let search_url = std::env::var("SEARCH_SERVICE_URL")
-            .unwrap_or_else(|_| "http://127.0.0.1:8086".into());
+        let gateway_url =
+            std::env::var("GATEWAY_URL").unwrap_or_else(|_| "http://127.0.0.1:8080".into());
+        let search_url =
+            std::env::var("SEARCH_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8086".into());
         Self {
             pool,
             keyring,

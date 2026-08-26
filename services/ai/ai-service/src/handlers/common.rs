@@ -4,15 +4,13 @@ use axum::http::HeaderMap;
 use companyos_authz::Principal;
 use companyos_authz::Role;
 use companyos_errors::{AppError, ErrorCode};
-use companyos_tenancy::{OrgId, set_session_org_id};
+use companyos_tenancy::{set_session_org_id, OrgId};
 use uuid::Uuid;
 
 use crate::auth::AuthCtx;
 use crate::principal::{enforce, load_principal};
 use crate::state::AppState;
-use crate::types::{
-    AiSettings, DataSharingSettings, ModulesEnabled, ProposalView, TokenUsage,
-};
+use crate::types::{AiSettings, DataSharingSettings, ModulesEnabled, ProposalView, TokenUsage};
 use chrono::Utc;
 
 pub(crate) type ProposalRow = (
@@ -33,10 +31,7 @@ pub fn extract_bearer(headers: &HeaderMap) -> Option<String> {
         .and_then(|v| v.strip_prefix("Bearer ").map(|s| s.to_string()))
 }
 
-pub async fn resolve_principal(
-    state: &AppState,
-    auth: &AuthCtx,
-) -> Result<Principal, AppError> {
+pub async fn resolve_principal(state: &AppState, auth: &AuthCtx) -> Result<Principal, AppError> {
     let request_id = auth.ctx.request_id.clone();
     if auth.local_bypass {
         return Ok(Principal::with_roles(vec![Role::Owner]));
@@ -81,18 +76,25 @@ pub async fn load_settings(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
-    let row: Option<(serde_json::Value, String, serde_json::Value, serde_json::Value, i64, i64, String)> =
-        sqlx::query_as(
-            r#"
+    let row: Option<(
+        serde_json::Value,
+        String,
+        serde_json::Value,
+        serde_json::Value,
+        i64,
+        i64,
+        String,
+    )> = sqlx::query_as(
+        r#"
             SELECT modules_enabled, model_preference, auto_execute_allow_list,
                    data_sharing, monthly_token_budget, tokens_used_this_month, budget_month
             FROM ai_org_settings WHERE org_id = $1
             "#,
-        )
-        .bind(org_id.as_uuid())
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+    )
+    .bind(org_id.as_uuid())
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
     tx.commit()
         .await
@@ -247,7 +249,11 @@ pub async fn load_proposal_view(
     let Some((id, tool_name, action_type, status, command, rendered_diff, citations, created_at)) =
         row
     else {
-        return Err(AppError::new(ErrorCode::NotFound, request_id, "proposal not found"));
+        return Err(AppError::new(
+            ErrorCode::NotFound,
+            request_id,
+            "proposal not found",
+        ));
     };
 
     let citations: Vec<crate::types::Citation> =

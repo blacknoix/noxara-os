@@ -1,18 +1,16 @@
 //! Document extract and review endpoints.
 
 use axum::extract::{Path, State};
-use axum::{Json, Router};
 use axum::routing::{get, post};
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_tenancy::set_session_org_id;
 use serde_json::json;
 use uuid::Uuid;
 
 use crate::auth::AuthCtx;
-use crate::document::{
-    build_proposal_command, extract_from_text, persist_review,
-};
-use crate::handlers::common::{resolve_principal, enforce_perm};
+use crate::document::{build_proposal_command, extract_from_text, persist_review};
+use crate::handlers::common::{enforce_perm, resolve_principal};
 use crate::state::AppState;
 use crate::tools::{persist_proposal, ProposalDraft};
 use crate::types::{DocumentExtractRequest, DocumentReview};
@@ -88,15 +86,8 @@ pub async fn extract_document(
         }),
     };
 
-    let proposal_id = persist_proposal(
-        &state,
-        org_id.as_uuid(),
-        user_id,
-        None,
-        &draft,
-        &request_id,
-    )
-    .await?;
+    let proposal_id =
+        persist_proposal(&state, org_id.as_uuid(), user_id, None, &draft, &request_id).await?;
 
     let review = persist_review(
         &state,
@@ -130,7 +121,11 @@ pub async fn get_document_review(
     enforce_perm(&principal, perms::ai_document_extract(), &request_id)?;
 
     let review_id = Uuid::parse_str(&id).map_err(|_| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid review id")
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            &request_id,
+            "invalid review id",
+        )
     })?;
 
     let mut tx = state
@@ -159,7 +154,11 @@ pub async fn get_document_review(
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     let Some((kind, confidence, extracted, proposal_id, status)) = row else {
-        return Err(AppError::new(ErrorCode::NotFound, &request_id, "review not found"));
+        return Err(AppError::new(
+            ErrorCode::NotFound,
+            &request_id,
+            "review not found",
+        ));
     };
 
     Ok(Json(DocumentReview {

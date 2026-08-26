@@ -171,10 +171,7 @@ pub async fn run_tool(
         ToolKind::Read => {
             let value = match def.name {
                 "search_workspace" => {
-                    let q = args
-                        .get("query")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("");
+                    let q = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
                     let org_public = org_id.to_public().as_str();
                     let url = format!(
                         "/api/v1/search/query?q={}&org_id={}",
@@ -197,11 +194,20 @@ pub async fn run_tool(
                 }
                 "get_deal" => {
                     let id = args.get("deal_id").and_then(|v| v.as_str()).unwrap_or("");
-                    read_get(state, bearer, user_id, request_id, &format!("/api/v1/sales/deals/{id}"))
-                        .await
+                    read_get(
+                        state,
+                        bearer,
+                        user_id,
+                        request_id,
+                        &format!("/api/v1/sales/deals/{id}"),
+                    )
+                    .await
                 }
                 "get_invoice" => {
-                    let id = args.get("invoice_id").and_then(|v| v.as_str()).unwrap_or("");
+                    let id = args
+                        .get("invoice_id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
                     read_get(
                         state,
                         bearer,
@@ -286,17 +292,17 @@ async fn read_get(
     body
 }
 
-fn build_write_proposal(
-    name: &str,
-    args: &Value,
-) -> (Value, String, String, String, Value) {
+fn build_write_proposal(name: &str, args: &Value) -> (Value, String, String, String, Value) {
     match name {
         "create_invoice" => {
             let customer = args
                 .get("customer_id")
                 .and_then(|v| v.as_str())
                 .unwrap_or("cus_placeholder");
-            let amount = args.get("amount_minor").and_then(|v| v.as_i64()).unwrap_or(0);
+            let amount = args
+                .get("amount_minor")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
             let currency = args
                 .get("currency")
                 .and_then(|v| v.as_str())
@@ -310,7 +316,8 @@ fn build_write_proposal(
                     "unit_price_minor": amount,
                 }],
             });
-            let diff = format!("+ Create invoice for {customer}\n  Total: {amount} {currency} minor");
+            let diff =
+                format!("+ Create invoice for {customer}\n  Total: {amount} {currency} minor");
             (
                 body.clone(),
                 diff,
@@ -342,7 +349,10 @@ fn build_write_proposal(
             )
         }
         "create_expense" => {
-            let amount = args.get("amount_minor").and_then(|v| v.as_i64()).unwrap_or(0);
+            let amount = args
+                .get("amount_minor")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
             let currency = args
                 .get("currency")
                 .and_then(|v| v.as_str())

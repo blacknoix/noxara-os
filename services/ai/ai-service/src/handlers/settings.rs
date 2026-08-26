@@ -1,23 +1,25 @@
 //! GET/PATCH /api/v1/ai/settings
 
 use axum::extract::State;
-use axum::{Json, Router};
 use axum::routing::get;
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_tenancy::set_session_org_id;
 use serde_json::json;
 
 use crate::auth::AuthCtx;
 use crate::handlers::common::{
-    ensure_settings_row, load_settings, resolve_principal, enforce_perm,
+    enforce_perm, ensure_settings_row, load_settings, resolve_principal,
 };
 use crate::state::AppState;
 use crate::types::{AiSettings, UpdateAiSettingsRequest};
 use companyos_errors::{AppError, ErrorCode};
 
 pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/api/v1/ai/settings", get(get_settings).patch(patch_settings))
+    Router::new().route(
+        "/api/v1/ai/settings",
+        get(get_settings).patch(patch_settings),
+    )
 }
 
 #[utoipa::path(
@@ -62,15 +64,15 @@ pub async fn patch_settings(
     ensure_settings_row(&state, org_id, &request_id).await?;
     let current = load_settings(&state, org_id, &request_id).await?;
 
-    let modules = req
-        .modules_enabled
-        .unwrap_or(current.modules_enabled);
+    let modules = req.modules_enabled.unwrap_or(current.modules_enabled);
     let model = req.model_preference.unwrap_or(current.model_preference);
     let allow_list = req
         .auto_execute_allow_list
         .unwrap_or(current.auto_execute_allow_list);
     let sharing = req.data_sharing.unwrap_or(current.data_sharing);
-    let budget = req.monthly_token_budget.unwrap_or(current.monthly_token_budget);
+    let budget = req
+        .monthly_token_budget
+        .unwrap_or(current.monthly_token_budget);
 
     let modules_json = serde_json::to_value(&modules).unwrap_or(json!({}));
     let allow_json = serde_json::to_value(&allow_list).unwrap_or(json!([]));

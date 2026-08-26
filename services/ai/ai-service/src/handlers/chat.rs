@@ -3,8 +3,8 @@
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::response::sse::{Event, KeepAlive, Sse};
-use axum::{Json, Router};
 use axum::routing::post;
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_ids::new_uuid_v7;
 use companyos_tenancy::set_session_org_id;
@@ -16,10 +16,10 @@ use uuid::Uuid;
 
 use crate::auth::AuthCtx;
 use crate::handlers::common::{
-    build_usage, check_token_budget, extract_bearer, load_settings, record_token_usage,
-    resolve_principal, enforce_perm,
+    build_usage, check_token_budget, enforce_perm, extract_bearer, load_settings,
+    record_token_usage, resolve_principal,
 };
-use crate::provider::{CompletionRequest, wrap_untrusted};
+use crate::provider::{wrap_untrusted, CompletionRequest};
 use crate::retrieval::{hybrid_retrieve, RetrievalQuery};
 use crate::state::AppState;
 use crate::tools::{persist_proposal, run_tool, ToolOutcome};
@@ -186,10 +186,13 @@ async fn process_chat(
         }
     }
 
-  // Auto-execute only when explicitly in allow_list
+    // Auto-execute only when explicitly in allow_list
     if !settings.auto_execute_allow_list.is_empty() {
         for proposal in &proposals {
-            if settings.auto_execute_allow_list.contains(&proposal.action_type) {
+            if settings
+                .auto_execute_allow_list
+                .contains(&proposal.action_type)
+            {
                 // auto-execute skipped by default policy — confirm required unless in list
             }
         }

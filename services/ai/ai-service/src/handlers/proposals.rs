@@ -2,8 +2,8 @@
 
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, Method};
-use axum::{Json, Router};
 use axum::routing::{get, post};
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_tenancy::set_session_org_id;
 use uuid::Uuid;
@@ -11,11 +11,11 @@ use uuid::Uuid;
 use crate::auth::AuthCtx;
 use crate::gateway_client::forward_user_request;
 use crate::handlers::common::{
-    extract_bearer, load_proposal_view, resolve_principal, enforce_perm, ProposalRow,
+    enforce_perm, extract_bearer, load_proposal_view, resolve_principal, ProposalRow,
 };
 use crate::state::AppState;
 use crate::tools::find_tool;
-use crate::types::{ConfirmProposalRequest, MessageResponse, ProposalsListResponse, ProposalView};
+use crate::types::{ConfirmProposalRequest, MessageResponse, ProposalView, ProposalsListResponse};
 use companyos_errors::{AppError, ErrorCode};
 
 pub fn router() -> Router<AppState> {
@@ -52,19 +52,19 @@ pub async fn list_proposals(
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     let rows: Vec<ProposalRow> = sqlx::query_as(
-            r#"
+        r#"
             SELECT id, tool_name, action_type, status, command, rendered_diff, citations, created_at
             FROM ai_proposal
             WHERE org_id = $1 AND user_id = $2
             ORDER BY created_at DESC
             LIMIT 50
             "#,
-        )
-        .bind(org_id.as_uuid())
-        .bind(user_id)
-        .fetch_all(&mut *tx)
-        .await
-        .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    )
+    .bind(org_id.as_uuid())
+    .bind(user_id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     tx.commit()
         .await
@@ -72,11 +72,9 @@ pub async fn list_proposals(
 
     let items = rows
         .into_iter()
-        .map(|(id, tool_name, action_type, status, command, rendered_diff, citations, created_at)| {
-            let citations: Vec<crate::types::Citation> =
-                serde_json::from_value(citations).unwrap_or_default();
-            ProposalView {
-                id: id.to_string(),
+        .map(
+            |(
+                id,
                 tool_name,
                 action_type,
                 status,
@@ -84,8 +82,21 @@ pub async fn list_proposals(
                 rendered_diff,
                 citations,
                 created_at,
-            }
-        })
+            )| {
+                let citations: Vec<crate::types::Citation> =
+                    serde_json::from_value(citations).unwrap_or_default();
+                ProposalView {
+                    id: id.to_string(),
+                    tool_name,
+                    action_type,
+                    status,
+                    command,
+                    rendered_diff,
+                    citations,
+                    created_at,
+                }
+            },
+        )
         .collect();
 
     Ok(Json(ProposalsListResponse { items }))
@@ -114,7 +125,11 @@ pub async fn confirm_proposal(
     enforce_perm(&principal, perms::ai_proposal_commit(), &request_id)?;
 
     let proposal_id = Uuid::parse_str(&id).map_err(|_| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid proposal id")
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            &request_id,
+            "invalid proposal id",
+        )
     })?;
 
     let mut tx = state
@@ -126,23 +141,26 @@ pub async fn confirm_proposal(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    let row: Option<(String, String, String, serde_json::Value, String, String)> =
-        sqlx::query_as(
-            r#"
+    let row: Option<(String, String, String, serde_json::Value, String, String)> = sqlx::query_as(
+        r#"
             SELECT tool_name, action_type, status, domain_body, domain_path, domain_method
             FROM ai_proposal WHERE id = $1 AND org_id = $2 AND user_id = $3
             "#,
-        )
-        .bind(proposal_id)
-        .bind(org_id.as_uuid())
-        .bind(user_id)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    )
+    .bind(proposal_id)
+    .bind(org_id.as_uuid())
+    .bind(user_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     let Some((tool_name, _action_type, status, domain_body, domain_path, domain_method)) = row
     else {
-        return Err(AppError::new(ErrorCode::NotFound, &request_id, "proposal not found"));
+        return Err(AppError::new(
+            ErrorCode::NotFound,
+            &request_id,
+            "proposal not found",
+        ));
     };
 
     if status != "pending" {
@@ -239,7 +257,11 @@ pub async fn cancel_proposal(
     enforce_perm(&principal, perms::ai_proposal_create(), &request_id)?;
 
     let proposal_id = Uuid::parse_str(&id).map_err(|_| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid proposal id")
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            &request_id,
+            "invalid proposal id",
+        )
     })?;
 
     let mut tx = state
@@ -270,7 +292,11 @@ pub async fn cancel_proposal(
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     if updated.rows_affected() == 0 {
-        return Err(AppError::new(ErrorCode::NotFound, &request_id, "proposal not found or not pending"));
+        return Err(AppError::new(
+            ErrorCode::NotFound,
+            &request_id,
+            "proposal not found or not pending",
+        ));
     }
 
     Ok(Json(MessageResponse {

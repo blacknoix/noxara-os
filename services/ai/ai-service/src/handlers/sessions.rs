@@ -1,14 +1,14 @@
 //! Session list and detail.
 
 use axum::extract::{Path, State};
-use axum::{Json, Router};
 use axum::routing::get;
+use axum::{Json, Router};
 use companyos_authz::perms;
 use companyos_tenancy::set_session_org_id;
 use uuid::Uuid;
 
 use crate::auth::AuthCtx;
-use crate::handlers::common::{resolve_principal, enforce_perm};
+use crate::handlers::common::{enforce_perm, resolve_principal};
 use crate::state::AppState;
 use crate::types::{ChatResponse, SessionDetail, SessionSummary, SessionsListResponse, TokenUsage};
 use companyos_errors::{AppError, ErrorCode};
@@ -111,7 +111,11 @@ pub async fn get_session(
     enforce_perm(&principal, perms::ai_copilot_use(), &request_id)?;
 
     let session_id = Uuid::parse_str(&id).map_err(|_| {
-        AppError::new(ErrorCode::ValidationFailed, &request_id, "invalid session id")
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            &request_id,
+            "invalid session id",
+        )
     })?;
 
     let mut tx = state
@@ -138,7 +142,11 @@ pub async fn get_session(
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     let Some((title, page_scope, updated_at)) = session_row else {
-        return Err(AppError::new(ErrorCode::NotFound, &request_id, "session not found"));
+        return Err(AppError::new(
+            ErrorCode::NotFound,
+            &request_id,
+            "session not found",
+        ));
     };
 
     let interaction_rows: Vec<InteractionRow> = sqlx::query_as(
@@ -162,31 +170,46 @@ pub async fn get_session(
 
     let interactions = interaction_rows
         .into_iter()
-        .map(|(iid, content, citations, _follow_ups, tool_trace, model, ptv, in_t, out_t, latency, cost, currency)| {
-            let citations: Vec<crate::types::Citation> =
-                serde_json::from_value(citations).unwrap_or_default();
-            let tool_trace: Vec<crate::types::ToolTraceEntry> =
-                serde_json::from_value(tool_trace).unwrap_or_default();
-            ChatResponse {
-                session_id: session_id.to_string(),
-                interaction_id: iid.to_string(),
-                role: "assistant".into(),
+        .map(
+            |(
+                iid,
                 content,
                 citations,
-                follow_ups: Vec::new(),
-                proposals: Vec::new(),
+                _follow_ups,
                 tool_trace,
-                usage: TokenUsage {
-                    model: model.unwrap_or_else(|| "mock".into()),
-                    prompt_template_version: ptv.unwrap_or_else(|| "ai.chat.v1".into()),
-                    input_tokens: in_t as u32,
-                    output_tokens: out_t as u32,
-                    latency_ms: latency as u32,
-                    cost_estimate_minor: cost,
-                    currency,
-                },
-            }
-        })
+                model,
+                ptv,
+                in_t,
+                out_t,
+                latency,
+                cost,
+                currency,
+            )| {
+                let citations: Vec<crate::types::Citation> =
+                    serde_json::from_value(citations).unwrap_or_default();
+                let tool_trace: Vec<crate::types::ToolTraceEntry> =
+                    serde_json::from_value(tool_trace).unwrap_or_default();
+                ChatResponse {
+                    session_id: session_id.to_string(),
+                    interaction_id: iid.to_string(),
+                    role: "assistant".into(),
+                    content,
+                    citations,
+                    follow_ups: Vec::new(),
+                    proposals: Vec::new(),
+                    tool_trace,
+                    usage: TokenUsage {
+                        model: model.unwrap_or_else(|| "mock".into()),
+                        prompt_template_version: ptv.unwrap_or_else(|| "ai.chat.v1".into()),
+                        input_tokens: in_t as u32,
+                        output_tokens: out_t as u32,
+                        latency_ms: latency as u32,
+                        cost_estimate_minor: cost,
+                        currency,
+                    },
+                }
+            },
+        )
         .collect();
 
     Ok(Json(SessionDetail {
