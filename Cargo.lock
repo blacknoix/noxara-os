@@ -488,6 +488,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "companyos-project"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "chrono",
+ "companyos-auth-token",
+ "companyos-authz",
+ "companyos-core",
+ "companyos-errors",
+ "companyos-events",
+ "companyos-ids",
+ "companyos-outbox",
+ "companyos-telemetry",
+ "companyos-tenancy",
+ "companyos-testkit",
+ "http",
+ "http-body-util",
+ "jsonwebtoken",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
 name = "companyos-telemetry"
 version = "0.1.0"
 dependencies = [
@@ -1790,6 +1824,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d678d17679829e73d371e96880897e98fee2ded7acc0a50bdf8af2affa4b2fe5"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "regex"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
 ]
 
 [[package]]

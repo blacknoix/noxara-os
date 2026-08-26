@@ -15,6 +15,7 @@ members = [
     "services/core",
     "services/business/crm-service",
     "services/business/finance-service",
+    "services/business/project-service",
 ]
 default-members = [
     "crates/ids",
@@ -31,6 +32,7 @@ default-members = [
     "services/core",
     "services/business/crm-service",
     "services/business/finance-service",
+    "services/business/project-service",
 ]
 
 [workspace.package]

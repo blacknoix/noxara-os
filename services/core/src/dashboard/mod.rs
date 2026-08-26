@@ -1,4 +1,4 @@
-//! Phase 1.5 dashboard BFF — widget descriptors + live CRM/Finance aggregates.
+//! Phase 1.6 dashboard BFF — widget descriptors + live CRM/Finance/Operations aggregates.
 //!
 //! CRM pipeline and Finance revenue/expenses/cash/receivables are fetched from
 //! their services when reachable. Staleness is labeled via `as_of` (no Redis
@@ -126,6 +126,10 @@ pub async fn get_dashboard(
     replace_widget(&mut widgets, pipeline_widget);
     let finance_widgets = build_finance_widgets(&headers, range_label.as_deref()).await;
     for w in finance_widgets {
+        replace_widget(&mut widgets, w);
+    }
+    let ops_widgets = build_operations_widgets(&headers, range_label.as_deref()).await;
+    for w in ops_widgets {
         replace_widget(&mut widgets, w);
     }
 
@@ -583,6 +587,203 @@ async fn build_pipeline_widget(headers: &HeaderMap, range_label: Option<&str>) -
             "open_deal_count": open_deal_count,
         }),
     }
+}
+
+async fn build_operations_widgets(
+    headers: &HeaderMap,
+    range_label: Option<&str>,
+) -> Vec<DashboardWidget> {
+    let project_url =
+        std::env::var("PROJECT_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8084".into());
+    let url = format!(
+        "{}/api/v1/operations/summary",
+        project_url.trim_end_matches('/')
+    );
+
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => {
+            return vec![
+                empty_widget(
+                    "my_work",
+                    "My work",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Projects unavailable" }),
+                ),
+                empty_widget(
+                    "tasks",
+                    "Tasks",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Tasks unavailable" }),
+                ),
+            ];
+        }
+    };
+
+    let mut req = client.get(&url);
+    if let Some(auth) = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+    {
+        req = req.header(axum::http::header::AUTHORIZATION, auth);
+    }
+    for name in [
+        "x-companyos-dev-org-id",
+        "x-companyos-dev-user-id",
+        "x-companyos-org-id",
+        "x-companyos-user-id",
+        "x-companyos-session-id",
+        "x-request-id",
+    ] {
+        if let Some(val) = headers.get(name).and_then(|v| v.to_str().ok()) {
+            req = req.header(name, val);
+        }
+    }
+
+    let resp = match req.send().await {
+        Ok(r) => r,
+        Err(_) => {
+            return vec![
+                empty_widget(
+                    "my_work",
+                    "My work",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Projects unavailable" }),
+                ),
+                empty_widget(
+                    "tasks",
+                    "Tasks",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Tasks unavailable" }),
+                ),
+            ];
+        }
+    };
+
+    let status = resp.status();
+    if status == reqwest::StatusCode::FORBIDDEN {
+        return vec![
+            empty_widget(
+                "my_work",
+                "My work",
+                "stat",
+                "empty",
+                "no_data",
+                range_label,
+                json!({ "count": 0, "message": "No task access" }),
+            ),
+            empty_widget(
+                "tasks",
+                "Tasks",
+                "stat",
+                "empty",
+                "no_data",
+                range_label,
+                json!({ "count": 0, "message": "No task access" }),
+            ),
+        ];
+    }
+    if !status.is_success() {
+        return vec![
+            empty_widget(
+                "my_work",
+                "My work",
+                "stat",
+                "unavailable",
+                "operations_unreachable",
+                range_label,
+                json!({ "module": "operations", "message": "Projects unavailable" }),
+            ),
+            empty_widget(
+                "tasks",
+                "Tasks",
+                "stat",
+                "unavailable",
+                "operations_unreachable",
+                range_label,
+                json!({ "module": "operations", "message": "Tasks unavailable" }),
+            ),
+        ];
+    }
+
+    let body: serde_json::Value = match resp.json().await {
+        Ok(v) => v,
+        Err(_) => {
+            return vec![
+                empty_widget(
+                    "my_work",
+                    "My work",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Projects unavailable" }),
+                ),
+                empty_widget(
+                    "tasks",
+                    "Tasks",
+                    "stat",
+                    "unavailable",
+                    "operations_unreachable",
+                    range_label,
+                    json!({ "module": "operations", "message": "Tasks unavailable" }),
+                ),
+            ];
+        }
+    };
+
+    let my_open = body
+        .get("my_open_tasks")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0);
+    let open_tasks = body.get("open_tasks").and_then(|v| v.as_i64()).unwrap_or(0);
+    let overdue = body.get("overdue").and_then(|v| v.as_i64()).unwrap_or(0);
+
+    vec![
+        DashboardWidget {
+            id: "my_work".into(),
+            title: "My work".into(),
+            kind: "stat".into(),
+            status: if my_open == 0 { "empty" } else { "ready" }.into(),
+            reason_code: None,
+            stale: false,
+            range_label: range_label.map(|s| s.to_string()),
+            payload: json!({
+                "count": my_open,
+                "overdue": overdue,
+                "href": "/my-work",
+            }),
+        },
+        DashboardWidget {
+            id: "tasks".into(),
+            title: "Tasks".into(),
+            kind: "stat".into(),
+            status: if open_tasks == 0 { "empty" } else { "ready" }.into(),
+            reason_code: None,
+            stale: false,
+            range_label: range_label.map(|s| s.to_string()),
+            payload: json!({
+                "count": open_tasks,
+                "overdue": overdue,
+                "href": "/ops/tasks",
+            }),
+        },
+    ]
 }
 
 fn empty_widget(

@@ -121,6 +121,15 @@ const emit = [
   'CashFlowPoint',
   'FinanceCustomerDto',
   'WebhookAck',
+  'ProjectDto',
+  'TaskDto',
+  'TaskBoardResponse',
+  'BoardColumnDto',
+  'ChecklistItemDto',
+  'TaskAttachmentDto',
+  'TaskCommentDto',
+  'MyWorkResponse',
+  'SummaryResponse',
 ];
 
 const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Run pnpm generate:sdk */\n`;

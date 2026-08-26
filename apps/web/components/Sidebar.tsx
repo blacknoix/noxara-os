@@ -25,7 +25,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: '/', label: 'Dashboard', short: 'D', perm: 'workspace.dashboard.read' },
       { href: '/inbox', label: 'Inbox', short: 'I', perm: 'workspace.dashboard.read', counter: 0 },
-      { href: '/my-work', label: 'My work', short: 'M', perm: 'workspace.dashboard.read', counter: 0 },
+      { href: '/my-work', label: 'My work', short: 'M', perm: 'operations.task.read', counter: 0 },
       {
         href: '/approvals',
         label: 'Approvals',
@@ -60,7 +60,10 @@ const GROUPS: NavGroup[] = [
   {
     id: 'ops',
     label: 'Ops',
-    items: [{ href: '/ops', label: 'Ops', short: 'O', perm: null }],
+    items: [
+      { href: '/ops/projects', label: 'Projects', short: 'P', perm: 'operations.project.read' },
+      { href: '/ops/tasks', label: 'Tasks', short: 'T', perm: 'operations.task.read' },
+    ],
   },
   {
     id: 'insights',

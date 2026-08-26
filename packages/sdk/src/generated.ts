@@ -655,3 +655,86 @@ export type WebhookAck = {
   payment_id?: string;
   received: boolean;
 };
+
+export type ProjectDto = {
+  created_at: string;
+  customer_id?: string;
+  deal_id?: string;
+  description?: string;
+  due_at?: string;
+  id: string;
+  name: string;
+  owner_user_id: string;
+  starts_at?: string;
+  status: string;
+  updated_at: string;
+  version: number;
+};
+
+export type TaskDto = {
+  assignee_id?: string;
+  attachments: TaskAttachmentDto[];
+  blocked_by: string[];
+  checklist: ChecklistItemDto[];
+  completed_at?: string;
+  created_at: string;
+  description?: string;
+  due_at?: string;
+  id: string;
+  labels: string[];
+  owner_user_id: string;
+  position: number;
+  priority: string;
+  project_id: string;
+  status: string;
+  title: string;
+  updated_at: string;
+  version: number;
+};
+
+export type TaskBoardResponse = {
+  columns: BoardColumnDto[];
+  project_id?: string;
+};
+
+export type BoardColumnDto = {
+  status: string;
+  tasks: TaskDto[];
+};
+
+export type ChecklistItemDto = {
+  id: string;
+  is_done: boolean;
+  position: number;
+  title: string;
+};
+
+export type TaskAttachmentDto = {
+  byte_size?: string;
+  content_type?: string;
+  created_at: string;
+  file_name: string;
+  id: string;
+  url: string;
+};
+
+export type TaskCommentDto = {
+  author_user_id: string;
+  body: string;
+  created_at: string;
+  id: string;
+  mentioned_user_ids: string[];
+};
+
+export type MyWorkResponse = {
+  assigned: TaskDto[];
+  mentions: TaskCommentDto[];
+  total_assigned: number;
+};
+
+export type SummaryResponse = {
+  my_open_tasks: number;
+  open_tasks: number;
+  overdue: number;
+  projects_active: number;
+};
