@@ -1,0 +1,47 @@
+[package]
+name = "companyos-file"
+description = "CompanyOS file service — Phase 1.8 (presigned upload / MinIO or local stub)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "companyos_file"
+path = "src/lib.rs"
+
+[[bin]]
+name = "companyos-file"
+path = "src/main.rs"
+
+[dependencies]
+companyos-ids = { workspace = true }
+companyos-errors = { workspace = true }
+companyos-telemetry = { workspace = true }
+companyos-tenancy = { workspace = true }
+companyos-authz = { workspace = true }
+companyos-auth-token = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+tokio = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true }
+anyhow = { workspace = true }
+http = { workspace = true }
+urlencoding = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+
+[dev-dependencies]
+companyos-testkit = { workspace = true }
+companyos-core = { path = "../../core" }
+tower = { workspace = true, features = ["util"] }
+http-body-util = "0.1"
+axum = { workspace = true }

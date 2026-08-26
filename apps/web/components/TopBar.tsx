@@ -1,7 +1,7 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -25,6 +25,14 @@ type Session = {
   last_seen_at: string;
 };
 type Me = { email?: string; display_name?: string; org_id?: string };
+type NotificationItem = {
+  id: string;
+  title: string;
+  body: string;
+  href?: string | null;
+  read_at?: string | null;
+  created_at?: string;
+};
 
 export function TopBar({
   onTogglePanel,
@@ -53,11 +61,50 @@ export function TopBar({
   const [currentOrg, setCurrentOrg] = useState('Select org');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  const loadNotifications = useCallback(async () => {
+    if (!getAccessToken()) return;
+    setNotifLoading(true);
+    try {
+      const res = await authFetch('/api/v1/notifications/feed');
+      if (!res.ok) {
+        setNotifications([]);
+        return;
+      }
+      const body = await res.json();
+      setNotifications(body.items ?? []);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setNotifLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!getAccessToken()) return;
     void refreshIdentity();
-  }, []);
+    void loadNotifications();
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    if (!notifyOpen) return;
+    void loadNotifications();
+    const id = window.setInterval(() => {
+      void loadNotifications();
+    }, 20_000);
+    return () => window.clearInterval(id);
+  }, [notifyOpen, loadNotifications]);
+
+  async function markRead(id: string) {
+    await authFetch(`/api/v1/notifications/${encodeURIComponent(id)}/read`, {
+      method: 'POST',
+    });
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
+    );
+  }
 
   async function refreshIdentity() {
     setLoading(true);
@@ -107,6 +154,7 @@ export function TopBar({
     window.dispatchEvent(new Event('cos:org-switched'));
     router.refresh();
     await refreshIdentity();
+    await loadNotifications();
   }
 
   async function loadSessions() {
@@ -133,6 +181,7 @@ export function TopBar({
   }
 
   const displayName = me?.display_name || me?.email || 'You';
+  const unread = notifications.filter((n) => !n.read_at).length;
 
   return (
     <header
@@ -285,12 +334,54 @@ export function TopBar({
         label="Notifications"
         trigger={
           <Button type="button" variant="ghost" size="sm" aria-label="Notifications">
-            Alerts
+            Alerts{unread > 0 ? ` (${unread})` : ''}
           </Button>
         }
       >
-        <div style={{ minWidth: 240, padding: '0.35rem' }}>
-          <EmptyState title="No notifications yet" description="Alerts will appear here when modules ship." />
+        <div style={{ minWidth: 280, maxWidth: 360, padding: '0.35rem', display: 'grid', gap: 8 }}>
+          {notifLoading && notifications.length === 0 ? (
+            <p style={{ margin: 0, color: 'var(--cos-color-fg-muted)', fontSize: '0.85rem' }}>
+              Loading…
+            </p>
+          ) : null}
+          {!notifLoading && notifications.length === 0 ? (
+            <EmptyState title="No notifications yet" description="Alerts appear when events fan out." />
+          ) : (
+            notifications.slice(0, 20).map((n) => (
+              <div
+                key={n.id}
+                style={{
+                  display: 'grid',
+                  gap: 4,
+                  paddingBottom: 8,
+                  borderBottom: '1px solid var(--cos-color-border)',
+                  opacity: n.read_at ? 0.65 : 1,
+                }}
+              >
+                <strong style={{ fontSize: '0.85rem' }}>{n.title}</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--cos-color-fg-muted)' }}>{n.body}</span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {n.href ? (
+                    <Link
+                      href={n.href}
+                      style={{ fontSize: '0.8rem' }}
+                      onClick={() => {
+                        setNotifyOpen(false);
+                        void markRead(n.id);
+                      }}
+                    >
+                      Open
+                    </Link>
+                  ) : null}
+                  {!n.read_at ? (
+                    <button type="button" style={{ ...menuItem, fontSize: '0.8rem' }} onClick={() => void markRead(n.id)}>
+                      Mark read
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Popover>
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-command local bootstrap for CompanyOS Phase 0.
+# One-command local bootstrap for CompanyOS Phase 1.8.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,21 +34,44 @@ export CORE_SERVICE_URL="${CORE_SERVICE_URL:-http://127.0.0.1:8081}"
 export CRM_SERVICE_URL="${CRM_SERVICE_URL:-http://127.0.0.1:8082}"
 export FINANCE_SERVICE_URL="${FINANCE_SERVICE_URL:-http://127.0.0.1:8083}"
 export PROJECT_SERVICE_URL="${PROJECT_SERVICE_URL:-http://127.0.0.1:8084}"
+export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://127.0.0.1:8085}"
+export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL:-http://127.0.0.1:8086}"
+export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL:-http://127.0.0.1:8087}"
+export FILE_SERVICE_URL="${FILE_SERVICE_URL:-http://127.0.0.1:8089}"
+export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
+export NATS_URL="${NATS_URL:-nats://127.0.0.1:4222}"
 
 cp -n .env.example .env 2>/dev/null || true
+
+if command -v nats >/dev/null 2>&1; then
+  echo "==> Bootstrapping NATS streams..."
+  bash "$ROOT/scripts/nats-bootstrap.sh" || true
+else
+  echo "==> Skipping nats-bootstrap (nats CLI not installed)"
+fi
 
 echo "==> Seeding one org + two users..."
 bash "$ROOT/scripts/seed-dev.sh"
 
-echo "==> Starting core (8081), CRM (8082), Finance (8083), Project (8084), Project worker, and gateway (8080) in background..."
+echo "==> Building platform + business + gateway..."
 mkdir -p "$ROOT/.tmp"
-cargo build -p companyos-core -p companyos-crm -p companyos-finance -p companyos-project -p companyos-gateway
+cargo build -p companyos-core -p companyos-crm -p companyos-finance -p companyos-project \
+  -p companyos-gateway -p companyos-outbox-relay -p companyos-notification \
+  -p companyos-search -p companyos-analytics -p companyos-file -p companyos-workflow-host
+
 pkill -f "target/debug/companyos-core" 2>/dev/null || true
 pkill -f "target/debug/companyos-crm" 2>/dev/null || true
 pkill -f "target/debug/companyos-finance" 2>/dev/null || true
 pkill -f "target/debug/companyos-project-worker" 2>/dev/null || true
 pkill -f "target/debug/companyos-project" 2>/dev/null || true
 pkill -f "target/debug/companyos-gateway" 2>/dev/null || true
+pkill -f "target/debug/companyos-outbox-relay" 2>/dev/null || true
+pkill -f "target/debug/companyos-notification" 2>/dev/null || true
+pkill -f "target/debug/companyos-search" 2>/dev/null || true
+pkill -f "target/debug/companyos-analytics" 2>/dev/null || true
+pkill -f "target/debug/companyos-file" 2>/dev/null || true
+pkill -f "target/debug/companyos-workflow-host" 2>/dev/null || true
+
 nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
   PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-core" >"$ROOT/.tmp/core.log" 2>&1 &
@@ -60,31 +83,50 @@ nohup env PROJECT_BIND="${PROJECT_BIND:-0.0.0.0:8084}" FINANCE_SERVICE_URL="$FIN
   "$ROOT/target/debug/companyos-project" >"$ROOT/.tmp/project.log" 2>&1 &
 nohup env TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-project-worker" >"$ROOT/.tmp/project-worker.log" 2>&1 &
+
+nohup env NATS_URL="$NATS_URL" DATABASE_URL="$DATABASE_URL" \
+  "$ROOT/target/debug/companyos-outbox-relay" >"$ROOT/.tmp/outbox-relay.log" 2>&1 &
+nohup env NOTIFICATION_BIND="${NOTIFICATION_BIND:-0.0.0.0:8085}" REDIS_URL="$REDIS_URL" \
+  "$ROOT/target/debug/companyos-notification" >"$ROOT/.tmp/notification.log" 2>&1 &
+nohup env SEARCH_BIND="${SEARCH_BIND:-0.0.0.0:8086}" \
+  "$ROOT/target/debug/companyos-search" >"$ROOT/.tmp/search.log" 2>&1 &
+nohup env ANALYTICS_BIND="${ANALYTICS_BIND:-0.0.0.0:8087}" \
+  "$ROOT/target/debug/companyos-analytics" >"$ROOT/.tmp/analytics.log" 2>&1 &
+nohup env FILE_BIND="${FILE_BIND:-0.0.0.0:8089}" \
+  "$ROOT/target/debug/companyos-file" >"$ROOT/.tmp/file.log" 2>&1 &
+nohup env WORKFLOW_HOST_BIND="${WORKFLOW_HOST_BIND:-0.0.0.0:8091}" \
+  TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" \
+  "$ROOT/target/debug/companyos-workflow-host" >"$ROOT/.tmp/workflow-host.log" 2>&1 &
+
 nohup env CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
   FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
+  NOTIFICATION_SERVICE_URL="$NOTIFICATION_SERVICE_URL" SEARCH_SERVICE_URL="$SEARCH_SERVICE_URL" \
+  ANALYTICS_SERVICE_URL="$ANALYTICS_SERVICE_URL" FILE_SERVICE_URL="$FILE_SERVICE_URL" \
+  REDIS_URL="$REDIS_URL" \
   "$ROOT/target/debug/companyos-gateway" >"$ROOT/.tmp/gateway.log" 2>&1 &
 
-sleep 2
+sleep 3
 echo "==> Health checks"
 curl -sf "http://127.0.0.1:8081/healthz" && echo " core ok"
 curl -sf "http://127.0.0.1:8082/healthz" && echo " crm ok"
 curl -sf "http://127.0.0.1:8083/healthz" && echo " finance ok"
 curl -sf "http://127.0.0.1:8084/healthz" && echo " project ok"
+curl -sf "http://127.0.0.1:8085/healthz" && echo " notification ok"
+curl -sf "http://127.0.0.1:8086/healthz" && echo " search ok"
+curl -sf "http://127.0.0.1:8087/healthz" && echo " analytics ok"
+curl -sf "http://127.0.0.1:8089/healthz" && echo " file ok"
 curl -sf "http://127.0.0.1:8080/healthz" && echo " gateway ok"
 
 echo ""
-echo "Dev stack is up."
-echo "  Gateway:  http://127.0.0.1:8080"
-echo "  Core:     http://127.0.0.1:8081"
-echo "  CRM:      http://127.0.0.1:8082"
-echo "  Finance:  http://127.0.0.1:8083"
-echo "  Project:  http://127.0.0.1:8084"
-echo "  Worker:   companyos-project-worker (ApprovalProcess / Temporal)"
-echo "  Web:      pnpm --filter @companyos/web dev"
-echo "  Temporal: http://127.0.0.1:8088"
-echo "  MinIO:    http://127.0.0.1:9001 (minioadmin/minioadmin)"
-echo ""
-echo "LOCAL-ONLY auth example:"
-echo "  curl -s http://127.0.0.1:8080/api/v1/hello \\"
-echo "    -H \"X-CompanyOS-Dev-Org-Id: \$(grep DEV_ORG_PUBLIC_ID .tmp/seed.env | cut -d= -f2)\" \\"
-echo "    -H \"X-CompanyOS-Dev-User-Id: \$(grep DEV_USER_OWNER_PUBLIC_ID .tmp/seed.env | cut -d= -f2)\""
+echo "Dev stack is up (Phase 1.8)."
+echo "  Gateway:       http://127.0.0.1:8080"
+echo "  Core:          http://127.0.0.1:8081"
+echo "  CRM:           http://127.0.0.1:8082"
+echo "  Finance:       http://127.0.0.1:8083"
+echo "  Project:       http://127.0.0.1:8084"
+echo "  Notification:  http://127.0.0.1:8085"
+echo "  Search:        http://127.0.0.1:8086"
+echo "  Analytics:     http://127.0.0.1:8087"
+echo "  File:          http://127.0.0.1:8089"
+echo "  Outbox relay:  http://127.0.0.1:8090"
+echo "  Workflow host: http://127.0.0.1:8091"

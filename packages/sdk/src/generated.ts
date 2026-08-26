@@ -742,3 +742,48 @@ export type SummaryResponse = {
   pending_approvals_for_me?: number;
   projects_active: number;
 };
+
+export type NotificationItemDto = {
+  body: string;
+  created_at: string;
+  href?: string;
+  id: string;
+  read_at?: string;
+  resource_id?: string;
+  resource_type?: string;
+  title: string;
+};
+
+export type FeedResponse = {
+  items: NotificationItemDto[];
+};
+
+export type SearchHit = {
+  body: string;
+  doc_id: string;
+  doc_type: string;
+  href?: string;
+  title: string;
+};
+
+export type PresignUploadRequest = {
+  content_type: string;
+  filename: string;
+  size_bytes: number;
+};
+
+export type PresignUploadResponse = {
+  file_id: string;
+  headers: Record<string, unknown>;
+  upload_url: string;
+};
+
+export type FileMetaResponse = {
+  content_type: string;
+  /** Download URL. Clients SHOULD set `Content-Disposition: attachment`
+when proxying to force download rather than inline render. */
+  download_url: string;
+  file_id: string;
+  size_bytes: number;
+  status: string;
+};

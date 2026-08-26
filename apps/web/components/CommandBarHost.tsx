@@ -16,6 +16,35 @@ type Member = {
 
 type Membership = { org_id: string; org_name: string; role: string };
 
+type SearchHit = {
+  doc_id: string;
+  doc_type: string;
+  title: string;
+  body: string;
+  href?: string | null;
+};
+
+function hrefForHit(hit: SearchHit): string {
+  if (hit.href) return hit.href;
+  const q = encodeURIComponent(hit.title);
+  switch (hit.doc_type) {
+    case 'customer':
+    case 'deal':
+    case 'lead':
+    case 'quote':
+      return `/sales?q=${q}`;
+    case 'invoice':
+    case 'expense':
+      return `/finance/invoices`;
+    case 'task':
+      return `/ops/tasks`;
+    case 'project':
+      return `/ops/projects`;
+    default:
+      return `/sales?q=${q}`;
+  }
+}
+
 export function CommandBarHost({
   open,
   onOpenChange,
@@ -32,6 +61,8 @@ export function CommandBarHost({
   const [query, setQuery] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -47,11 +78,17 @@ export function CommandBarHost({
   useEffect(() => {
     if (!open) {
       setQuery('');
+      setSearchHits([]);
       return;
     }
     if (!getAccessToken()) return;
 
     void (async () => {
+      const meRes = await authFetch('/api/v1/auth/me');
+      if (meRes.ok) {
+        const me = await meRes.json();
+        if (me.org_id) setOrgId(me.org_id);
+      }
       const memRes = await authFetch('/api/v1/auth/memberships');
       if (memRes.ok) {
         const body = await memRes.json();
@@ -69,9 +106,41 @@ export function CommandBarHost({
     })();
   }, [open, caps]);
 
+  useEffect(() => {
+    if (!open || !orgId || query.trim().length < 2) {
+      setSearchHits([]);
+      return;
+    }
+    if (!getAccessToken()) return;
+    const q = query.trim();
+    const handle = window.setTimeout(() => {
+      void (async () => {
+        const res = await authFetch(
+          `/api/v1/search/query?q=${encodeURIComponent(q)}&org_id=${encodeURIComponent(orgId)}`,
+        );
+        if (!res.ok) {
+          setSearchHits([]);
+          return;
+        }
+        const body = await res.json();
+        setSearchHits(body.hits ?? []);
+      })();
+    }, 200);
+    return () => window.clearTimeout(handle);
+  }, [open, orgId, query]);
+
   const items: CommandItem[] = useMemo(() => {
     const list: CommandItem[] = [];
     const q = query.trim().toLowerCase();
+
+    for (const hit of searchHits) {
+      list.push({
+        id: `search-${hit.doc_type}-${hit.doc_id}`,
+        label: `${hit.title} · ${hit.doc_type}`,
+        group: 'Search',
+        onSelect: () => router.push(hrefForHit(hit)),
+      });
+    }
 
     for (const m of members) {
       const label = `${m.display_name} · ${m.email}`;
@@ -179,7 +248,7 @@ export function CommandBarHost({
     }
 
     return list;
-  }, [members, memberships, query, can, router, theme, setTheme, onToggleSidebar, toast]);
+  }, [members, memberships, searchHits, query, can, router, theme, setTheme, onToggleSidebar, toast]);
 
   return (
     <CommandBar
