@@ -75,7 +75,10 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 /// `audit_entry` on this same database — this migration only adds
 /// `finance_*` tables.
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for migration in [include_str!("../migrations/001_finance.sql")] {
+    for migration in [
+        include_str!("../migrations/001_finance.sql"),
+        include_str!("../migrations/002_approval_link.sql"),
+    ] {
         for stmt in split_sql(migration) {
             sqlx::query(&stmt).execute(pool).await?;
         }

@@ -162,6 +162,8 @@ impl Role {
                 perms::finance_report_read(),
                 perms::finance_customer_read(),
                 perms::finance_ledger_read(),
+                perms::operations_approval_read(),
+                perms::operations_approval_decide(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -206,6 +208,7 @@ impl Role {
                 perms::operations_task_create(),
                 perms::operations_task_update(),
                 perms::operations_task_comment(),
+                perms::operations_approval_read(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -242,6 +245,8 @@ impl Role {
                 perms::operations_task_delete(),
                 perms::operations_task_assign(),
                 perms::operations_task_comment(),
+                perms::operations_approval_read(),
+                perms::operations_approval_decide(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -265,6 +270,7 @@ impl Role {
                 perms::operations_task_read(),
                 perms::operations_task_create(),
                 perms::operations_task_comment(),
+                perms::operations_approval_read(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -287,6 +293,7 @@ impl Role {
                 perms::finance_customer_read(),
                 perms::operations_project_read(),
                 perms::operations_task_read(),
+                perms::operations_approval_read(),
             ]),
         }
     }
@@ -739,6 +746,14 @@ mod tests {
             ("finance.expense.approve", Role::ReadOnly),
             ("finance.expense.approve", Role::Sales),
             ("finance.expense.approve", Role::Manager),
+            ("operations.approval.decide", Role::Member),
+            ("operations.approval.decide", Role::ReadOnly),
+            ("operations.approval.decide", Role::Sales),
+            ("operations.approval.manage", Role::Member),
+            ("operations.approval.manage", Role::ReadOnly),
+            ("operations.approval.manage", Role::Sales),
+            ("operations.approval.manage", Role::Finance),
+            ("operations.approval.manage", Role::Manager),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);

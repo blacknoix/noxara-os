@@ -30,7 +30,7 @@ const GROUPS: NavGroup[] = [
         href: '/approvals',
         label: 'Approvals',
         short: 'A',
-        perm: 'workspace.dashboard.read',
+        perm: 'operations.approval.read',
         counter: 0,
       },
     ],

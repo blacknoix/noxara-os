@@ -70,6 +70,7 @@ fn ops_app(pool: PgPool, ring: KeyRing) -> Router {
 struct Seeded {
     pool: PgPool,
     ring: KeyRing,
+    #[allow(dead_code)]
     org: OrgId,
     #[allow(dead_code)]
     org_public: String,

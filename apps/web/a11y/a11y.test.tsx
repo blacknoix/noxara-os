@@ -262,4 +262,27 @@ describe('a11y', () => {
     );
     await expectNoSeriousAxeViolations(container);
   });
+
+  it('approvals inbox landmark has no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Approvals</h1>
+        <p>Pending items assigned to you.</p>
+        <label htmlFor="approval-comment">Comment</label>
+        <input id="approval-comment" name="comment" />
+        <ul>
+          <li>
+            <input type="checkbox" aria-label="Select Expense: Travel" />
+            <strong>Expense: Travel</strong>
+            <div aria-label="Routing rationale">
+              Routed by policy Default expense approval v1 (any)
+            </div>
+            <button type="button">Approve</button>
+            <button type="button">Reject</button>
+          </li>
+        </ul>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
 });

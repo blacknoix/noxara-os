@@ -2420,6 +2420,320 @@
         }
       }
     },
+    "/api/v1/operations/approval-policies": {
+      "get": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "Policy list/create/get/update",
+        "operationId": "list_policies",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "operationId": "create_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalPolicyDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approval-policies/{id}": {
+      "get": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "operationId": "get_policy",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalPolicyDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "operationId": "update_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalPolicyDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals": {
+      "get": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "GET list",
+        "operationId": "list_approvals",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "POST create / request",
+        "operationId": "create_approval",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApprovalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals/bulk-decide": {
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "POST bulk decide",
+        "operationId": "bulk_decide",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkDecideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkDecideResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals/delegations": {
+      "get": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "operationId": "list_delegations",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "POST delegation",
+        "operationId": "create_delegation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDelegationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals/inbox/summary": {
+      "get": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "GET inbox summary",
+        "operationId": "inbox_summary",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals/{id}": {
+      "get": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "GET one",
+        "operationId": "get_approval",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals/{id}/decide": {
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "POST decide \u2014 Idempotency-Key; duplicate decide is a no-op.",
+        "operationId": "decide_approval",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideApprovalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/approvals/{id}/escalate": {
+      "post": {
+        "tags": [
+          "operations-approvals"
+        ],
+        "summary": "Internal escalate (Temporal activity / SLA).",
+        "operationId": "escalate_approval",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/operations/board": {
       "get": {
         "tags": [
@@ -5605,6 +5919,12 @@
               "null"
             ]
           },
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "created_at": {
             "type": "string"
           },
@@ -6546,6 +6866,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "category_code": {
             "type": [
               "string",
@@ -7382,6 +7708,245 @@
           }
         }
       },
+      "ApprovalDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "subject_type",
+          "subject_id",
+          "status",
+          "requester_user_id",
+          "title",
+          "mode",
+          "current_step",
+          "policy_id",
+          "policy_version",
+          "routing_snapshot",
+          "steps",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current_step": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "decided_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decided_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "policy_id": {
+            "type": "string"
+          },
+          "policy_version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requester_user_id": {
+            "type": "string"
+          },
+          "routing_snapshot": {
+            "$ref": "#/components/schemas/RoutingSnapshot"
+          },
+          "status": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalStepDto"
+            }
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "subject_type": {
+            "type": "string"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "ApprovalListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ApprovalMode": {
+        "type": "string",
+        "description": "Approval modes for multi-step / multi-approver policies.",
+        "enum": [
+          "sequential",
+          "any",
+          "all"
+        ]
+      },
+      "ApprovalPolicyDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "subject_type",
+          "is_active",
+          "current_version",
+          "definition",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "current_version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/PolicyDefinition"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subject_type": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "ApprovalStepDto": {
+        "type": "object",
+        "required": [
+          "order",
+          "status",
+          "assignee_user_ids"
+        ],
+        "properties": {
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assignee_user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decided_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decided_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "escalate_to_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "escalated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sla_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
       "BoardColumnDto": {
         "type": "object",
         "required": [
@@ -7396,6 +7961,51 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TaskDto"
+            }
+          }
+        }
+      },
+      "BulkDecideRequest": {
+        "type": "object",
+        "required": [
+          "ids",
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "BulkDecideResponse": {
+        "type": "object",
+        "required": [
+          "decided",
+          "skipped"
+        ],
+        "properties": {
+          "decided": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalDto"
+            }
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         }
@@ -7471,6 +8081,64 @@
           }
         }
       },
+      "CreateApprovalRequest": {
+        "type": "object",
+        "required": [
+          "subject_type",
+          "subject_id"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "department_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requester_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "subject_type": {
+            "type": "string"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateAttachmentRequest": {
         "type": "object",
         "required": [
@@ -7506,6 +8174,48 @@
         ],
         "properties": {
           "body": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateDelegationRequest": {
+        "type": "object",
+        "required": [
+          "to_user_id"
+        ],
+        "properties": {
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ends_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to_user_id": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePolicyRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "subject_type",
+          "definition"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/PolicyDefinition"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subject_type": {
             "type": "string"
           }
         }
@@ -7637,6 +8347,76 @@
           }
         }
       },
+      "DecideApprovalRequest": {
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DelegationDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "from_user_id",
+          "to_user_id",
+          "starts_at"
+        ],
+        "properties": {
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ends_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "from_user_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revoked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": "string"
+          },
+          "to_user_id": {
+            "type": "string"
+          }
+        }
+      },
+      "InboxSummaryDto": {
+        "type": "object",
+        "required": [
+          "pending_for_me"
+        ],
+        "properties": {
+          "pending_for_me": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "MoveTaskRequest": {
         "type": "object",
         "required": [
@@ -7715,6 +8495,124 @@
           },
           "resource_type": {
             "type": "string"
+          }
+        }
+      },
+      "PolicyDefinition": {
+        "type": "object",
+        "required": [
+          "mode",
+          "steps"
+        ],
+        "properties": {
+          "match_criteria": {
+            "$ref": "#/components/schemas/PolicyMatch"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ApprovalMode"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyStepDef"
+            }
+          }
+        }
+      },
+      "PolicyListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalPolicyDto"
+            }
+          }
+        }
+      },
+      "PolicyMatch": {
+        "type": "object",
+        "description": "Match criteria evaluated at request time (snapshotted onto the approval).",
+        "properties": {
+          "amount_minor_gte": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "amount_minor_lt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "department_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "discount_bps_gte": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Discount basis points (quote_discount): discount/subtotal * 10000."
+          },
+          "requester_roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PolicyStepDef": {
+        "type": "object",
+        "required": [
+          "order"
+        ],
+        "properties": {
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approver_user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "escalate_to_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sla_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -7803,6 +8701,84 @@
           }
         }
       },
+      "ResolvedStepSnapshot": {
+        "type": "object",
+        "required": [
+          "order",
+          "assignee_user_ids"
+        ],
+        "properties": {
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assignee_user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "escalate_to_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sla_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "RoutingSnapshot": {
+        "type": "object",
+        "required": [
+          "policy_public_id",
+          "policy_name",
+          "policy_version",
+          "mode",
+          "match_criteria",
+          "steps",
+          "rationale"
+        ],
+        "properties": {
+          "match_criteria": {
+            "$ref": "#/components/schemas/PolicyMatch"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ApprovalMode"
+          },
+          "policy_name": {
+            "type": "string"
+          },
+          "policy_public_id": {
+            "type": "string"
+          },
+          "policy_version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResolvedStepSnapshot"
+            }
+          }
+        }
+      },
       "SummaryResponse": {
         "type": "object",
         "required": [
@@ -7823,6 +8799,11 @@
           "overdue": {
             "type": "integer",
             "format": "int64"
+          },
+          "pending_approvals_for_me": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Pending approvals assigned to the current user (Phase 1.7)."
           },
           "projects_active": {
             "type": "integer",
@@ -8033,6 +9014,34 @@
           "total": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "UpdatePolicyRequest": {
+        "type": "object",
+        "properties": {
+          "definition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PolicyDefinition",
+                "description": "Publishing a new definition increments version (immutable history)."
+              }
+            ]
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -8281,6 +9290,10 @@
     {
       "name": "operations-events",
       "description": "In-process sales event apply"
+    },
+    {
+      "name": "operations-approvals",
+      "description": "Approval engine (Phase 1.7)"
     }
   ]
 }

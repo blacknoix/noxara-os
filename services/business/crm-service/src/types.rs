@@ -427,6 +427,8 @@ pub struct QuoteDto {
     pub updated_at: String,
     pub version: i32,
     pub lines: Vec<QuoteLineDto>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub approval_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -301,6 +301,7 @@ export type DealDto = {
 
 export type QuoteDto = {
   accepted_at?: string;
+  approval_id?: string;
   created_at: string;
   currency: string;
   customer_id: string;
@@ -594,6 +595,7 @@ export type CreateCreditNoteRequest = {
 
 export type ExpenseDto = {
   amount_minor: number;
+  approval_id?: string;
   category_code?: string;
   created_at: string;
   currency: string;
@@ -736,5 +738,7 @@ export type SummaryResponse = {
   my_open_tasks: number;
   open_tasks: number;
   overdue: number;
+  /** Pending approvals assigned to the current user (Phase 1.7). */
+  pending_approvals_for_me?: number;
   projects_active: number;
 };

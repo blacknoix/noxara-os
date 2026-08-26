@@ -289,6 +289,43 @@ function DashboardWidgetCard({
     );
   }
 
+  if (widget.id === 'approvals') {
+    const count = typeof widget.payload.count === 'number' ? widget.payload.count : 0;
+    if (widget.status === 'ready' || widget.status === 'empty') {
+      return (
+        <Widget title={widget.title} range={range} menu={menu} footer={footer}>
+          <p style={{ margin: 0, fontSize: '1.5rem', fontVariantNumeric: 'tabular-nums' }}>{count}</p>
+          <p style={{ margin: '0.35rem 0 0', color: 'var(--cos-color-fg-muted)', fontSize: '0.9rem' }}>
+            Pending for you
+          </p>
+          <div style={{ marginTop: 12 }}>
+            <Link href="/approvals">
+              <Button size="sm" variant="secondary">
+                Open inbox
+              </Button>
+            </Link>
+          </div>
+        </Widget>
+      );
+    }
+  }
+
+  if (widget.id === 'my_work' && (widget.status === 'ready' || widget.status === 'empty')) {
+    const count = typeof widget.payload.count === 'number' ? widget.payload.count : 0;
+    return (
+      <Widget title={widget.title} range={range} menu={menu} footer={footer}>
+        <p style={{ margin: 0, fontSize: '1.5rem', fontVariantNumeric: 'tabular-nums' }}>{count}</p>
+        <div style={{ marginTop: 12 }}>
+          <Link href="/my-work">
+            <Button size="sm" variant="secondary">
+              Open My work
+            </Button>
+          </Link>
+        </div>
+      </Widget>
+    );
+  }
+
   const emptyCopy = reasonCopy(widget.reason_code, widget.payload);
   return (
     <Widget

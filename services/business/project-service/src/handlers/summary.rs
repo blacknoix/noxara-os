@@ -121,6 +121,33 @@ pub async fn get_summary(
         .await
         .map_err(internal(&request_id))?;
 
+    let pending_approvals_for_me: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(DISTINCT a.id)
+        FROM operations_approval a
+        JOIN operations_approval_step s
+          ON s.approval_id = a.id AND s.org_id = a.org_id AND s.step_order = a.current_step
+        WHERE a.org_id = $1
+          AND a.status = 'pending'
+          AND (
+            $2 = ANY(s.assignee_user_ids)
+            OR EXISTS (
+              SELECT 1 FROM operations_approval_delegation d
+              WHERE d.org_id = a.org_id AND d.to_user_id = $2
+                AND d.from_user_id = ANY(s.assignee_user_ids)
+                AND d.revoked_at IS NULL
+                AND (d.ends_at IS NULL OR d.ends_at > now())
+                AND (d.approval_id IS NULL OR d.approval_id = a.id)
+            )
+          )
+        "#,
+    )
+    .bind(org_id)
+    .bind(actor)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap_or(0);
+
     tx.commit().await.map_err(internal(&request_id))?;
 
     Ok(Json(SummaryResponse {
@@ -128,5 +155,6 @@ pub async fn get_summary(
         my_open_tasks,
         projects_active,
         overdue,
+        pending_approvals_for_me,
     }))
 }

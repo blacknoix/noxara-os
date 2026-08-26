@@ -208,6 +208,9 @@ pub struct SummaryResponse {
     pub my_open_tasks: i64,
     pub projects_active: i64,
     pub overdue: i64,
+    /// Pending approvals assigned to the current user (Phase 1.7).
+    #[serde(default)]
+    pub pending_approvals_for_me: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

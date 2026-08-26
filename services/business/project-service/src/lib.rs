@@ -1,4 +1,4 @@
-//! CompanyOS Projects & Tasks service (library) — Phase 1.6.
+//! CompanyOS Projects & Tasks service (library) — Phase 1.6+1.7.
 //!
 //! Bounded context: **Operations** (`operations_*` tables, `Context::Operations`
 //! events). Routes mount under `/api/v1/operations/...`. Standalone network
@@ -6,8 +6,11 @@
 //! `organization` / `membership` / `role_permission` / `org_role` for authz,
 //! and **never** reads or writes CRM/`sales_*` or Finance tables. Customer /
 //! deal links are opaque UUIDs (+ optional public ids) from the request body
-//! or DealWon event projection. `companyos_authz` remains the sole PDP.
+//! or DealWon event projection. Approval records live here; finance/CRM call
+//! the approval API rather than reading operations tables.
+//! `companyos_authz` remains the sole PDP.
 
+pub mod approvals;
 pub mod audit;
 pub mod auth;
 pub mod handlers;
@@ -68,7 +71,10 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 /// Run the Operations schema migration. Assumes core migrate has already
 /// created shared tables (`organization`, `membership`, `outbox_event`, …).
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for migration in [include_str!("../migrations/001_operations.sql")] {
+    for migration in [
+        include_str!("../migrations/001_operations.sql"),
+        include_str!("../migrations/002_approvals.sql"),
+    ] {
         for stmt in split_sql(migration) {
             sqlx::query(&stmt).execute(pool).await?;
         }

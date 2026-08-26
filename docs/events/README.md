@@ -37,3 +37,10 @@ Emitted in the same transaction as the domain write via the shared outbox.
 - `companyos.{org_}.operations.task.completed.v1`
 
 Operations **projects** `sales.deal.won` via `POST /api/v1/operations/events/sales/apply` (opaque deal/customer ids only — never reads `sales_*` tables). Mentions write `operations_notification_intent` rows for authz-allowed recipients only.
+
+## Operations / Approvals (Phase 1.7)
+
+- `companyos.{org_}.operations.approval.requested.v1`
+- `companyos.{org_}.operations.approval.decided.v1`
+
+Emitted in the same transaction as the approval write. Finance/CRM call the Operations approval API (no cross-context table reads); Temporal activities call service APIs with `on_behalf_of` recorded on decisions.

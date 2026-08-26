@@ -52,6 +52,7 @@ struct ExpenseRow {
     receipt_url: Option<String>,
     incurred_at: NaiveDate,
     created_at: DateTime<Utc>,
+    approval_id: Option<String>,
 }
 
 impl ExpenseRow {
@@ -66,13 +67,15 @@ impl ExpenseRow {
             receipt_url: self.receipt_url,
             incurred_at: self.incurred_at.to_string(),
             created_at: self.created_at.to_rfc3339(),
+            approval_id: self.approval_id,
         }
     }
 }
 
 const EXPENSE_SELECT: &str = r#"
     e.id, e.public_id, e.owner_user_id, e.status, e.currency, e.amount_minor,
-    e.description, cat.code AS category_code, e.receipt_url, e.incurred_at, e.created_at
+    e.description, cat.code AS category_code, e.receipt_url, e.incurred_at, e.created_at,
+    e.approval_id
 "#;
 
 async fn fetch_expense(
@@ -447,7 +450,86 @@ pub async fn submit_expense(
     }
 
     tx.commit().await.map_err(internal(&request_id))?;
+
+    // Phase 1.7: when above approval_limit, request via Operations approval engine.
+    // Falls back to the 1.5 pending_approval + finance decide path if the engine
+    // is unreachable (tests / local without project-service).
+    let mut dto = dto;
+    if needs_approval {
+        if let Some(apr_id) = request_expense_approval(
+            &auth,
+            &public_id.as_str(),
+            body.amount_minor,
+            &body.currency,
+            body.category_code.as_deref(),
+            &body.description,
+        )
+        .await
+        {
+            if let Ok(mut link_tx) = state.pool.begin().await {
+                let _ = set_session_org_id(&mut link_tx, auth.ctx.org_id).await;
+                let _ = sqlx::query(
+                    "UPDATE finance_expense SET approval_id = $3, updated_at = now() WHERE org_id = $1 AND id = $2",
+                )
+                .bind(org_id)
+                .bind(id)
+                .bind(&apr_id)
+                .execute(&mut *link_tx)
+                .await;
+                let _ = link_tx.commit().await;
+                dto.approval_id = Some(apr_id);
+            }
+        }
+    }
+
     Ok((StatusCode::CREATED, Json(dto)).into_response())
+}
+
+/// Call Operations approval API (no cross-context table reads).
+async fn request_expense_approval(
+    auth: &AuthCtx,
+    expense_public_id: &str,
+    amount_minor: i64,
+    currency: &str,
+    category: Option<&str>,
+    description: &str,
+) -> Option<String> {
+    let project_url =
+        std::env::var("PROJECT_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8084".into());
+    let url = format!(
+        "{}/api/v1/operations/approvals",
+        project_url.trim_end_matches('/')
+    );
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .ok()?;
+    let mut req = client.post(&url).json(&serde_json::json!({
+        "subject_type": "expense",
+        "subject_id": expense_public_id,
+        "title": format!("Expense: {description}"),
+        "summary": description,
+        "amount_minor": amount_minor,
+        "currency": currency,
+        "category": category,
+    }));
+    req = req
+        .header(
+            "x-companyos-dev-org-id",
+            auth.ctx.org_id.to_public().as_str(),
+        )
+        .header(
+            "x-companyos-dev-user-id",
+            PublicId::new(IdKind::User, auth.ctx.actor.user_id).as_str(),
+        );
+    let resp = req.send().await.ok()?;
+    if !resp.status().is_success() {
+        return None;
+    }
+    let body: serde_json::Value = resp.json().await.ok()?;
+    body.get("id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
 }
 
 /// POST /api/v1/finance/expenses/{id}/decide

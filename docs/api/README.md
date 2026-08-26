@@ -27,7 +27,12 @@ Finance bounded context, mounted at **`/api/v1/finance/...`** (proxied by the ga
 - `POST /api/v1/finance/invoices/from-quote` — quote snapshot → draft invoice
 - `GET|POST /api/v1/finance/payments` — record + allocate
 - `POST /api/v1/finance/credit-notes`
-- `GET|POST /api/v1/finance/expenses` — submit / decide (approval_limit)
+- `GET|POST /api/v1/finance/expenses` — submit / decide (approval_limit → Operations approval engine when available)
+- `GET|POST /api/v1/operations/approvals` — inbox + create
+- `POST /api/v1/operations/approvals/{id}/decide` — Idempotency-Key; duplicate decide is a no-op
+- `POST /api/v1/operations/approvals/bulk-decide`
+- `GET|POST /api/v1/operations/approval-policies` — versioned policy CRUD (`operations.approval.manage`)
+- `POST /api/v1/sales/quotes/{id}/send` — discount ≥ threshold → `pending_approval` hold via approval engine
 - `GET /api/v1/finance/reports/summary`
 - `POST /api/v1/finance/webhooks/stripe` — idempotent provider fixtures
 - `POST /api/v1/finance/events/sales/apply` — in-process CRM event projection (tests)
