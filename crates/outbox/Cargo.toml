@@ -17,6 +17,8 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 async-trait = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

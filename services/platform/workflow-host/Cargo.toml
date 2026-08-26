@@ -1,0 +1,37 @@
+[package]
+name = "companyos-workflow-host"
+description = "CompanyOS Temporal workflow host — Phase 1.8 platform catalogue"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "companyos_workflow_host"
+path = "src/lib.rs"
+
+[[bin]]
+name = "companyos-workflow-host"
+path = "src/main.rs"
+
+[dependencies]
+companyos-ids = { workspace = true }
+companyos-errors = { workspace = true }
+companyos-telemetry = { workspace = true }
+companyos-tenancy = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true }
+anyhow = { workspace = true }
+http = { workspace = true }
+reqwest = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+serde_json = { workspace = true }

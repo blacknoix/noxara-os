@@ -2,6 +2,11 @@
 //!
 //! Publishers poll `outbox_event` and push at-least-once to NATS JetStream.
 //! Consumers must be idempotent via `idempotency_key`.
+//!
+//! Phase 1.8 adds a **relay** (`relay` module): claim unpublished rows with
+//! `SKIP LOCKED`, publish, mark published, or move to `outbox_dlq`.
+
+pub mod relay;
 
 use chrono::{DateTime, Utc};
 use companyos_events::EventEnvelope;
@@ -15,6 +20,8 @@ use uuid::Uuid;
 pub enum OutboxError {
     #[error("database error: {0}")]
     Db(#[from] sqlx::Error),
+    #[error("relay error: {0}")]
+    Relay(String),
 }
 
 /// Row stored in `outbox_event`.
@@ -98,6 +105,33 @@ where
 /// Helper to assert org_id is present on an envelope before insert.
 pub fn assert_tenant_bound(envelope: &EventEnvelope) -> OrgId {
     envelope.org_id
+}
+
+/// Apply outbox migrations (001 + 002 relay/DLQ). Safe to call repeatedly.
+pub async fn migrate(pool: &sqlx::PgPool) -> Result<(), OutboxError> {
+    for sql in [
+        include_str!("../migrations/001_outbox_event.sql"),
+        include_str!("../migrations/002_outbox_relay.sql"),
+    ] {
+        for stmt in split_sql(sql) {
+            sqlx::query(&stmt).execute(pool).await?;
+        }
+    }
+    Ok(())
+}
+
+fn split_sql(sql: &str) -> Vec<String> {
+    let cleaned: String = sql
+        .lines()
+        .filter(|l| !l.trim_start().starts_with("--"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    cleaned
+        .split(';')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
 }
 
 #[cfg(test)]
