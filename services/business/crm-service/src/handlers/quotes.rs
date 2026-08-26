@@ -1098,14 +1098,13 @@ pub async fn invoice_action(
     set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
-    let row: Option<(String,)> = sqlx::query_as(
-        "SELECT status FROM sales_quote WHERE org_id = $1 AND id = $2",
-    )
-    .bind(auth.ctx.org_id.as_uuid())
-    .bind(quote_uuid)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(&request_id))?;
+    let row: Option<(String,)> =
+        sqlx::query_as("SELECT status FROM sales_quote WHERE org_id = $1 AND id = $2")
+            .bind(auth.ctx.org_id.as_uuid())
+            .bind(quote_uuid)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?;
     tx.commit().await.map_err(internal(&request_id))?;
     let Some((status,)) = row else {
         return Ok(Json(InvoiceActionResponse {

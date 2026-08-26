@@ -153,7 +153,10 @@ mod tests {
     #[test]
     fn fx_convert_half_up() {
         // 10000 * 11/10 = 11000
-        assert_eq!(convert_to_base(10_000, 11, 10, Currency::USD).unwrap(), 11_000);
+        assert_eq!(
+            convert_to_base(10_000, 11, 10, Currency::USD).unwrap(),
+            11_000
+        );
         // 100 * 3/2 = 150
         assert_eq!(convert_to_base(100, 3, 2, Currency::USD).unwrap(), 150);
     }

@@ -937,10 +937,7 @@ async fn invoice_numbering_unique_under_concurrent_issue() {
             )
             .await;
             assert_eq!(status, StatusCode::OK, "{issued:?}");
-            issued["invoice_number"]
-                .as_str()
-                .unwrap()
-                .to_string()
+            issued["invoice_number"].as_str().unwrap().to_string()
         }));
     }
 
@@ -1030,7 +1027,10 @@ async fn payment_webhook_idempotent_on_replayed_event_id() {
     .await
     .unwrap();
     tx.commit().await.unwrap();
-    assert_eq!(count.0, 1, "replayed webhook must not create a second payment");
+    assert_eq!(
+        count.0, 1,
+        "replayed webhook must not create a second payment"
+    );
 }
 
 #[tokio::test]

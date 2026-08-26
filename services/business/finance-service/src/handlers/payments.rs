@@ -16,7 +16,8 @@ use sqlx::{Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use super::{
-    balance_and_status, conflict, internal, normalize_paging, not_found, parse_public_id, validation,
+    balance_and_status, conflict, internal, normalize_paging, not_found, parse_public_id,
+    validation,
 };
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
@@ -267,9 +268,7 @@ pub async fn list_payments(
         membership.department_id,
     );
     if let Some(ref cus) = q.customer_id {
-        count_qb.push(
-            " AND customer_id IN (SELECT id FROM finance_customer WHERE org_id = ",
-        );
+        count_qb.push(" AND customer_id IN (SELECT id FROM finance_customer WHERE org_id = ");
         count_qb.push_bind(org_id);
         count_qb.push(" AND public_id = ");
         count_qb.push_bind(cus.clone());
@@ -423,10 +422,9 @@ pub async fn record_payment(
         .map_err(internal(&request_id))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "payment.record", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "payment.record", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -434,15 +432,14 @@ pub async fn record_payment(
         }
     }
 
-    let customer_id: Uuid = sqlx::query_scalar(
-        "SELECT id FROM finance_customer WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id)
-    .bind(&body.customer_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(&request_id))?
-    .ok_or_else(|| not_found(&request_id, "customer"))?;
+    let customer_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM finance_customer WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id)
+            .bind(&body.customer_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?
+            .ok_or_else(|| not_found(&request_id, "customer"))?;
 
     // Determine allocation vs overpayment (unapplied / customer credits).
     let mut allocate_amount = 0i64;
@@ -693,15 +690,14 @@ pub async fn allocate_payment(
     // Journal for late allocation: move from customer credits to AR.
     // When payment was fully unapplied at record time, cash+credits already posted.
     // Allocating later: Dr Customer Credits, Cr AR.
-    let currency_str: String = sqlx::query_scalar(
-        "SELECT currency FROM finance_payment WHERE org_id = $1 AND id = $2",
-    )
-    .bind(org_id)
-    .bind(payment_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(&request_id))?
-    .ok_or_else(|| not_found(&request_id, "payment"))?;
+    let currency_str: String =
+        sqlx::query_scalar("SELECT currency FROM finance_payment WHERE org_id = $1 AND id = $2")
+            .bind(org_id)
+            .bind(payment_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?
+            .ok_or_else(|| not_found(&request_id, "payment"))?;
     let currency = Currency::new(&currency_str)
         .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
 

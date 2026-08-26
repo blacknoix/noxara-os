@@ -353,15 +353,7 @@ async fn proxy_finance(State(state): State<GatewayState>, req: Request) -> Respo
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     // Coarse auth: authenticate only; Finance enforces finance.* permissions.
-    proxy_to(
-        &state,
-        req,
-        &upstream,
-        &state.finance_url,
-        true,
-        "finance",
-    )
-    .await
+    proxy_to(&state, req, &upstream, &state.finance_url, true, "finance").await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {

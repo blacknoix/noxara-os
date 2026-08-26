@@ -499,6 +499,14 @@ export type InvoiceLineDto = {
   unit_price_minor: number;
 };
 
+export type InvoiceLineInput = {
+  description: string;
+  discount_minor?: number;
+  quantity: number;
+  tax_rate_bps?: number;
+  unit_price_minor: number;
+};
+
 export type InvoiceListResponse = {
   items: InvoiceDto[];
   total: number;
@@ -524,6 +532,14 @@ export type CreateInvoiceFromQuoteRequest = {
   quote_id: string;
   terms?: string;
   total_minor?: string;
+};
+
+export type QuoteLineSnapshot = {
+  description: string;
+  discount_minor?: number;
+  quantity: number;
+  tax_rate_bps?: number;
+  unit_price_minor: number;
 };
 
 export type IssueInvoiceRequest = {
@@ -607,6 +623,22 @@ export type ReportSummaryDto = {
   expenses_minor: number;
   receivables_minor: number;
   revenue_minor: number;
+};
+
+export type AgeingBucket = {
+  amount_minor: number;
+  label: string;
+};
+
+export type CategoryAmount = {
+  amount_minor: number;
+  category: string;
+};
+
+export type CashFlowPoint = {
+  inflow_minor: number;
+  outflow_minor: number;
+  period: string;
 };
 
 export type FinanceCustomerDto = {

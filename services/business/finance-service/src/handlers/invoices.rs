@@ -260,14 +260,13 @@ async fn resolve_customer_id(
     request_id: &str,
 ) -> Result<Uuid, AppError> {
     let _: Uuid = parse_public_id(IdKind::Customer, customer_public_id, request_id)?;
-    let row: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM finance_customer WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id)
-    .bind(customer_public_id)
-    .fetch_optional(&mut **tx)
-    .await
-    .map_err(internal(request_id))?;
+    let row: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM finance_customer WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id)
+            .bind(customer_public_id)
+            .fetch_optional(&mut **tx)
+            .await
+            .map_err(internal(request_id))?;
     row.map(|r| r.0)
         .ok_or_else(|| not_found(request_id, "customer"))
 }
@@ -299,7 +298,11 @@ async fn enforce_invoice_scope(
     )
 }
 
-fn parse_date(raw: Option<&str>, field: &str, request_id: &str) -> Result<Option<NaiveDate>, AppError> {
+fn parse_date(
+    raw: Option<&str>,
+    field: &str,
+    request_id: &str,
+) -> Result<Option<NaiveDate>, AppError> {
     raw.map(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d"))
         .transpose()
         .map_err(|_| validation(request_id, format!("{field} must be YYYY-MM-DD")))
@@ -359,9 +362,7 @@ pub async fn list_invoices(
         count_qb.push_bind(status);
     }
     if let Some(ref cus) = q.customer_id {
-        count_qb.push(
-            " AND i.customer_id IN (SELECT id FROM finance_customer WHERE org_id = ",
-        );
+        count_qb.push(" AND i.customer_id IN (SELECT id FROM finance_customer WHERE org_id = ");
         count_qb.push_bind(org_id);
         count_qb.push(" AND public_id = ");
         count_qb.push_bind(cus.clone());
@@ -461,7 +462,10 @@ pub async fn create_invoice(
     )?;
 
     if body.lines.is_empty() {
-        return Err(validation(&request_id, "invoice requires at least one line"));
+        return Err(validation(
+            &request_id,
+            "invoice requires at least one line",
+        ));
     }
     let currency = Currency::new(&body.currency)
         .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
@@ -484,10 +488,9 @@ pub async fn create_invoice(
         .map_err(internal(&request_id))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "invoice.create", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "invoice.create", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -495,8 +498,7 @@ pub async fn create_invoice(
         }
     }
 
-    let customer_id =
-        resolve_customer_id(&mut tx, org_id, &body.customer_id, &request_id).await?;
+    let customer_id = resolve_customer_id(&mut tx, org_id, &body.customer_id, &request_id).await?;
 
     sqlx::query(
         r#"
@@ -716,7 +718,10 @@ pub async fn update_invoice(
 
     let (subtotal, discount, tax, total) = if let Some(ref lines) = body.lines {
         if lines.is_empty() {
-            return Err(validation(&request_id, "invoice requires at least one line"));
+            return Err(validation(
+                &request_id,
+                "invoice requires at least one line",
+            ));
         }
         let currency = Currency::new(&row.currency)
             .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
@@ -884,8 +889,7 @@ pub async fn issue_invoice(
 
     let issue_date = parse_date(body.issue_date.as_deref(), "issue_date", &request_id)?
         .unwrap_or_else(|| Utc::now().date_naive());
-    let due_date = parse_date(body.due_date.as_deref(), "due_date", &request_id)?
-        .or(row.due_date);
+    let due_date = parse_date(body.due_date.as_deref(), "due_date", &request_id)?.or(row.due_date);
     let fx_date = parse_date(body.fx_rate_date.as_deref(), "fx_rate_date", &request_id)?
         .unwrap_or(issue_date);
 

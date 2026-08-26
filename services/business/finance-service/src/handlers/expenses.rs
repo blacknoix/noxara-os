@@ -15,9 +15,7 @@ use companyos_tenancy::set_session_org_id;
 use sqlx::{Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use super::{
-    conflict, internal, normalize_paging, not_found, parse_public_id, validation,
-};
+use super::{conflict, internal, normalize_paging, not_found, parse_public_id, validation};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
@@ -203,9 +201,7 @@ pub async fn list_expenses(
             qb.push(" AND (e.owner_user_id = ");
             qb.push_bind(actor);
             if let Some(dept) = membership.department_id {
-                qb.push(
-                    " OR e.owner_user_id IN (SELECT user_id FROM membership WHERE org_id = ",
-                );
+                qb.push(" OR e.owner_user_id IN (SELECT user_id FROM membership WHERE org_id = ");
                 qb.push_bind(org_id);
                 qb.push(" AND department_id = ");
                 qb.push_bind(dept);
@@ -288,10 +284,9 @@ pub async fn submit_expense(
         .map_err(internal(&request_id))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "expense.submit", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "expense.submit", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -385,8 +380,15 @@ pub async fn submit_expense(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if !needs_approval {
-        post_expense_journal(&mut tx, org_id, id, currency, body.amount_minor, &request_id)
-            .await?;
+        post_expense_journal(
+            &mut tx,
+            org_id,
+            id,
+            currency,
+            body.amount_minor,
+            &request_id,
+        )
+        .await?;
         let approved_env = EventEnvelope::new(
             auth.ctx.org_id,
             Context::Finance,

@@ -97,10 +97,9 @@ pub async fn create_recurring(
         .map_err(internal(&request_id))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "recurring.create", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "recurring.create", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -108,15 +107,14 @@ pub async fn create_recurring(
         }
     }
 
-    let customer_id: Uuid = sqlx::query_scalar(
-        "SELECT id FROM finance_customer WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id)
-    .bind(&body.customer_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(&request_id))?
-    .ok_or_else(|| not_found(&request_id, "customer"))?;
+    let customer_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM finance_customer WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id)
+            .bind(&body.customer_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?
+            .ok_or_else(|| not_found(&request_id, "customer"))?;
 
     sqlx::query(
         r#"

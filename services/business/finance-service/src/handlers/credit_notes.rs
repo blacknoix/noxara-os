@@ -14,9 +14,7 @@ use companyos_money::Currency;
 use companyos_tenancy::set_session_org_id;
 use uuid::Uuid;
 
-use super::{
-    balance_and_status, conflict, internal, not_found, parse_public_id, validation,
-};
+use super::{balance_and_status, conflict, internal, not_found, parse_public_id, validation};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
@@ -99,16 +97,7 @@ pub async fn create_credit_note(
     .await
     .map_err(internal(&request_id))?;
 
-    let Some((
-        customer_id,
-        inv_public,
-        currency_str,
-        total,
-        paid,
-        credited,
-        balance,
-        status,
-    )) = inv
+    let Some((customer_id, inv_public, currency_str, total, paid, credited, balance, status)) = inv
     else {
         return Err(not_found(&request_id, "invoice"));
     };
@@ -273,14 +262,13 @@ pub async fn create_credit_note(
     .await
     .map_err(internal(&request_id))?;
 
-    let customer_public: String = sqlx::query_scalar(
-        "SELECT public_id FROM finance_customer WHERE org_id = $1 AND id = $2",
-    )
-    .bind(org_id)
-    .bind(customer_id)
-    .fetch_one(&mut *tx)
-    .await
-    .map_err(internal(&request_id))?;
+    let customer_public: String =
+        sqlx::query_scalar("SELECT public_id FROM finance_customer WHERE org_id = $1 AND id = $2")
+            .bind(org_id)
+            .bind(customer_id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?;
 
     let dto = CreditNoteDto {
         id: public_id.as_str(),

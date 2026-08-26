@@ -49,9 +49,8 @@ pub async fn apply_sales_event(
     }
     match (envelope.aggregate.as_str(), envelope.event_type.as_str()) {
         ("customer", "created") => {
-            let payload: CustomerCreatedPayload =
-                serde_json::from_value(envelope.payload.clone())
-                    .map_err(|e| sqlx::Error::Protocol(format!("bad customer.created: {e}")))?;
+            let payload: CustomerCreatedPayload = serde_json::from_value(envelope.payload.clone())
+                .map_err(|e| sqlx::Error::Protocol(format!("bad customer.created: {e}")))?;
             upsert_customer_projection(tx, envelope.org_id, &payload).await?;
             Ok(true)
         }

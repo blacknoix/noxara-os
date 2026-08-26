@@ -273,13 +273,12 @@ pub async fn account_id_by_code(
     org_id: Uuid,
     code: &str,
 ) -> Result<Uuid, sqlx::Error> {
-    let (id,): (Uuid,) = sqlx::query_as(
-        "SELECT id FROM finance_ledger_account WHERE org_id = $1 AND code = $2",
-    )
-    .bind(org_id)
-    .bind(code)
-    .fetch_one(&mut **tx)
-    .await?;
+    let (id,): (Uuid,) =
+        sqlx::query_as("SELECT id FROM finance_ledger_account WHERE org_id = $1 AND code = $2")
+            .bind(org_id)
+            .bind(code)
+            .fetch_one(&mut **tx)
+            .await?;
     Ok(id)
 }
 

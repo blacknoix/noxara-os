@@ -8,7 +8,7 @@ use companyos_errors::{AppError, ErrorCode};
 use companyos_events::{Context, EventEnvelope};
 use companyos_ids::{new_uuid_v7, IdKind, PublicId};
 use companyos_money::Currency;
-use companyos_tenancy::{Actor, OrgId, set_session_org_id};
+use companyos_tenancy::{set_session_org_id, Actor, OrgId};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -20,10 +20,7 @@ use crate::state::AppState;
 use crate::types::{StripeWebhookFixture, WebhookAck};
 
 pub fn router() -> Router<AppState> {
-    Router::new().route(
-        "/api/v1/finance/webhooks/stripe",
-        post(stripe_webhook),
-    )
+    Router::new().route("/api/v1/finance/webhooks/stripe", post(stripe_webhook))
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,14 +39,12 @@ fn extract_org_id(
         .map(str::trim)
         .filter(|s| !s.is_empty())
     {
-        return auth::parse_org_public_id(raw).map_err(|e| {
-            AppError::new(e.code, request_id.to_string(), e.detail)
-        });
+        return auth::parse_org_public_id(raw)
+            .map_err(|e| AppError::new(e.code, request_id.to_string(), e.detail));
     }
     if let Some(raw) = q.org_id.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        return auth::parse_org_public_id(raw).map_err(|e| {
-            AppError::new(e.code, request_id.to_string(), e.detail)
-        });
+        return auth::parse_org_public_id(raw)
+            .map_err(|e| AppError::new(e.code, request_id.to_string(), e.detail));
     }
     Err(validation(
         request_id,
