@@ -223,7 +223,8 @@ async fn from_jwt(
     }
 
     let org_id = OrgId::new(claims.org_uuid);
-    let ctx = RequestContext::new(org_id, Actor::human(claims.user_id), request_id.to_string());
+    let actor = actor_from_headers(headers, claims.user_id, request_id)?;
+    let ctx = RequestContext::new(org_id, actor, request_id.to_string());
     Ok(AuthCtx {
         ctx,
         roles: vec![role],
@@ -231,6 +232,37 @@ async fn from_jwt(
         policy_version,
         local_bypass: false,
     })
+}
+
+/// AI confirm path: same user JWT + explicit AI-on-behalf-of headers (no privilege escalation).
+fn actor_from_headers(
+    headers: &HeaderMap,
+    user_id: Uuid,
+    request_id: &str,
+) -> Result<Actor, AppError> {
+    let is_ai = headers
+        .get("x-companyos-actor-is-ai")
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|s| s == "true" || s == "1");
+    if !is_ai {
+        return Ok(Actor::human(user_id));
+    }
+    let on_behalf = match headers
+        .get("x-companyos-on-behalf-of")
+        .and_then(|v| v.to_str().ok())
+    {
+        Some(s) => parse_user_public_id(s)
+            .map_err(|e| AppError::new(e.code, request_id.to_string(), e.detail))?,
+        None => user_id,
+    };
+    if on_behalf != user_id {
+        return Err(AppError::new(
+            ErrorCode::Forbidden,
+            request_id,
+            "AI on_behalf_of must match the authenticated user",
+        ));
+    }
+    Ok(Actor::ai_on_behalf_of(user_id, on_behalf))
 }
 
 fn from_local_headers(headers: &HeaderMap, request_id: &str) -> Result<Option<AuthCtx>, AppError> {

@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–1.7 merged; Phase 1.8 is this slice.
+Status: **Active** outline. Phase 0–1.8 merged; Phase 1.9 is this slice.
 
 ## Completed
 
@@ -14,23 +14,21 @@ Status: **Active** outline. Phase 0–1.7 merged; Phase 1.8 is this slice.
 | 1.5 | Finance v1 (invoices, payments, journal, expenses, quote→invoice) |
 | 1.6 | Projects & Tasks / Operations (`companyos-project`) |
 | 1.7 | Approval engine (operations / Temporal) |
+| 1.8 | Platform events, notifications, search, analytics, files, outbox relay |
 
-## Phase 1.8 — Platform events, notifications, search, analytics, files (this slice)
+## Phase 1.9 — AI copilot (`companyos-ai`) (this slice)
 
-- Authz catalogue: `platform.notification.*`, `platform.search.*`, `platform.file.*`, `platform.analytics.*` (no member bypass)
-- Gateway proxies `/api/v1/notifications|search|analytics|files` + SSE `/api/v1/notifications/stream` (Redis or feed poll)
-- Notification service: ingest fan-out, prefs, feed, Redis PUBLISH, deferred digest
-- Search indexer, analytics facts, file service (presign + local-upload / MinIO SigV4)
-- Outbox relay binary + DLQ; services call `companyos_outbox::migrate`; optional `OUTBOX_EMBEDDED_RELAY=1`
-- NATS bootstrap + DLQ replay scripts; outbox-lag runbook; event schema contract tests
-- Web: TopBar notifications, CommandBar search, expense receipt upload
-- OpenAPI merge includes platform services; `dev-up` starts platform binaries
+- Authz catalogue: `ai.copilot.use`, `ai.proposal.create`, `ai.proposal.commit`, `ai.settings.*`, `ai.insights.read`, `ai.document.extract`
+- Gateway proxy `/api/v1/ai/*` → `AI_SERVICE_URL` (`:8092`)
+- AI service: chat/ask/stream, hybrid retrieval (org_id required), tool registry with authz trace, propose-then-commit writes, insights, document extract, org settings
+- Mock LLM when `AI_API_KEY` unset; OpenAI-compatible when set
+- Integration tests: `services/ai/ai-service/tests/phase19_ai.rs` (authz deny, retrieval tenant guard, injection, proposal pending until confirm)
+- OpenAPI merge includes AI; `dev-up` starts `companyos-ai`; SDK types for AI DTOs
 
 ## Later (not this PR)
 
 | Phase | Notes |
 |-------|--------|
-| 1.9 | AI copilot in context panel |
 | InvoiceDunning | Temporal dunning (separate from this approval engine) |
 | PDF / email | Nice-to-have; local logs payment URL |
 | Live provider | Stub webhook only |

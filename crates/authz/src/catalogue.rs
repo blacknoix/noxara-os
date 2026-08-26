@@ -691,6 +691,63 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Read analytics facts derived from the event stream",
         sensitive: false,
     },
+    // --- AI (Phase 1.9) ---
+    PermissionDef {
+        id: "ai.copilot.use",
+        context: "ai",
+        resource: "copilot",
+        action: "use",
+        description: "Use the AI copilot chat, ask-mode, and retrieval",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "ai.proposal.create",
+        context: "ai",
+        resource: "proposal",
+        action: "create",
+        description: "Create propose-then-commit write proposals from AI tools",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "ai.proposal.commit",
+        context: "ai",
+        resource: "proposal",
+        action: "commit",
+        description: "Confirm or cancel AI write proposals",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "ai.settings.read",
+        context: "ai",
+        resource: "settings",
+        action: "read",
+        description: "Read organization AI settings and token budget",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "ai.settings.manage",
+        context: "ai",
+        resource: "settings",
+        action: "manage",
+        description: "Manage AI module toggles, auto-execute allow-list, and budget",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "ai.insights.read",
+        context: "ai",
+        resource: "insights",
+        action: "read",
+        description: "Read dashboard AI Insights observations",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "ai.document.extract",
+        context: "ai",
+        resource: "document",
+        action: "extract",
+        description: "Run Document AI extraction into expense/invoice draft proposals",
+        sensitive: false,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -708,6 +765,7 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "finance.expense.approve",
     "operations.approval.decide",
     "operations.approval.manage",
+    "ai.settings.manage",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -970,6 +1028,27 @@ pub mod perms {
     pub fn platform_analytics_read() -> PermissionId {
         PermissionId::from("platform.analytics.read")
     }
+    pub fn ai_copilot_use() -> PermissionId {
+        PermissionId::from("ai.copilot.use")
+    }
+    pub fn ai_proposal_create() -> PermissionId {
+        PermissionId::from("ai.proposal.create")
+    }
+    pub fn ai_proposal_commit() -> PermissionId {
+        PermissionId::from("ai.proposal.commit")
+    }
+    pub fn ai_settings_read() -> PermissionId {
+        PermissionId::from("ai.settings.read")
+    }
+    pub fn ai_settings_manage() -> PermissionId {
+        PermissionId::from("ai.settings.manage")
+    }
+    pub fn ai_insights_read() -> PermissionId {
+        PermissionId::from("ai.insights.read")
+    }
+    pub fn ai_document_extract() -> PermissionId {
+        PermissionId::from("ai.document.extract")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -1004,7 +1083,12 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "platform.search.read"
         | "platform.file.read"
         | "platform.file.create"
-        | "platform.analytics.read" => Scope::Organization,
+        | "platform.analytics.read"
+        | "ai.copilot.use"
+        | "ai.proposal.create"
+        | "ai.settings.read"
+        | "ai.insights.read"
+        | "ai.document.extract" => Scope::Organization,
         _ => Scope::Organization,
     }
 }

@@ -14,6 +14,7 @@ import {
 } from '@companyos/design-system';
 import { authFetch, getAccessToken } from '../../../lib/auth-client';
 import { useCapabilities } from '../../../lib/capabilities';
+import { AiSuggestionChips } from '../../../components/AiSuggestionChips';
 
 type Invoice = {
   id: string;
@@ -89,6 +90,7 @@ export default function FinanceInvoicesPage() {
         </div>
         <Link href="/finance" style={{ textDecoration: 'none' }}><Button type="button" variant="ghost">Back</Button></Link>
       </header>
+      <AiSuggestionChips pageScope="invoice" />
       {!can('finance.invoice.read') ? (
         <PermissionDeniedState requiredPermission="finance.invoice.read" />
       ) : state.items.length === 0 ? (

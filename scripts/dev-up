@@ -38,6 +38,7 @@ export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://127.0.0.1:80
 export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL:-http://127.0.0.1:8086}"
 export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL:-http://127.0.0.1:8087}"
 export FILE_SERVICE_URL="${FILE_SERVICE_URL:-http://127.0.0.1:8089}"
+export AI_SERVICE_URL="${AI_SERVICE_URL:-http://127.0.0.1:8092}"
 export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
 export NATS_URL="${NATS_URL:-nats://127.0.0.1:4222}"
 
@@ -53,11 +54,12 @@ fi
 echo "==> Seeding one org + two users..."
 bash "$ROOT/scripts/seed-dev.sh"
 
-echo "==> Building platform + business + gateway..."
+echo "==> Building platform + business + gateway + AI..."
 mkdir -p "$ROOT/.tmp"
 cargo build -p companyos-core -p companyos-crm -p companyos-finance -p companyos-project \
   -p companyos-gateway -p companyos-outbox-relay -p companyos-notification \
-  -p companyos-search -p companyos-analytics -p companyos-file -p companyos-workflow-host
+  -p companyos-search -p companyos-analytics -p companyos-file -p companyos-workflow-host \
+  -p companyos-ai
 
 pkill -f "target/debug/companyos-core" 2>/dev/null || true
 pkill -f "target/debug/companyos-crm" 2>/dev/null || true
@@ -71,6 +73,7 @@ pkill -f "target/debug/companyos-search" 2>/dev/null || true
 pkill -f "target/debug/companyos-analytics" 2>/dev/null || true
 pkill -f "target/debug/companyos-file" 2>/dev/null || true
 pkill -f "target/debug/companyos-workflow-host" 2>/dev/null || true
+pkill -f "target/debug/companyos-ai" 2>/dev/null || true
 
 nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
   PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
@@ -97,11 +100,15 @@ nohup env FILE_BIND="${FILE_BIND:-0.0.0.0:8089}" \
 nohup env WORKFLOW_HOST_BIND="${WORKFLOW_HOST_BIND:-0.0.0.0:8091}" \
   TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" \
   "$ROOT/target/debug/companyos-workflow-host" >"$ROOT/.tmp/workflow-host.log" 2>&1 &
+nohup env AI_BIND="${AI_BIND:-0.0.0.0:8092}" GATEWAY_URL="${GATEWAY_URL:-http://127.0.0.1:8080}" \
+  SEARCH_SERVICE_URL="$SEARCH_SERVICE_URL" \
+  "$ROOT/target/debug/companyos-ai" >"$ROOT/.tmp/ai.log" 2>&1 &
 
 nohup env CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
   FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   NOTIFICATION_SERVICE_URL="$NOTIFICATION_SERVICE_URL" SEARCH_SERVICE_URL="$SEARCH_SERVICE_URL" \
   ANALYTICS_SERVICE_URL="$ANALYTICS_SERVICE_URL" FILE_SERVICE_URL="$FILE_SERVICE_URL" \
+  AI_SERVICE_URL="$AI_SERVICE_URL" \
   REDIS_URL="$REDIS_URL" \
   "$ROOT/target/debug/companyos-gateway" >"$ROOT/.tmp/gateway.log" 2>&1 &
 
@@ -115,10 +122,11 @@ curl -sf "http://127.0.0.1:8085/healthz" && echo " notification ok"
 curl -sf "http://127.0.0.1:8086/healthz" && echo " search ok"
 curl -sf "http://127.0.0.1:8087/healthz" && echo " analytics ok"
 curl -sf "http://127.0.0.1:8089/healthz" && echo " file ok"
+curl -sf "http://127.0.0.1:8092/healthz" && echo " ai ok"
 curl -sf "http://127.0.0.1:8080/healthz" && echo " gateway ok"
 
 echo ""
-echo "Dev stack is up (Phase 1.8)."
+echo "Dev stack is up (Phase 1.9)."
 echo "  Gateway:       http://127.0.0.1:8080"
 echo "  Core:          http://127.0.0.1:8081"
 echo "  CRM:           http://127.0.0.1:8082"
@@ -130,3 +138,4 @@ echo "  Analytics:     http://127.0.0.1:8087"
 echo "  File:          http://127.0.0.1:8089"
 echo "  Outbox relay:  http://127.0.0.1:8090"
 echo "  Workflow host: http://127.0.0.1:8091"
+echo "  AI copilot:    http://127.0.0.1:8092"

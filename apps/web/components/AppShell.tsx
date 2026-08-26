@@ -108,6 +108,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [isCompact]);
 
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        togglePanel();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [togglePanel]);
+
+  useEffect(() => {
     setSidebarOverlayOpen(false);
   }, [pathname]);
 

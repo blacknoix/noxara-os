@@ -22,6 +22,7 @@ members = [
     "services/platform/analytics-service",
     "services/platform/file-service",
     "services/platform/workflow-host",
+    "services/ai/ai-service",
 ]
 default-members = [
     "crates/ids",
@@ -45,6 +46,7 @@ default-members = [
     "services/platform/analytics-service",
     "services/platform/file-service",
     "services/platform/workflow-host",
+    "services/ai/ai-service",
 ]
 
 [workspace.package]

@@ -172,6 +172,11 @@ export default function ExpensesPage() {
         <div>
           <p style={eyebrow}>Finance</p>
           <h1 style={title}>Expenses</h1>
+          <p style={muted}>
+            <Link href="/finance/documents" style={{ color: 'var(--cos-color-accent)' }}>
+              Document AI
+            </Link>
+          </p>
         </div>
         <Link href="/finance" style={{ textDecoration: 'none' }}><Button type="button" variant="ghost">Back</Button></Link>
       </header>
@@ -262,6 +267,7 @@ const eyebrow: CSSProperties = {
   color: 'var(--cos-color-fg-muted)',
 };
 const title: CSSProperties = { margin: '0.25rem 0', fontSize: '1.75rem' };
+const muted: CSSProperties = { margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--cos-color-fg-muted)' };
 const formStyle: CSSProperties = {
   display: 'grid',
   gap: 12,

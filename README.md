@@ -16,9 +16,10 @@ Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@c
 - **Phase 1.5** (merged): Finance service (`companyos-finance`), invoices/payments/journal, quote→invoice, dashboard finance widgets.
 - **Phase 1.6** (merged): Projects & Tasks (`companyos-project`), `/api/v1/operations/*`, board/my-work, DealWon → project.
 - **Phase 1.7** (merged): Approval engine + Temporal `ApprovalProcess` worker.
-- **Phase 1.8** (this line of work): Platform spine — outbox→NATS relay, notifications, search, analytics, files, workflow catalogue.
+- **Phase 1.8** (merged): Platform spine — outbox→NATS relay, notifications, search, analytics, files, workflow catalogue.
+- **Phase 1.9** (this line of work): AI copilot (`companyos-ai`) — chat/ask, retrieval, propose-then-commit writes, insights, gateway proxy.
 
-Not in scope yet: AI copilot (1.9), web push, malware scan/PDF render, full TenantDeletion purge, Flutter/Tauri, live payment provider keys.
+Not in scope yet: web push, malware scan/PDF render, full TenantDeletion purge, Flutter/Tauri, live payment provider keys.
 
 ## Non-negotiable invariants
 
@@ -34,6 +35,7 @@ services/business/crm-service/  CRM / Sales API (`/api/v1/sales/...`)
 services/business/finance-service/  Finance API (`/api/v1/finance/...`)
 services/business/project-service/  Operations API (`/api/v1/operations/...`)
 services/platform/        Outbox relay, notification, search, analytics, file, workflow-host
+services/ai/ai-service/   AI copilot API (`/api/v1/ai/...`, bind `:8092`)
 crates/                   ids, money, errors, telemetry, tenancy, events, outbox, authz, auth-token, testkit
 packages/design-system/   Tokens + Table/FilterBar/shell primitives (gallery: /dev/components)
 packages/sdk/             OpenAPI + TypeScript SDK
@@ -66,6 +68,7 @@ pnpm --filter @companyos/web dev
 - Breach checks: fixture list locally; set `HIBP_ENABLED=1` for Have I Been Pwned k-anonymity in prod.
 - OAuth: set `GOOGLE_OAUTH_*` / `MICROSOFT_OAUTH_*`. Tests use `OAUTH_MOCK_BASE`.
 - SSO admin API exists but returns `403 feature_disabled` unless `COMPANYOS_SSO_ENABLED=1` **and** org flag `sso`.
+- AI copilot: optional `AI_API_KEY` for OpenAI-compatible provider; mock fixtures when unset (see [services/ai/README.md](services/ai/README.md)).
 
 ### LOCAL-ONLY bypass (default off)
 

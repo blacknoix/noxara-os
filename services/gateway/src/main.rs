@@ -1,8 +1,8 @@
-//! CompanyOS gateway / BFF — Phase 1.8.
+//! CompanyOS gateway / BFF — Phase 1.9.
 //!
 //! Authenticates access JWTs (org-scoped), resolves tenant, runs a coarse authz
 //! pre-check, attaches request context headers, and proxies to core, CRM,
-//! Finance, Operations, plus platform notification / search / analytics / file.
+//! Finance, Operations, platform, and AI.
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
@@ -36,6 +36,7 @@ struct GatewayState {
     search_url: String,
     analytics_url: String,
     file_url: String,
+    ai_url: String,
     redis_url: Option<String>,
     client: reqwest::Client,
     keyring: KeyRing,
@@ -67,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("ANALYTICS_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8087".into());
     let file_url =
         std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8089".into());
+    let ai_url = std::env::var("AI_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8092".into());
     let redis_url = std::env::var("REDIS_URL").ok().filter(|s| !s.is_empty());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
@@ -84,6 +86,7 @@ async fn main() -> anyhow::Result<()> {
         search_url,
         analytics_url,
         file_url,
+        ai_url,
         redis_url,
         client: reqwest::Client::new(),
         keyring,
@@ -118,7 +121,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "1.8"
+                    "phase": "1.9"
                 }))
             }),
         )
@@ -137,6 +140,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/search/{*rest}", any(proxy_search))
         .route("/api/v1/analytics/{*rest}", any(proxy_analytics))
         .route("/api/v1/files/{*rest}", any(proxy_files))
+        // AI (Phase 1.9)
+        .route("/api/v1/ai/{*rest}", any(proxy_ai))
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
@@ -431,6 +436,12 @@ async fn proxy_files(State(state): State<GatewayState>, req: Request) -> Respons
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     proxy_to(&state, req, &upstream, &state.file_url, true, "file").await
+}
+
+async fn proxy_ai(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.ai_url, true, "ai").await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {
