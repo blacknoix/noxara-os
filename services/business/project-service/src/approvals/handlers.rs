@@ -24,7 +24,9 @@ use super::types::*;
 use crate::approvals::workflow_logic::ProcessState;
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
-use crate::handlers::{conflict, internal, not_found, normalize_paging, parse_public_id, validation};
+use crate::handlers::{
+    conflict, internal, normalize_paging, not_found, parse_public_id, validation,
+};
 use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
@@ -43,10 +45,7 @@ pub fn router() -> Router<AppState> {
             "/api/v1/operations/approvals/bulk-decide",
             post(bulk_decide),
         )
-        .route(
-            "/api/v1/operations/approvals/{id}",
-            get(get_approval),
-        )
+        .route("/api/v1/operations/approvals/{id}", get(get_approval))
         .route(
             "/api/v1/operations/approvals/{id}/decide",
             post(decide_approval),
@@ -524,10 +523,9 @@ pub async fn create_approval(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idempotency::header_key(&headers) {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "approval.create", &key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "approval.create", &key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -1046,12 +1044,15 @@ async fn apply_subject_side_effect(
                     "x-companyos-dev-user-id",
                     PublicId::new(IdKind::User, auth.ctx.actor.user_id).as_str(),
                 )
-                .header("x-companyos-on-behalf-of", user_pub(auth.ctx.actor.on_behalf_of));
+                .header(
+                    "x-companyos-on-behalf-of",
+                    user_pub(auth.ctx.actor.on_behalf_of),
+                );
             let _ = req.send().await;
         }
         "quote_discount" => {
-            let crm_url = std::env::var("CRM_SERVICE_URL")
-                .unwrap_or_else(|_| "http://127.0.0.1:8082".into());
+            let crm_url =
+                std::env::var("CRM_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8082".into());
             let path = if approve {
                 format!(
                     "{}/api/v1/sales/quotes/{}/approval-complete",
@@ -1535,7 +1536,10 @@ pub async fn create_policy(
         &request_id,
     )?;
     if body.definition.steps.is_empty() {
-        return Err(validation(&request_id, "policy must have at least one step"));
+        return Err(validation(
+            &request_id,
+            "policy must have at least one step",
+        ));
     }
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;

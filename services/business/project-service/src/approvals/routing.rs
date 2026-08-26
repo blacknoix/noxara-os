@@ -60,11 +60,7 @@ pub fn matches_criteria(m: &PolicyMatch, ctx: &RouteContext) -> bool {
         let Some(cat) = ctx.category.as_deref() else {
             return false;
         };
-        if !m
-            .categories
-            .iter()
-            .any(|c| c.eq_ignore_ascii_case(cat))
-        {
+        if !m.categories.iter().any(|c| c.eq_ignore_ascii_case(cat)) {
             return false;
         }
     }

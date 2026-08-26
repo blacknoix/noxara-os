@@ -434,9 +434,7 @@ async fn policy_change_does_not_rewrite_in_flight_version() {
     assert_eq!(status, StatusCode::OK, "{got:?}");
     assert_eq!(got["policy_version"].as_i64().unwrap(), frozen_version);
     assert_eq!(
-        got["routing_snapshot"]["policy_version"]
-            .as_i64()
-            .unwrap(),
+        got["routing_snapshot"]["policy_version"].as_i64().unwrap(),
         frozen_snap_version
     );
 }
