@@ -3663,6 +3663,355 @@
           }
         }
       }
+    },
+    "/api/v1/ai/ask": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "ask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/chat": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "chat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/chat/stream": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "chat_stream",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/documents/extract": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "extract_document",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentExtractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentReview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/documents/reviews/{id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_document_review",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentReview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/insights": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_insights",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/proposals": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "list_proposals",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalsListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/proposals/{id}/cancel": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "cancel_proposal",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/proposals/{id}/confirm": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "confirm_proposal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/sessions": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "list_sessions",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionsListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/sessions/{id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_session",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/settings": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_settings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "patch_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAiSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/suggestions": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_suggestions",
+        "parameters": [
+          {
+            "name": "page_scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9780,6 +10129,719 @@
             "type": "string"
           }
         }
+      },
+      "AiSettings": {
+        "type": "object",
+        "required": [
+          "modules_enabled",
+          "model_preference",
+          "auto_execute_allow_list",
+          "data_sharing",
+          "monthly_token_budget",
+          "tokens_used_this_month",
+          "budget_month"
+        ],
+        "properties": {
+          "auto_execute_allow_list": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget_month": {
+            "type": "string"
+          },
+          "data_sharing": {
+            "$ref": "#/components/schemas/DataSharingSettings"
+          },
+          "model_preference": {
+            "type": "string"
+          },
+          "modules_enabled": {
+            "$ref": "#/components/schemas/ModulesEnabled"
+          },
+          "monthly_token_budget": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tokens_used_this_month": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AskForm": {
+        "type": "object",
+        "required": [
+          "action_type",
+          "fields"
+        ],
+        "properties": {
+          "action_type": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AskFormField"
+            }
+          },
+          "proposal_preview": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AskFormField": {
+        "type": "object",
+        "required": [
+          "name",
+          "label",
+          "value",
+          "type"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "AskRequest": {
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "page_scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "query": {
+            "type": "string"
+          }
+        }
+      },
+      "AskResponse": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "citations": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "form": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AskForm"
+              }
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tool_trace": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ToolTraceEntry"
+            }
+          }
+        }
+      },
+      "ChatRequest": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "page_scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "session_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stream": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "ChatResponse": {
+        "type": "object",
+        "required": [
+          "session_id",
+          "interaction_id",
+          "role",
+          "content",
+          "citations",
+          "follow_ups",
+          "proposals",
+          "tool_trace",
+          "usage"
+        ],
+        "properties": {
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "content": {
+            "type": "string"
+          },
+          "follow_ups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "interaction_id": {
+            "type": "string"
+          },
+          "proposals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalView"
+            }
+          },
+          "role": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "tool_trace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolTraceEntry"
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/TokenUsage"
+          }
+        }
+      },
+      "Citation": {
+        "type": "object",
+        "required": [
+          "record_type",
+          "record_id",
+          "title"
+        ],
+        "properties": {
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "record_id": {
+            "type": "string"
+          },
+          "record_type": {
+            "type": "string"
+          },
+          "snippet": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfirmProposalRequest": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DataSharingSettings": {
+        "type": "object",
+        "required": [
+          "share_with_provider",
+          "allow_training"
+        ],
+        "properties": {
+          "allow_training": {
+            "type": "boolean"
+          },
+          "share_with_provider": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DocumentExtractRequest": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "file_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DocumentReview": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "confidence",
+          "extracted",
+          "status"
+        ],
+        "properties": {
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "extracted": {},
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "proposal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "InsightObservation": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "body",
+          "evidence",
+          "estimate"
+        ],
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "estimate": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "suggested_action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "InsightsResponse": {
+        "type": "object",
+        "required": [
+          "observations"
+        ],
+        "properties": {
+          "empty_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InsightObservation"
+            }
+          }
+        }
+      },
+      "ModulesEnabled": {
+        "type": "object",
+        "required": [
+          "copilot",
+          "insights",
+          "document_ai",
+          "ask_mode"
+        ],
+        "properties": {
+          "ask_mode": {
+            "type": "boolean"
+          },
+          "copilot": {
+            "type": "boolean"
+          },
+          "document_ai": {
+            "type": "boolean"
+          },
+          "insights": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProposalView": {
+        "type": "object",
+        "required": [
+          "id",
+          "tool_name",
+          "action_type",
+          "status",
+          "command",
+          "rendered_diff",
+          "citations",
+          "created_at"
+        ],
+        "properties": {
+          "action_type": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "command": {},
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string"
+          },
+          "rendered_diff": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tool_name": {
+            "type": "string"
+          }
+        }
+      },
+      "ProposalsListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalView"
+            }
+          }
+        }
+      },
+      "SessionDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "updated_at",
+          "interactions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatResponse"
+            }
+          },
+          "page_scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SessionSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "page_scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SessionsListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionSummary"
+            }
+          }
+        }
+      },
+      "SuggestionChip": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "action_type"
+        ],
+        "properties": {
+          "action_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "proposal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SuggestionsResponse": {
+        "type": "object",
+        "required": [
+          "chips"
+        ],
+        "properties": {
+          "chips": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SuggestionChip"
+            }
+          }
+        }
+      },
+      "TokenUsage": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt_template_version",
+          "input_tokens",
+          "output_tokens",
+          "latency_ms",
+          "cost_estimate_minor",
+          "currency"
+        ],
+        "properties": {
+          "cost_estimate_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "latency_ms": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "model": {
+            "type": "string"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "prompt_template_version": {
+            "type": "string"
+          }
+        }
+      },
+      "ToolTraceEntry": {
+        "type": "object",
+        "required": [
+          "tool_name",
+          "permission",
+          "decision",
+          "reason",
+          "args_summary",
+          "duration_ms"
+        ],
+        "properties": {
+          "args_summary": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "permission": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "tool_name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateAiSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "auto_execute_allow_list": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "data_sharing": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DataSharingSettings"
+              }
+            ]
+          },
+          "model_preference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modules_enabled": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModulesEnabled"
+              }
+            ]
+          },
+          "monthly_token_budget": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
       }
     }
   },
@@ -9931,6 +10993,10 @@
     {
       "name": "files",
       "description": "Presigned upload and file metadata"
+    },
+    {
+      "name": "ai",
+      "description": "CompanyOS AI copilot"
     }
   ]
 }

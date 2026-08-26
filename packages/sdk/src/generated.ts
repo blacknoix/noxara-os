@@ -787,3 +787,183 @@ when proxying to force download rather than inline render. */
   size_bytes: number;
   status: string;
 };
+
+export type ChatRequest = {
+  message: string;
+  page_scope?: string;
+  session_id?: string;
+  stream?: string;
+};
+
+export type ChatResponse = {
+  citations: Citation[];
+  content: string;
+  follow_ups: string[];
+  interaction_id: string;
+  proposals: ProposalView[];
+  role: string;
+  session_id: string;
+  tool_trace: ToolTraceEntry[];
+  usage: TokenUsage;
+};
+
+export type ProposalView = {
+  action_type: string;
+  citations: Citation[];
+  command: Record<string, unknown>;
+  created_at: string;
+  id: string;
+  rendered_diff: string;
+  status: string;
+  tool_name: string;
+};
+
+export type ConfirmProposalRequest = {
+  note?: string;
+};
+
+export type ProposalsListResponse = {
+  items: ProposalView[];
+};
+
+export type AskRequest = {
+  page_scope?: string;
+  query: string;
+};
+
+export type AskResponse = {
+  citations?: string;
+  form?: string;
+  kind: string;
+  message?: string;
+  tool_trace?: string;
+};
+
+export type AskForm = {
+  action_type: string;
+  fields: AskFormField[];
+  proposal_preview?: string;
+};
+
+export type AskFormField = {
+  label: string;
+  name: string;
+  type: string;
+  value: string;
+};
+
+export type AiSettings = {
+  auto_execute_allow_list: string[];
+  budget_month: string;
+  data_sharing: DataSharingSettings;
+  model_preference: string;
+  modules_enabled: ModulesEnabled;
+  monthly_token_budget: number;
+  tokens_used_this_month: number;
+};
+
+export type ModulesEnabled = {
+  ask_mode: boolean;
+  copilot: boolean;
+  document_ai: boolean;
+  insights: boolean;
+};
+
+export type DataSharingSettings = {
+  allow_training: boolean;
+  share_with_provider: boolean;
+};
+
+export type UpdateAiSettingsRequest = {
+  auto_execute_allow_list?: string;
+  data_sharing?: string;
+  model_preference?: string;
+  modules_enabled?: string;
+  monthly_token_budget?: string;
+};
+
+export type InsightsResponse = {
+  empty_reason?: string;
+  observations: InsightObservation[];
+};
+
+export type InsightObservation = {
+  body: string;
+  estimate: boolean;
+  evidence: Citation[];
+  id: string;
+  suggested_action?: string;
+  title: string;
+};
+
+export type DocumentExtractRequest = {
+  file_id?: string;
+  kind: string;
+  text?: string;
+};
+
+export type DocumentReview = {
+  confidence: number;
+  extracted: Record<string, unknown>;
+  id: string;
+  kind: string;
+  proposal_id?: string;
+  status: string;
+};
+
+export type TokenUsage = {
+  cost_estimate_minor: number;
+  currency: string;
+  input_tokens: number;
+  latency_ms: number;
+  model: string;
+  output_tokens: number;
+  prompt_template_version: string;
+};
+
+export type Citation = {
+  href?: string;
+  record_id: string;
+  record_type: string;
+  snippet?: string;
+  title: string;
+};
+
+export type ToolTraceEntry = {
+  args_summary: string;
+  decision: string;
+  duration_ms: number;
+  permission: string;
+  reason: string;
+  tool_name: string;
+};
+
+export type SessionSummary = {
+  id: string;
+  page_scope?: string;
+  title: string;
+  updated_at: string;
+};
+
+export type SessionDetail = {
+  id: string;
+  interactions: ChatResponse[];
+  page_scope?: string;
+  title: string;
+  updated_at: string;
+};
+
+export type SessionsListResponse = {
+  items: SessionSummary[];
+};
+
+export type SuggestionChip = {
+  action_type: string;
+  id: string;
+  label: string;
+  proposal_id?: string;
+};
+
+export type SuggestionsResponse = {
+  chips: SuggestionChip[];
+};
