@@ -153,6 +153,33 @@ impl Role {
                 perms::workspace_role_read(),
                 perms::workspace_team_read(),
                 perms::workspace_department_read(),
+                perms::sales_customer_read(),
+                perms::sales_customer_create(),
+                perms::sales_customer_update(),
+                perms::sales_contact_read(),
+                perms::sales_contact_create(),
+                perms::sales_contact_update(),
+                perms::sales_lead_read(),
+                perms::sales_lead_create(),
+                perms::sales_lead_update(),
+                perms::sales_lead_convert(),
+                perms::sales_pipeline_read(),
+                perms::sales_pipeline_manage(),
+                perms::sales_deal_read(),
+                perms::sales_deal_create(),
+                perms::sales_deal_update(),
+                perms::sales_deal_win(),
+                perms::sales_deal_lose(),
+                perms::sales_quote_read(),
+                perms::sales_quote_create(),
+                perms::sales_quote_update(),
+                perms::sales_quote_accept(),
+                perms::sales_product_read(),
+                perms::sales_product_manage(),
+                perms::sales_activity_read(),
+                perms::sales_activity_create(),
+                perms::sales_import_create(),
+                perms::sales_report_read(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -164,6 +191,16 @@ impl Role {
                 perms::workspace_team_manage(),
                 perms::workspace_department_read(),
                 perms::admin_membership_manage(),
+                perms::sales_customer_read(),
+                perms::sales_contact_read(),
+                perms::sales_lead_read(),
+                perms::sales_pipeline_read(),
+                perms::sales_deal_read(),
+                perms::sales_deal_update(),
+                perms::sales_quote_read(),
+                perms::sales_product_read(),
+                perms::sales_activity_read(),
+                perms::sales_report_read(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -172,6 +209,15 @@ impl Role {
                 perms::workspace_role_read(),
                 perms::workspace_team_read(),
                 perms::workspace_department_read(),
+                perms::sales_customer_read(),
+                perms::sales_contact_read(),
+                perms::sales_lead_read(),
+                perms::sales_pipeline_read(),
+                perms::sales_deal_read(),
+                perms::sales_quote_read(),
+                perms::sales_product_read(),
+                perms::sales_activity_read(),
+                perms::sales_report_read(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -180,6 +226,15 @@ impl Role {
                 perms::workspace_role_read(),
                 perms::workspace_team_read(),
                 perms::workspace_department_read(),
+                perms::sales_customer_read(),
+                perms::sales_contact_read(),
+                perms::sales_lead_read(),
+                perms::sales_pipeline_read(),
+                perms::sales_deal_read(),
+                perms::sales_quote_read(),
+                perms::sales_product_read(),
+                perms::sales_activity_read(),
+                perms::sales_report_read(),
             ]),
         }
     }
@@ -497,7 +552,7 @@ mod tests {
     #[test]
     fn deny_by_default_unknown_permission() {
         let p = Principal::with_roles(vec![Role::Owner]);
-        let unknown = PermissionId::from("sales.deal.delete");
+        let unknown = PermissionId::from("ops.widget.fly");
         assert!(!is_allowed(&p, &unknown));
     }
 

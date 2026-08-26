@@ -22,7 +22,7 @@ impl PermissionDef {
     }
 }
 
-/// Full Phase 1.2 permission catalogue (Workspace + reserved Finance/Admin stubs).
+/// Full permission catalogue: Phase 1.2 Workspace, Phase 1.4 Sales (CRM), reserved Finance/Admin stubs.
 pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
     PermissionDef {
         id: "workspace.dashboard.read",
@@ -145,6 +145,230 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         sensitive: true,
     },
     PermissionDef {
+        id: "sales.customer.read",
+        context: "sales",
+        resource: "customer",
+        action: "read",
+        description: "View customers and account details",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.customer.create",
+        context: "sales",
+        resource: "customer",
+        action: "create",
+        description: "Create new customer accounts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.customer.update",
+        context: "sales",
+        resource: "customer",
+        action: "update",
+        description: "Update customer account details",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.customer.delete",
+        context: "sales",
+        resource: "customer",
+        action: "delete",
+        description: "Delete (soft-delete) customer accounts",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.contact.read",
+        context: "sales",
+        resource: "contact",
+        action: "read",
+        description: "View contacts linked to customers",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.contact.create",
+        context: "sales",
+        resource: "contact",
+        action: "create",
+        description: "Create contacts on customer accounts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.contact.update",
+        context: "sales",
+        resource: "contact",
+        action: "update",
+        description: "Update contact details",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.lead.read",
+        context: "sales",
+        resource: "lead",
+        action: "read",
+        description: "View leads and lead pipeline",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.lead.create",
+        context: "sales",
+        resource: "lead",
+        action: "create",
+        description: "Create new leads",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.lead.update",
+        context: "sales",
+        resource: "lead",
+        action: "update",
+        description: "Update lead details and status",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.lead.convert",
+        context: "sales",
+        resource: "lead",
+        action: "convert",
+        description: "Convert a qualified lead to customer and deal",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.pipeline.read",
+        context: "sales",
+        resource: "pipeline",
+        action: "read",
+        description: "View sales pipelines and stages",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.pipeline.manage",
+        context: "sales",
+        resource: "pipeline",
+        action: "manage",
+        description: "Create and configure pipelines and stages",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.deal.read",
+        context: "sales",
+        resource: "deal",
+        action: "read",
+        description: "View deals and opportunity details",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.deal.create",
+        context: "sales",
+        resource: "deal",
+        action: "create",
+        description: "Create new deals",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.deal.update",
+        context: "sales",
+        resource: "deal",
+        action: "update",
+        description: "Update deal fields, stage, and amounts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.deal.win",
+        context: "sales",
+        resource: "deal",
+        action: "win",
+        description: "Mark a deal as won",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.deal.lose",
+        context: "sales",
+        resource: "deal",
+        action: "lose",
+        description: "Mark a deal as lost",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.quote.read",
+        context: "sales",
+        resource: "quote",
+        action: "read",
+        description: "View quotes and line items",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.quote.create",
+        context: "sales",
+        resource: "quote",
+        action: "create",
+        description: "Create and draft quotes",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.quote.update",
+        context: "sales",
+        resource: "quote",
+        action: "update",
+        description: "Update quote details and line items",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.quote.accept",
+        context: "sales",
+        resource: "quote",
+        action: "accept",
+        description: "Accept a quote on behalf of the customer",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.product.read",
+        context: "sales",
+        resource: "product",
+        action: "read",
+        description: "View product catalogue",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.product.manage",
+        context: "sales",
+        resource: "product",
+        action: "manage",
+        description: "Create and manage products in the catalogue",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.activity.read",
+        context: "sales",
+        resource: "activity",
+        action: "read",
+        description: "View sales activities and notes",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.activity.create",
+        context: "sales",
+        resource: "activity",
+        action: "create",
+        description: "Log calls, meetings, emails, and notes",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.import.create",
+        context: "sales",
+        resource: "import",
+        action: "create",
+        description: "Import customers, leads, and deals from files",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.report.read",
+        context: "sales",
+        resource: "report",
+        action: "read",
+        description: "View sales reports and dashboards",
+        sensitive: false,
+    },
+    PermissionDef {
         id: "admin.membership.manage",
         context: "admin",
         resource: "membership",
@@ -235,6 +459,90 @@ pub mod perms {
     pub fn workspace_department_manage() -> PermissionId {
         PermissionId::from("workspace.department.manage")
     }
+    pub fn sales_customer_read() -> PermissionId {
+        PermissionId::from("sales.customer.read")
+    }
+    pub fn sales_customer_create() -> PermissionId {
+        PermissionId::from("sales.customer.create")
+    }
+    pub fn sales_customer_update() -> PermissionId {
+        PermissionId::from("sales.customer.update")
+    }
+    pub fn sales_customer_delete() -> PermissionId {
+        PermissionId::from("sales.customer.delete")
+    }
+    pub fn sales_contact_read() -> PermissionId {
+        PermissionId::from("sales.contact.read")
+    }
+    pub fn sales_contact_create() -> PermissionId {
+        PermissionId::from("sales.contact.create")
+    }
+    pub fn sales_contact_update() -> PermissionId {
+        PermissionId::from("sales.contact.update")
+    }
+    pub fn sales_lead_read() -> PermissionId {
+        PermissionId::from("sales.lead.read")
+    }
+    pub fn sales_lead_create() -> PermissionId {
+        PermissionId::from("sales.lead.create")
+    }
+    pub fn sales_lead_update() -> PermissionId {
+        PermissionId::from("sales.lead.update")
+    }
+    pub fn sales_lead_convert() -> PermissionId {
+        PermissionId::from("sales.lead.convert")
+    }
+    pub fn sales_pipeline_read() -> PermissionId {
+        PermissionId::from("sales.pipeline.read")
+    }
+    pub fn sales_pipeline_manage() -> PermissionId {
+        PermissionId::from("sales.pipeline.manage")
+    }
+    pub fn sales_deal_read() -> PermissionId {
+        PermissionId::from("sales.deal.read")
+    }
+    pub fn sales_deal_create() -> PermissionId {
+        PermissionId::from("sales.deal.create")
+    }
+    pub fn sales_deal_update() -> PermissionId {
+        PermissionId::from("sales.deal.update")
+    }
+    pub fn sales_deal_win() -> PermissionId {
+        PermissionId::from("sales.deal.win")
+    }
+    pub fn sales_deal_lose() -> PermissionId {
+        PermissionId::from("sales.deal.lose")
+    }
+    pub fn sales_quote_read() -> PermissionId {
+        PermissionId::from("sales.quote.read")
+    }
+    pub fn sales_quote_create() -> PermissionId {
+        PermissionId::from("sales.quote.create")
+    }
+    pub fn sales_quote_update() -> PermissionId {
+        PermissionId::from("sales.quote.update")
+    }
+    pub fn sales_quote_accept() -> PermissionId {
+        PermissionId::from("sales.quote.accept")
+    }
+    pub fn sales_product_read() -> PermissionId {
+        PermissionId::from("sales.product.read")
+    }
+    pub fn sales_product_manage() -> PermissionId {
+        PermissionId::from("sales.product.manage")
+    }
+    pub fn sales_activity_read() -> PermissionId {
+        PermissionId::from("sales.activity.read")
+    }
+    pub fn sales_activity_create() -> PermissionId {
+        PermissionId::from("sales.activity.create")
+    }
+    pub fn sales_import_create() -> PermissionId {
+        PermissionId::from("sales.import.create")
+    }
+    pub fn sales_report_read() -> PermissionId {
+        PermissionId::from("sales.report.read")
+    }
     pub fn admin_membership_manage() -> PermissionId {
         PermissionId::from("admin.membership.manage")
     }
@@ -254,7 +562,16 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "workspace.member.read"
         | "workspace.role.read"
         | "workspace.team.read"
-        | "workspace.department.read" => Scope::Organization,
+        | "workspace.department.read"
+        | "sales.customer.read"
+        | "sales.contact.read"
+        | "sales.lead.read"
+        | "sales.pipeline.read"
+        | "sales.deal.read"
+        | "sales.quote.read"
+        | "sales.product.read"
+        | "sales.activity.read"
+        | "sales.report.read" => Scope::Organization,
         _ => Scope::Organization,
     }
 }

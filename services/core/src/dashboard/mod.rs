@@ -1,9 +1,13 @@
-//! Phase 1.3 dashboard BFF — widget descriptors + honest empty payloads.
+//! Phase 1.4 dashboard BFF — widget descriptors + honest empty payloads.
 //!
-//! Does **not** query CRM/invoice tables (they do not exist yet). At most one
-//! membership count query for the setup checklist.
+//! CRM pipeline data is fetched from `companyos-crm` when `CRM_SERVICE_URL` is
+//! reachable. Finance widgets remain honest empties (no invoice tables yet).
+//! At most one membership count query for the setup checklist.
+
+use std::time::Duration;
 
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::routing::get;
 use axum::{Json, Router};
 use chrono::Utc;
@@ -33,14 +37,14 @@ pub struct DashboardResponse {
 pub struct DashboardWidget {
     pub id: String,
     pub title: String,
-    /// checklist | stat | module_empty | feed
+    /// checklist | stat | module_empty | feed | pipeline
     pub kind: String,
     /// ready | empty | unavailable | loading
     pub status: String,
-    /// module_not_enabled | coming_in_later_phase | no_data
+    /// module_not_enabled | coming_in_later_phase | no_data | crm_unreachable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_code: Option<String>,
-    /// Always false for honest empties in Phase 1.3 (pattern present for later).
+    /// Always false for honest empties in Phase 1.4 (pattern present for later).
     pub stale: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub range_label: Option<String>,
@@ -78,6 +82,7 @@ pub fn router() -> Router<AppState> {
 )]
 pub async fn get_dashboard(
     State(state): State<AppState>,
+    headers: HeaderMap,
     user: AuthUser,
     Query(q): Query<DashboardQuery>,
 ) -> Result<Json<DashboardResponse>, AppError> {
@@ -116,7 +121,9 @@ pub async fn get_dashboard(
     // Single cheap aggregator: active membership count for this tenant only.
     let member_count = count_active_members(&state, &user).await?;
 
-    let widgets = build_widgets(role_layout, member_count, range_label.as_deref());
+    let mut widgets = build_widgets(role_layout, member_count, range_label.as_deref());
+    let pipeline_widget = build_pipeline_widget(&headers, range_label.as_deref()).await;
+    replace_pipeline_widget(&mut widgets, pipeline_widget);
 
     tracing::info!(
         request_id = %user.ctx.request_id,
@@ -250,15 +257,7 @@ fn build_widgets(
             None,
             json!({ "items": [] }),
         ),
-        empty_widget(
-            "pipeline",
-            "Pipeline",
-            "module_empty",
-            "unavailable",
-            "module_not_enabled",
-            range_label,
-            json!({ "module": "sales", "message": "CRM pipeline is not enabled yet" }),
-        ),
+        unavailable_pipeline_placeholder(range_label),
         empty_widget(
             "revenue",
             "Revenue",
@@ -278,6 +277,134 @@ fn build_widgets(
             json!({ "items": [] }),
         ),
     ]
+}
+
+fn unavailable_pipeline_placeholder(range_label: Option<&str>) -> DashboardWidget {
+    empty_widget(
+        "pipeline",
+        "Pipeline",
+        "module_empty",
+        "unavailable",
+        "crm_unreachable",
+        range_label,
+        json!({ "module": "sales", "message": "CRM unavailable" }),
+    )
+}
+
+fn replace_pipeline_widget(widgets: &mut Vec<DashboardWidget>, pipeline: DashboardWidget) {
+    if let Some(idx) = widgets.iter().position(|w| w.id == "pipeline") {
+        widgets[idx] = pipeline;
+    } else {
+        widgets.push(pipeline);
+    }
+}
+
+async fn build_pipeline_widget(headers: &HeaderMap, range_label: Option<&str>) -> DashboardWidget {
+    let crm_url =
+        std::env::var("CRM_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8082".into());
+    let url = format!(
+        "{}/api/v1/sales/reports/summary",
+        crm_url.trim_end_matches('/')
+    );
+
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => return unavailable_pipeline_placeholder(range_label),
+    };
+
+    let mut req = client.get(&url);
+    if let Some(auth) = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+    {
+        req = req.header(axum::http::header::AUTHORIZATION, auth);
+    }
+    for name in [
+        "x-companyos-dev-org-id",
+        "x-companyos-dev-user-id",
+        "x-companyos-org-id",
+        "x-companyos-user-id",
+        "x-companyos-session-id",
+        "x-request-id",
+    ] {
+        if let Some(val) = headers.get(name).and_then(|v| v.to_str().ok()) {
+            req = req.header(name, val);
+        }
+    }
+
+    let resp = match req.send().await {
+        Ok(r) => r,
+        Err(_) => return unavailable_pipeline_placeholder(range_label),
+    };
+
+    let status = resp.status();
+    if status == reqwest::StatusCode::FORBIDDEN {
+        return empty_widget(
+            "pipeline",
+            "Pipeline",
+            "module_empty",
+            "empty",
+            "no_data",
+            range_label,
+            json!({ "open_deal_count": 0, "message": "No sales report access" }),
+        );
+    }
+    if status == reqwest::StatusCode::NOT_FOUND {
+        return empty_widget(
+            "pipeline",
+            "Pipeline",
+            "module_empty",
+            "empty",
+            "no_data",
+            range_label,
+            json!({ "open_deal_count": 0 }),
+        );
+    }
+    if !status.is_success() {
+        return unavailable_pipeline_placeholder(range_label);
+    }
+
+    let body: serde_json::Value = match resp.json().await {
+        Ok(v) => v,
+        Err(_) => return unavailable_pipeline_placeholder(range_label),
+    };
+
+    let pipeline_by_stage = body.get("pipeline_by_stage").cloned().unwrap_or(json!([]));
+    let open_deal_count = pipeline_by_stage
+        .as_array()
+        .map(|stages| {
+            stages
+                .iter()
+                .filter_map(|s| s.get("open_deal_count").and_then(|c| c.as_i64()))
+                .sum::<i64>()
+        })
+        .unwrap_or(0);
+
+    let status = if open_deal_count == 0 {
+        "empty"
+    } else {
+        "ready"
+    };
+
+    DashboardWidget {
+        id: "pipeline".into(),
+        title: "Pipeline".into(),
+        kind: "pipeline".into(),
+        status: status.into(),
+        reason_code: None,
+        stale: false,
+        range_label: range_label.map(|s| s.to_string()),
+        payload: json!({
+            "pipeline_by_stage": pipeline_by_stage,
+            "win_rate": body.get("win_rate").cloned().unwrap_or(json!({})),
+            "weighted_forecast": body.get("weighted_forecast").cloned().unwrap_or(json!({})),
+            "activity_volume": body.get("activity_volume").cloned().unwrap_or(json!([])),
+            "open_deal_count": open_deal_count,
+        }),
+    }
 }
 
 fn empty_widget(

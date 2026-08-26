@@ -45,6 +45,10 @@ jobs:
           PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
             -c "CREATE ROLE companyos LOGIN PASSWORD 'companyos' NOSUPERUSER NOBYPASSRLS CREATEDB;" \
             -c "CREATE DATABASE companyos_test OWNER companyos;"
+          # pg_trgm is required by CRM duplicate detection (Phase 1.4); create as
+          # superuser so the non-superuser app role can use it under RLS tests.
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d companyos_test -v ON_ERROR_STOP=1 \
+            -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
           PGPASSWORD=companyos psql -h 127.0.0.1 -U companyos -d companyos_test \
             -c "SELECT current_user, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user;"
       - name: fmt

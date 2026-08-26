@@ -8,6 +8,7 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
+  MoneyCell,
   PermissionDeniedState,
   Select,
   Widget,
@@ -19,6 +20,14 @@ type ChecklistItem = {
   label: string;
   done: boolean;
   member_count?: number;
+};
+
+type PipelineStageSummary = {
+  stage_id: string;
+  stage_name: string;
+  open_deal_count: number;
+  open_amount_minor: number;
+  currency: string;
 };
 
 type DashboardWidget = {
@@ -237,6 +246,45 @@ function DashboardWidgetCard({
             </Link>
           </div>
         ) : null}
+      </Widget>
+    );
+  }
+
+  if (widget.kind === 'pipeline' && widget.status === 'ready') {
+    const pipelineByStage =
+      (widget.payload.pipeline_by_stage as PipelineStageSummary[] | undefined) ?? [];
+    return (
+      <Widget title={widget.title} range={range} menu={menu} footer={footer}>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+          {pipelineByStage.map((s) => (
+            <li
+              key={s.stage_id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                gap: 8,
+                fontSize: '0.9rem',
+                color: 'var(--cos-color-fg)',
+              }}
+            >
+              <span>{s.stage_name}</span>
+              <span style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <span style={{ color: 'var(--cos-color-fg-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                  {s.open_deal_count}
+                </span>
+                <MoneyCell amount={s.open_amount_minor / 100} currency={s.currency} />
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div style={{ marginTop: 12 }}>
+          <Link href="/sales">
+            <Button size="sm" variant="secondary">
+              View pipeline
+            </Button>
+          </Link>
+        </div>
       </Widget>
     );
   }

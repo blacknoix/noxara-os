@@ -13,6 +13,7 @@ members = [
     "crates/testkit",
     "services/gateway",
     "services/core",
+    "services/business/crm-service",
 ]
 default-members = [
     "crates/ids",
@@ -27,6 +28,7 @@ default-members = [
     "crates/testkit",
     "services/gateway",
     "services/core",
+    "services/business/crm-service",
 ]
 
 [workspace.package]

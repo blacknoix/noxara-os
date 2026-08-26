@@ -1,7 +1,8 @@
-//! CompanyOS gateway / BFF — Phase 1.3.
+//! CompanyOS gateway / BFF — Phase 1.4.
 //!
 //! Authenticates access JWTs (org-scoped), resolves tenant, runs a coarse authz
-//! pre-check, attaches request context headers, and proxies to core.
+//! pre-check, attaches request context headers, and proxies to core (auth,
+//! workspace, dashboard) and CRM (sales).
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -25,6 +26,7 @@ use tracing::info;
 #[derive(Clone)]
 struct GatewayState {
     core_url: String,
+    crm_url: String,
     client: reqwest::Client,
     keyring: KeyRing,
     jwks_cache: Arc<RwLock<JwksCache>>,
@@ -41,6 +43,8 @@ async fn main() -> anyhow::Result<()> {
 
     let core_url =
         std::env::var("CORE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".into());
+    let crm_url =
+        std::env::var("CRM_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8082".into());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
     let local_auth = matches!(
@@ -50,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
 
     let state = GatewayState {
         core_url,
+        crm_url,
         client: reqwest::Client::new(),
         keyring,
         jwks_cache: Arc::new(RwLock::new(JwksCache { fetched_at: None })),
@@ -83,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "1.3"
+                    "phase": "1.4"
                 }))
             }),
         )
@@ -93,6 +98,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/hello", any(proxy_hello))
         .route("/api/v1/dashboard", any(proxy_dashboard))
         .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
+        .route("/api/v1/sales/{*rest}", any(proxy_sales))
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
@@ -221,7 +227,9 @@ async fn proxy_to(
     state: &GatewayState,
     req: Request,
     upstream_path: &str,
+    base_url: &str,
     require_auth: bool,
+    upstream_label: &str,
 ) -> Response {
     let request_id = req
         .headers()
@@ -267,7 +275,7 @@ async fn proxy_to(
         }
     }
 
-    let url = format!("{}{}", state.core_url.trim_end_matches('/'), upstream_path);
+    let url = format!("{}{}", base_url.trim_end_matches('/'), upstream_path);
     let mut outbound = state.client.request(method, &url);
     for (k, v) in headers.iter() {
         if k == axum::http::header::HOST || k == axum::http::header::CONTENT_LENGTH {
@@ -283,7 +291,7 @@ async fn proxy_to(
             return AppError::new(
                 ErrorCode::ServiceUnavailable,
                 request_id,
-                format!("core unreachable: {e}"),
+                format!("{upstream_label} unreachable: {e}"),
             )
             .into_response();
         }
@@ -315,27 +323,42 @@ async fn proxy_to(
 
 async fn proxy_hello(State(state): State<GatewayState>, req: Request) -> Response {
     let upstream = with_query(&req, "/api/v1/hello");
-    proxy_to(&state, req, &upstream, true).await
+    proxy_to(&state, req, &upstream, &state.core_url, true, "core").await
 }
 
 async fn proxy_dashboard(State(state): State<GatewayState>, req: Request) -> Response {
     let upstream = with_query(&req, "/api/v1/dashboard");
-    proxy_to(&state, req, &upstream, true).await
+    proxy_to(&state, req, &upstream, &state.core_url, true, "core").await
 }
 
 async fn proxy_workspace(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
-    proxy_to(&state, req, &upstream, true).await
+    proxy_to(&state, req, &upstream, &state.core_url, true, "core").await
+}
+
+async fn proxy_sales(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    // Coarse auth: authenticate only; CRM enforces sales.* permissions.
+    proxy_to(&state, req, &upstream, &state.crm_url, true, "crm").await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {
-    proxy_to(&state, req, "/api/v1/openapi.json", false).await
+    proxy_to(
+        &state,
+        req,
+        "/api/v1/openapi.json",
+        &state.core_url,
+        false,
+        "core",
+    )
+    .await
 }
 
 async fn proxy_auth(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     // Some auth admin routes require auth — core enforces; gateway lets Bearer through.
-    proxy_to(&state, req, &upstream, false).await
+    proxy_to(&state, req, &upstream, &state.core_url, false, "core").await
 }

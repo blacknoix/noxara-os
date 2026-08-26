@@ -45,6 +45,15 @@ for (const name of ['DashboardResponse', 'DashboardWidget']) {
   }
 }
 
+if (!doc.paths['/api/v1/sales/pipelines']) {
+  console.error('OpenAPI drift: missing /api/v1/sales/pipelines');
+  process.exit(1);
+}
+if (!doc.components.schemas.DealDto && !doc.components.schemas.CustomerDto) {
+  console.error('OpenAPI drift: missing DealDto or CustomerDto schema');
+  process.exit(1);
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);

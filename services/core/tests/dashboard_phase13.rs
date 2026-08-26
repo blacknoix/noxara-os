@@ -355,9 +355,14 @@ async fn dashboard_happy_path_widgets_and_reason_codes() {
     assert!(member_count >= 2, "seeded org has owner+member");
 
     let pipeline = by_id("pipeline");
+    // Phase 1.4: dashboard tries CRM over the network. Without CRM running in
+    // this suite we expect an honest unavailable + crm_unreachable (not the
+    // old module_not_enabled stub). Finance remains module_not_enabled.
     assert_eq!(pipeline["status"], "unavailable");
-    assert_eq!(pipeline["reason_code"], "module_not_enabled");
+    assert_eq!(pipeline["reason_code"], "crm_unreachable");
     assert_eq!(pipeline["stale"], false);
+    assert_eq!(pipeline["kind"], "module_empty");
+    assert_eq!(pipeline["payload"]["module"], "sales");
 
     let revenue = by_id("revenue");
     assert_eq!(revenue["status"], "unavailable");
