@@ -54,6 +54,15 @@ if (!doc.components.schemas.DealDto && !doc.components.schemas.CustomerDto) {
   process.exit(1);
 }
 
+if (!doc.paths['/api/v1/finance/invoices']) {
+  console.error('OpenAPI drift: missing /api/v1/finance/invoices');
+  process.exit(1);
+}
+if (!doc.components.schemas.InvoiceDto) {
+  console.error('OpenAPI drift: missing InvoiceDto schema');
+  process.exit(1);
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);

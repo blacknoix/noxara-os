@@ -490,7 +490,7 @@ pub async fn decide_expense(
         .ok_or_else(|| not_found(&request_id, "expense"))?;
 
     let required = required_scope_for_owner_row(
-        &mut *tx,
+        &mut tx,
         org_id,
         auth.ctx.actor.user_id,
         membership.team_id,

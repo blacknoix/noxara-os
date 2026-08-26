@@ -32,27 +32,33 @@ export COMPANYOS_LOCAL_AUTH=1
 export RUST_LOG="${RUST_LOG:-info,companyos=debug}"
 export CORE_SERVICE_URL="${CORE_SERVICE_URL:-http://127.0.0.1:8081}"
 export CRM_SERVICE_URL="${CRM_SERVICE_URL:-http://127.0.0.1:8082}"
+export FINANCE_SERVICE_URL="${FINANCE_SERVICE_URL:-http://127.0.0.1:8083}"
 
 cp -n .env.example .env 2>/dev/null || true
 
 echo "==> Seeding one org + two users..."
 bash "$ROOT/scripts/seed-dev.sh"
 
-echo "==> Starting core (8081), CRM (8082), and gateway (8080) in background..."
+echo "==> Starting core (8081), CRM (8082), Finance (8083), and gateway (8080) in background..."
 mkdir -p "$ROOT/.tmp"
-cargo build -p companyos-core -p companyos-crm -p companyos-gateway
+cargo build -p companyos-core -p companyos-crm -p companyos-finance -p companyos-gateway
 pkill -f "target/debug/companyos-core" 2>/dev/null || true
 pkill -f "target/debug/companyos-crm" 2>/dev/null || true
+pkill -f "target/debug/companyos-finance" 2>/dev/null || true
 pkill -f "target/debug/companyos-gateway" 2>/dev/null || true
-nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" "$ROOT/target/debug/companyos-core" >"$ROOT/.tmp/core.log" 2>&1 &
+nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
+  "$ROOT/target/debug/companyos-core" >"$ROOT/.tmp/core.log" 2>&1 &
 nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" "$ROOT/target/debug/companyos-crm" >"$ROOT/.tmp/crm.log" 2>&1 &
+nohup env FINANCE_BIND="${FINANCE_BIND:-0.0.0.0:8083}" "$ROOT/target/debug/companyos-finance" >"$ROOT/.tmp/finance.log" 2>&1 &
 nohup env CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
+  FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
   "$ROOT/target/debug/companyos-gateway" >"$ROOT/.tmp/gateway.log" 2>&1 &
 
 sleep 2
 echo "==> Health checks"
 curl -sf "http://127.0.0.1:8081/healthz" && echo " core ok"
 curl -sf "http://127.0.0.1:8082/healthz" && echo " crm ok"
+curl -sf "http://127.0.0.1:8083/healthz" && echo " finance ok"
 curl -sf "http://127.0.0.1:8080/healthz" && echo " gateway ok"
 
 echo ""
@@ -60,6 +66,7 @@ echo "Dev stack is up."
 echo "  Gateway:  http://127.0.0.1:8080"
 echo "  Core:     http://127.0.0.1:8081"
 echo "  CRM:      http://127.0.0.1:8082"
+echo "  Finance:  http://127.0.0.1:8083"
 echo "  Web:      pnpm --filter @companyos/web dev"
 echo "  Temporal: http://127.0.0.1:8088"
 echo "  MinIO:    http://127.0.0.1:9001 (minioadmin/minioadmin)"

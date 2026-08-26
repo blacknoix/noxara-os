@@ -199,6 +199,7 @@ impl Role {
                 perms::sales_report_read(),
                 perms::finance_customer_read(),
                 perms::finance_invoice_read(),
+                perms::finance_invoice_create(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),

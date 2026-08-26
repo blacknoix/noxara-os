@@ -1083,16 +1083,45 @@ pub async fn reject_quote(
 
 /// GET /api/v1/sales/quotes/{id}/invoice-action
 ///
-/// Always disabled in this phase — invoicing/finance integration ships later.
+/// Available when the quote is accepted — Finance creates the invoice from a
+/// quote snapshot (no CRM table reads on the finance side).
 #[utoipa::path(get, path = "/api/v1/sales/quotes/{id}/invoice-action", tag = "sales-quotes",
     responses((status = 200, body = InvoiceActionResponse)))]
 pub async fn invoice_action(
-    State(_state): State<AppState>,
-    _auth: AuthCtx,
-    Path(_id): Path<String>,
-) -> Json<InvoiceActionResponse> {
-    Json(InvoiceActionResponse {
-        available: false,
-        reason: "coming_in_1.5".to_string(),
-    })
+    State(state): State<AppState>,
+    auth: AuthCtx,
+    Path(id): Path<String>,
+) -> Result<Json<InvoiceActionResponse>, AppError> {
+    let request_id = auth.ctx.request_id.clone();
+    let quote_uuid = parse_public_id(IdKind::Quote, &id, &request_id)?;
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, auth.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    let row: Option<(String,)> = sqlx::query_as(
+        "SELECT status FROM sales_quote WHERE org_id = $1 AND id = $2",
+    )
+    .bind(auth.ctx.org_id.as_uuid())
+    .bind(quote_uuid)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
+    tx.commit().await.map_err(internal(&request_id))?;
+    let Some((status,)) = row else {
+        return Ok(Json(InvoiceActionResponse {
+            available: false,
+            reason: "quote_not_found".into(),
+        }));
+    };
+    if status == "accepted" {
+        Ok(Json(InvoiceActionResponse {
+            available: true,
+            reason: "ready".into(),
+        }))
+    } else {
+        Ok(Json(InvoiceActionResponse {
+            available: false,
+            reason: format!("quote_status_{status}"),
+        }))
+    }
 }

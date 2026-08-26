@@ -83,6 +83,7 @@ pub async fn create_credit_note(
         }
     }
 
+    #[allow(clippy::type_complexity)]
     let inv: Option<(Uuid, String, String, i64, i64, i64, i64, String)> = sqlx::query_as(
         r#"
         SELECT customer_id, public_id, currency, total_minor, amount_paid_minor,

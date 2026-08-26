@@ -1,8 +1,8 @@
-//! CompanyOS gateway / BFF — Phase 1.4.
+//! CompanyOS gateway / BFF — Phase 1.5.
 //!
 //! Authenticates access JWTs (org-scoped), resolves tenant, runs a coarse authz
 //! pre-check, attaches request context headers, and proxies to core (auth,
-//! workspace, dashboard) and CRM (sales).
+//! workspace, dashboard), CRM (sales), and Finance.
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -27,6 +27,7 @@ use tracing::info;
 struct GatewayState {
     core_url: String,
     crm_url: String,
+    finance_url: String,
     client: reqwest::Client,
     keyring: KeyRing,
     jwks_cache: Arc<RwLock<JwksCache>>,
@@ -45,6 +46,8 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("CORE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".into());
     let crm_url =
         std::env::var("CRM_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8082".into());
+    let finance_url =
+        std::env::var("FINANCE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8083".into());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
     let local_auth = matches!(
@@ -55,6 +58,7 @@ async fn main() -> anyhow::Result<()> {
     let state = GatewayState {
         core_url,
         crm_url,
+        finance_url,
         client: reqwest::Client::new(),
         keyring,
         jwks_cache: Arc::new(RwLock::new(JwksCache { fetched_at: None })),
@@ -88,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "1.4"
+                    "phase": "1.5"
                 }))
             }),
         )
@@ -99,6 +103,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/dashboard", any(proxy_dashboard))
         .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
         .route("/api/v1/sales/{*rest}", any(proxy_sales))
+        .route("/api/v1/finance/{*rest}", any(proxy_finance))
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
@@ -342,6 +347,21 @@ async fn proxy_sales(State(state): State<GatewayState>, req: Request) -> Respons
     let upstream = with_query(&req, &path);
     // Coarse auth: authenticate only; CRM enforces sales.* permissions.
     proxy_to(&state, req, &upstream, &state.crm_url, true, "crm").await
+}
+
+async fn proxy_finance(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    // Coarse auth: authenticate only; Finance enforces finance.* permissions.
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.finance_url,
+        true,
+        "finance",
+    )
+    .await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {

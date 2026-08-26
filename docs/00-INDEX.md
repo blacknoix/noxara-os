@@ -22,20 +22,21 @@ CompanyOS (repo `noxara-os`) is an AI-native, multi-tenant Business Operating Sy
 | [03-UIUX](specs/03-UIUX.md) | Active — Phase 1.3 shell & design system |
 | [04-APP-FLOW](specs/04-APP-FLOW.md) | Placeholder |
 | [05-SCHEMA](specs/05-SCHEMA.md) | Placeholder |
-| [06-IMPLEMENTATION-PLAN](specs/06-IMPLEMENTATION-PLAN.md) | Active — phase outline through 1.3 |
+| [06-IMPLEMENTATION-PLAN](specs/06-IMPLEMENTATION-PLAN.md) | Active — phase outline through 1.5 |
 
 ## ADRs
 
-Accepted ADRs [001–018](adrs/) document foundational decisions.
+Accepted ADRs [001–018](adrs/) document foundational decisions. ADR [019](adrs/019-finance-ledger-layout.md) documents Finance v1 posting rules (**not** finance-reviewer signed-off).
 
 ## Other
 
 - [CONTRIBUTING](../CONTRIBUTING.md)
 - [API stubs](api/)
 - [Events stubs](events/)
-- [Runbooks](runbooks/)
+- [Runbooks](runbooks/) — including finance payment reconciliation, stuck invoice, provider outage
 - [Auth threat model](threat-models/auth.md)
 - ADR [016](adrs/016-org-scoped-jwt-opaque-refresh.md) — org-scoped JWT + opaque refresh cookies
 - ADR [017](adrs/017-org-provisioning-durable-command.md) — durable OrgProvisioning (Temporal follow-up)
 - ADR [018](adrs/018-table-virtualisation.md) — Table virtualisation (`@tanstack/react-virtual`)
+- ADR [019](adrs/019-finance-ledger-layout.md) — Finance double-entry layout (Phase 1.5)
 - Runbook: [locked-out owner / restore last Owner](runbooks/locked-out-owner-recovery.md)

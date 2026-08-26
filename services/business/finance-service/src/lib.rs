@@ -30,19 +30,43 @@ use tower_http::trace::TraceLayer;
 
 /// Split a `.sql` file into individual statements, stripping full-line `--`
 /// comments first so semicolons inside comments don't create bogus
-/// statement fragments.
+/// statement fragments. Respects `$$ … $$` dollar-quotes so PL/pgSQL
+/// function bodies are not split on internal semicolons.
 pub fn split_sql(sql: &str) -> Vec<String> {
     let cleaned: String = sql
         .lines()
         .filter(|l| !l.trim_start().starts_with("--"))
         .collect::<Vec<_>>()
         .join("\n");
-    cleaned
-        .split(';')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|s| s.to_string())
-        .collect()
+    let mut stmts = Vec::new();
+    let mut buf = String::new();
+    let mut in_dollar = false;
+    let chars: Vec<char> = cleaned.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '$' && i + 1 < chars.len() && chars[i + 1] == '$' {
+            buf.push_str("$$");
+            in_dollar = !in_dollar;
+            i += 2;
+            continue;
+        }
+        if chars[i] == ';' && !in_dollar {
+            let stmt = buf.trim().to_string();
+            if !stmt.is_empty() {
+                stmts.push(stmt);
+            }
+            buf.clear();
+            i += 1;
+            continue;
+        }
+        buf.push(chars[i]);
+        i += 1;
+    }
+    let stmt = buf.trim().to_string();
+    if !stmt.is_empty() {
+        stmts.push(stmt);
+    }
+    stmts
 }
 
 /// Run the Finance schema migration. Assumes `companyos_core::migrate` (or
@@ -98,5 +122,22 @@ mod tests {
         assert_eq!(stmts.len(), 2);
         assert!(stmts[0].starts_with("CREATE TABLE"));
         assert!(stmts[1].starts_with("SELECT"));
+    }
+
+    #[test]
+    fn split_sql_preserves_dollar_quoted_function_bodies() {
+        let sql = r#"
+CREATE OR REPLACE FUNCTION foo() RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION 'nope';
+END;
+$$ LANGUAGE plpgsql;
+CREATE TABLE bar (id UUID);
+"#;
+        let stmts = split_sql(sql);
+        assert_eq!(stmts.len(), 2);
+        assert!(stmts[0].contains("RAISE EXCEPTION"));
+        assert!(stmts[0].contains("$$"));
+        assert!(stmts[1].starts_with("CREATE TABLE"));
     }
 }

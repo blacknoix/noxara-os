@@ -22,9 +22,14 @@ use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::collections::HashSet;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
+use tokio::sync::Mutex as AsyncMutex;
 use tower::ServiceExt;
 use uuid::Uuid;
+
+/// Migrate once — concurrent DDL from every test is racy under FORCE RLS.
+static MIGRATED: OnceLock<()> = OnceLock::new();
+static SEED_LOCK: AsyncMutex<()> = AsyncMutex::const_new(());
 
 async fn pool() -> Option<PgPool> {
     let url = test_database_url()?;
@@ -33,9 +38,21 @@ async fn pool() -> Option<PgPool> {
         .connect(&url)
         .await
         .ok()?;
-    companyos_core::migrate(&pool).await.ok()?;
-    companyos_finance::migrate(&pool).await.ok()?;
+    ensure_migrated(&pool).await?;
     Some(pool)
+}
+
+async fn ensure_migrated(pool: &PgPool) -> Option<()> {
+    if MIGRATED.get().is_some() {
+        return Some(());
+    }
+    let _guard = SEED_LOCK.lock().await;
+    if MIGRATED.get().is_none() {
+        companyos_core::migrate(pool).await.ok()?;
+        companyos_finance::migrate(pool).await.ok()?;
+        let _ = MIGRATED.set(());
+    }
+    Some(())
 }
 
 fn core_app(pool: PgPool, ring: KeyRing) -> Router {
@@ -138,7 +155,11 @@ async fn insert_member_with_role(
 }
 
 async fn seed_org_with_tokens(secret: &str) -> Option<Seeded> {
+    // Connect + migrate before taking the seed lock (SEED_LOCK is not reentrant).
     let pool = pool().await?;
+    // Serialize org registration + membership inserts; parallel seeds race on
+    // shared auth tables / RLS session bindings under load.
+    let _guard = SEED_LOCK.lock().await;
     let ring = KeyRing::from_secret(secret);
     companyos_core::auth::ensure_bootstrap_key(&pool, &ring)
         .await
