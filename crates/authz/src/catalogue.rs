@@ -528,6 +528,87 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Read journal entries and ledger accounts",
         sensitive: false,
     },
+    // --- Operations / Projects & Tasks (Phase 1.6) ---
+    PermissionDef {
+        id: "operations.project.read",
+        context: "operations",
+        resource: "project",
+        action: "read",
+        description: "Read projects",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.project.create",
+        context: "operations",
+        resource: "project",
+        action: "create",
+        description: "Create projects (including from won deals)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.project.update",
+        context: "operations",
+        resource: "project",
+        action: "update",
+        description: "Update projects (If-Match)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.project.delete",
+        context: "operations",
+        resource: "project",
+        action: "delete",
+        description: "Soft-delete projects",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "operations.task.read",
+        context: "operations",
+        resource: "task",
+        action: "read",
+        description: "Read tasks, board, calendar, and My Work",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.task.create",
+        context: "operations",
+        resource: "task",
+        action: "create",
+        description: "Create tasks",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.task.update",
+        context: "operations",
+        resource: "task",
+        action: "update",
+        description: "Update tasks including board moves (If-Match)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.task.delete",
+        context: "operations",
+        resource: "task",
+        action: "delete",
+        description: "Soft-delete tasks",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "operations.task.assign",
+        context: "operations",
+        resource: "task",
+        action: "assign",
+        description: "Assign or reassign tasks",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.task.comment",
+        context: "operations",
+        resource: "task",
+        action: "comment",
+        description: "Comment on tasks (including @mentions)",
+        sensitive: false,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -745,6 +826,36 @@ pub mod perms {
     pub fn finance_ledger_read() -> PermissionId {
         PermissionId::from("finance.ledger.read")
     }
+    pub fn operations_project_read() -> PermissionId {
+        PermissionId::from("operations.project.read")
+    }
+    pub fn operations_project_create() -> PermissionId {
+        PermissionId::from("operations.project.create")
+    }
+    pub fn operations_project_update() -> PermissionId {
+        PermissionId::from("operations.project.update")
+    }
+    pub fn operations_project_delete() -> PermissionId {
+        PermissionId::from("operations.project.delete")
+    }
+    pub fn operations_task_read() -> PermissionId {
+        PermissionId::from("operations.task.read")
+    }
+    pub fn operations_task_create() -> PermissionId {
+        PermissionId::from("operations.task.create")
+    }
+    pub fn operations_task_update() -> PermissionId {
+        PermissionId::from("operations.task.update")
+    }
+    pub fn operations_task_delete() -> PermissionId {
+        PermissionId::from("operations.task.delete")
+    }
+    pub fn operations_task_assign() -> PermissionId {
+        PermissionId::from("operations.task.assign")
+    }
+    pub fn operations_task_comment() -> PermissionId {
+        PermissionId::from("operations.task.comment")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -771,7 +882,9 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "finance.expense.read"
         | "finance.report.read"
         | "finance.customer.read"
-        | "finance.ledger.read" => Scope::Organization,
+        | "finance.ledger.read"
+        | "operations.project.read"
+        | "operations.task.read" => Scope::Organization,
         _ => Scope::Organization,
     }
 }
