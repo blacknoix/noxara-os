@@ -455,6 +455,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "companyos-ai"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-stream",
+ "async-trait",
+ "axum",
+ "bytes",
+ "chrono",
+ "companyos-auth-token",
+ "companyos-authz",
+ "companyos-core",
+ "companyos-errors",
+ "companyos-events",
+ "companyos-ids",
+ "companyos-money",
+ "companyos-telemetry",
+ "companyos-tenancy",
+ "companyos-testkit",
+ "futures",
+ "http",
+ "http-body-util",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "urlencoding",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
 name = "companyos-analytics"
 version = "0.1.0"
 dependencies = [
