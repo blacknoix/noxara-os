@@ -1,8 +1,8 @@
-//! Phase 1.4 dashboard BFF — widget descriptors + honest empty payloads.
+//! Phase 1.5 dashboard BFF — widget descriptors + live CRM/Finance aggregates.
 //!
-//! CRM pipeline data is fetched from `companyos-crm` when `CRM_SERVICE_URL` is
-//! reachable. Finance widgets remain honest empties (no invoice tables yet).
-//! At most one membership count query for the setup checklist.
+//! CRM pipeline and Finance revenue/expenses/cash/receivables are fetched from
+//! their services when reachable. Staleness is labeled via `as_of` (no Redis
+//! cache yet — Redis is in the stack but unused for dashboard).
 
 use std::time::Duration;
 
@@ -123,7 +123,11 @@ pub async fn get_dashboard(
 
     let mut widgets = build_widgets(role_layout, member_count, range_label.as_deref());
     let pipeline_widget = build_pipeline_widget(&headers, range_label.as_deref()).await;
-    replace_pipeline_widget(&mut widgets, pipeline_widget);
+    replace_widget(&mut widgets, pipeline_widget);
+    let finance_widgets = build_finance_widgets(&headers, range_label.as_deref()).await;
+    for w in finance_widgets {
+        replace_widget(&mut widgets, w);
+    }
 
     tracing::info!(
         request_id = %user.ctx.request_id,
@@ -268,6 +272,33 @@ fn build_widgets(
             json!({ "module": "finance", "message": "Revenue metrics are not available yet" }),
         ),
         empty_widget(
+            "expenses",
+            "Expenses",
+            "stat",
+            "unavailable",
+            "module_not_enabled",
+            range_label,
+            json!({ "module": "finance", "message": "Expense metrics are not available yet" }),
+        ),
+        empty_widget(
+            "cash",
+            "Cash",
+            "stat",
+            "unavailable",
+            "module_not_enabled",
+            range_label,
+            json!({ "module": "finance", "message": "Cash metrics are not available yet" }),
+        ),
+        empty_widget(
+            "receivables",
+            "Receivables",
+            "stat",
+            "unavailable",
+            "module_not_enabled",
+            range_label,
+            json!({ "module": "finance", "message": "Receivables metrics are not available yet" }),
+        ),
+        empty_widget(
             "team_activity",
             "Team activity",
             "feed",
@@ -291,12 +322,159 @@ fn unavailable_pipeline_placeholder(range_label: Option<&str>) -> DashboardWidge
     )
 }
 
-fn replace_pipeline_widget(widgets: &mut Vec<DashboardWidget>, pipeline: DashboardWidget) {
-    if let Some(idx) = widgets.iter().position(|w| w.id == "pipeline") {
-        widgets[idx] = pipeline;
+fn replace_widget(widgets: &mut Vec<DashboardWidget>, widget: DashboardWidget) {
+    if let Some(idx) = widgets.iter().position(|w| w.id == widget.id) {
+        widgets[idx] = widget;
     } else {
-        widgets.push(pipeline);
+        widgets.push(widget);
     }
+}
+
+fn unavailable_finance_stat(id: &str, title: &str, range_label: Option<&str>) -> DashboardWidget {
+    empty_widget(
+        id,
+        title,
+        "stat",
+        "unavailable",
+        "finance_unreachable",
+        range_label,
+        json!({ "module": "finance", "message": format!("{title} unavailable") }),
+    )
+}
+
+async fn build_finance_widgets(
+    headers: &HeaderMap,
+    range_label: Option<&str>,
+) -> Vec<DashboardWidget> {
+    let finance_url =
+        std::env::var("FINANCE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8083".into());
+    let url = format!(
+        "{}/api/v1/finance/reports/summary",
+        finance_url.trim_end_matches('/')
+    );
+
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => {
+            return vec![
+                unavailable_finance_stat("revenue", "Revenue", range_label),
+                unavailable_finance_stat("expenses", "Expenses", range_label),
+                unavailable_finance_stat("cash", "Cash", range_label),
+                unavailable_finance_stat("receivables", "Receivables", range_label),
+            ];
+        }
+    };
+
+    let mut req = client.get(&url);
+    if let Some(auth) = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+    {
+        req = req.header(axum::http::header::AUTHORIZATION, auth);
+    }
+    for name in [
+        "x-companyos-dev-org-id",
+        "x-companyos-dev-user-id",
+        "x-companyos-org-id",
+        "x-companyos-user-id",
+        "x-companyos-session-id",
+        "x-request-id",
+    ] {
+        if let Some(val) = headers.get(name).and_then(|v| v.to_str().ok()) {
+            req = req.header(name, val);
+        }
+    }
+
+    let resp = match req.send().await {
+        Ok(r) => r,
+        Err(_) => {
+            return vec![
+                unavailable_finance_stat("revenue", "Revenue", range_label),
+                unavailable_finance_stat("expenses", "Expenses", range_label),
+                unavailable_finance_stat("cash", "Cash", range_label),
+                unavailable_finance_stat("receivables", "Receivables", range_label),
+            ];
+        }
+    };
+
+    let status = resp.status();
+    if status == reqwest::StatusCode::FORBIDDEN {
+        let empty = |id: &str, title: &str| {
+            empty_widget(
+                id,
+                title,
+                "stat",
+                "empty",
+                "no_data",
+                range_label,
+                json!({ "amount_minor": 0, "currency": "USD", "message": "No finance report access" }),
+            )
+        };
+        return vec![
+            empty("revenue", "Revenue"),
+            empty("expenses", "Expenses"),
+            empty("cash", "Cash"),
+            empty("receivables", "Receivables"),
+        ];
+    }
+    if !status.is_success() {
+        return vec![
+            unavailable_finance_stat("revenue", "Revenue", range_label),
+            unavailable_finance_stat("expenses", "Expenses", range_label),
+            unavailable_finance_stat("cash", "Cash", range_label),
+            unavailable_finance_stat("receivables", "Receivables", range_label),
+        ];
+    }
+
+    let body: serde_json::Value = match resp.json().await {
+        Ok(v) => v,
+        Err(_) => {
+            return vec![
+                unavailable_finance_stat("revenue", "Revenue", range_label),
+                unavailable_finance_stat("expenses", "Expenses", range_label),
+                unavailable_finance_stat("cash", "Cash", range_label),
+                unavailable_finance_stat("receivables", "Receivables", range_label),
+            ];
+        }
+    };
+
+    let currency = body
+        .get("currency")
+        .and_then(|c| c.as_str())
+        .unwrap_or("USD");
+    let as_of = body
+        .get("as_of")
+        .and_then(|c| c.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    let stat = |id: &str, title: &str, key: &str| {
+        let amount = body.get(key).and_then(|v| v.as_i64()).unwrap_or(0);
+        DashboardWidget {
+            id: id.into(),
+            title: title.into(),
+            kind: "stat".into(),
+            status: if amount == 0 { "empty" } else { "ready" }.into(),
+            reason_code: None,
+            stale: false,
+            range_label: range_label.map(|s| s.to_string()),
+            payload: json!({
+                "amount_minor": amount,
+                "currency": currency,
+                "as_of": as_of,
+            }),
+        }
+    };
+
+    vec![
+        stat("revenue", "Revenue", "revenue_minor"),
+        stat("expenses", "Expenses", "expenses_minor"),
+        stat("cash", "Cash", "cash_minor"),
+        stat("receivables", "Receivables", "receivables_minor"),
+    ]
 }
 
 async fn build_pipeline_widget(headers: &HeaderMap, range_label: Option<&str>) -> DashboardWidget {

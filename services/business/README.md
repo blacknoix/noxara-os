@@ -2,7 +2,7 @@
 
 Sales CRM lives in **`crm-service/`** (Phase 1.4). Customer, lead, deal, pipeline, quote, product, activity, and import data are mastered in that bounded context (see ADR 009).
 
-Finance, Operations, and People bounded contexts will follow in later phases. Finance (invoicing, payments) is intentionally separate from CRM.
+Finance lives in **`finance-service/`** (Phase 1.5). It projects customers from Sales events, owns invoices/payments/ledger, and never reads `sales_*` tables.
 
 ## Network boundary
 
@@ -13,4 +13,4 @@ Even when co-located with core in development, business services are reached thr
 | Path | Phase | Description |
 |------|-------|-------------|
 | `crm-service/` | 1.4 | Sales CRM — customers, leads, deals, pipelines, quotes |
-| *(future)* `finance-service/` | 1.5+ | Invoicing, payments, ledger projections |
+| `finance-service/` | 1.5 | Invoicing, payments, expenses, double-entry journal |

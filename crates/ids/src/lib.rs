@@ -27,6 +27,9 @@ pub enum IdKind {
     Org,
     User,
     Invoice,
+    CreditNote,
+    Payment,
+    Expense,
     Deal,
     Customer,
     Contact,
@@ -51,6 +54,9 @@ impl IdKind {
             Self::Org => "org_",
             Self::User => "usr_",
             Self::Invoice => "inv_",
+            Self::CreditNote => "cn_",
+            Self::Payment => "pay_",
+            Self::Expense => "exp_",
             Self::Deal => "dl_",
             Self::Customer => "cus_",
             Self::Contact => "con_",
@@ -75,6 +81,9 @@ impl IdKind {
             "org_" => Some(Self::Org),
             "usr_" => Some(Self::User),
             "inv_" => Some(Self::Invoice),
+            "cn_" => Some(Self::CreditNote),
+            "pay_" => Some(Self::Payment),
+            "exp_" => Some(Self::Expense),
             "dl_" => Some(Self::Deal),
             "cus_" => Some(Self::Customer),
             "con_" => Some(Self::Contact),
@@ -151,6 +160,8 @@ impl FromStr for PublicId {
             ("org_", IdKind::Org),
             ("usr_", IdKind::User),
             ("inv_", IdKind::Invoice),
+            ("pay_", IdKind::Payment),
+            ("exp_", IdKind::Expense),
             ("cus_", IdKind::Customer),
             ("con_", IdKind::Contact),
             ("led_", IdKind::Lead),
@@ -167,6 +178,7 @@ impl FromStr for PublicId {
             ("mem_", IdKind::Membership),
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
+            ("cn_", IdKind::CreditNote),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {
@@ -203,6 +215,18 @@ pub fn usr_id(uuid: Uuid) -> PublicId {
 
 pub fn inv_id(uuid: Uuid) -> PublicId {
     PublicId::new(IdKind::Invoice, uuid)
+}
+
+pub fn cn_id(uuid: Uuid) -> PublicId {
+    PublicId::new(IdKind::CreditNote, uuid)
+}
+
+pub fn pay_id(uuid: Uuid) -> PublicId {
+    PublicId::new(IdKind::Payment, uuid)
+}
+
+pub fn exp_id(uuid: Uuid) -> PublicId {
+    PublicId::new(IdKind::Expense, uuid)
 }
 
 #[cfg(test)]
@@ -242,6 +266,9 @@ mod tests {
             IdKind::Org,
             IdKind::User,
             IdKind::Invoice,
+            IdKind::CreditNote,
+            IdKind::Payment,
+            IdKind::Expense,
             IdKind::Deal,
             IdKind::Customer,
             IdKind::Hello,

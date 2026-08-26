@@ -187,4 +187,34 @@ describe('a11y', () => {
     );
     await expectNoSeriousAxeViolations(container);
   });
+
+  it('finance invoices table has no serious/critical violations', async () => {
+    const rows = [
+      { id: 'inv_1', number: 'INV-2026-000001', status: 'issued', total: 120 },
+      { id: 'inv_2', number: 'Draft', status: 'draft', total: 50 },
+    ];
+    const { container } = render(
+      <main>
+        <h1>Invoices</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'number', header: 'Number', cell: (r) => r.number },
+            { key: 'status', header: 'Status', cell: (r) => <StatusCell status={r.status} tone="info" /> },
+            {
+              key: 'total',
+              header: 'Total',
+              align: 'right',
+              cell: (r) => <MoneyCell amount={r.total} currency="USD" />,
+            },
+          ]}
+          rows={rows}
+        />
+        <Widget title="Revenue" footer="As of now">
+          <MoneyCell amount={120} currency="USD" />
+        </Widget>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
 });

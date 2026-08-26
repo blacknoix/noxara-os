@@ -385,12 +385,148 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         sensitive: true,
     },
     PermissionDef {
+        id: "finance.invoice.read",
+        context: "finance",
+        resource: "invoice",
+        action: "read",
+        description: "Read invoices and invoice lines",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.invoice.create",
+        context: "finance",
+        resource: "invoice",
+        action: "create",
+        description: "Create draft invoices",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.invoice.update",
+        context: "finance",
+        resource: "invoice",
+        action: "update",
+        description: "Update draft invoices (If-Match)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.invoice.issue",
+        context: "finance",
+        resource: "invoice",
+        action: "issue",
+        description: "Issue (finalize) invoices — immutable thereafter",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.invoice.send",
+        context: "finance",
+        resource: "invoice",
+        action: "send",
+        description: "Mark invoices as sent / log payment link",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.invoice.void",
+        context: "finance",
+        resource: "invoice",
+        action: "void",
+        description: "Void an unpaid issued invoice",
+        sensitive: true,
+    },
+    PermissionDef {
         id: "finance.invoice.approve",
         context: "finance",
         resource: "invoice",
         action: "approve",
-        description: "Approve invoices (catalogue reserved for Finance)",
+        description: "Approve invoices requiring approval",
         sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.payment.read",
+        context: "finance",
+        resource: "payment",
+        action: "read",
+        description: "Read payments and allocations",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.payment.create",
+        context: "finance",
+        resource: "payment",
+        action: "create",
+        description: "Record payments (manual or provider webhook)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.payment.allocate",
+        context: "finance",
+        resource: "payment",
+        action: "allocate",
+        description: "Allocate payments to invoices",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.credit_note.read",
+        context: "finance",
+        resource: "credit_note",
+        action: "read",
+        description: "Read credit notes",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.credit_note.create",
+        context: "finance",
+        resource: "credit_note",
+        action: "create",
+        description: "Create and issue credit notes",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.expense.read",
+        context: "finance",
+        resource: "expense",
+        action: "read",
+        description: "Read expenses",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.expense.create",
+        context: "finance",
+        resource: "expense",
+        action: "create",
+        description: "Submit expenses",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.expense.approve",
+        context: "finance",
+        resource: "expense",
+        action: "approve",
+        description: "Approve or reject expenses above approval_limit",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.report.read",
+        context: "finance",
+        resource: "report",
+        action: "read",
+        description: "Read finance reports and dashboard aggregates",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.customer.read",
+        context: "finance",
+        resource: "customer",
+        action: "read",
+        description: "Read finance customer projections and outstanding balances",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.ledger.read",
+        context: "finance",
+        resource: "ledger",
+        action: "read",
+        description: "Read journal entries and ledger accounts",
+        sensitive: false,
     },
 ];
 
@@ -401,6 +537,12 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "workspace.member.revoke",
     "workspace.org.update_settings",
     "finance.invoice.approve",
+    "finance.invoice.issue",
+    "finance.invoice.void",
+    "finance.payment.create",
+    "finance.payment.allocate",
+    "finance.credit_note.create",
+    "finance.expense.approve",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -552,6 +694,57 @@ pub mod perms {
     pub fn finance_invoice_approve() -> PermissionId {
         PermissionId::from("finance.invoice.approve")
     }
+    pub fn finance_invoice_read() -> PermissionId {
+        PermissionId::from("finance.invoice.read")
+    }
+    pub fn finance_invoice_create() -> PermissionId {
+        PermissionId::from("finance.invoice.create")
+    }
+    pub fn finance_invoice_update() -> PermissionId {
+        PermissionId::from("finance.invoice.update")
+    }
+    pub fn finance_invoice_issue() -> PermissionId {
+        PermissionId::from("finance.invoice.issue")
+    }
+    pub fn finance_invoice_send() -> PermissionId {
+        PermissionId::from("finance.invoice.send")
+    }
+    pub fn finance_invoice_void() -> PermissionId {
+        PermissionId::from("finance.invoice.void")
+    }
+    pub fn finance_payment_read() -> PermissionId {
+        PermissionId::from("finance.payment.read")
+    }
+    pub fn finance_payment_create() -> PermissionId {
+        PermissionId::from("finance.payment.create")
+    }
+    pub fn finance_payment_allocate() -> PermissionId {
+        PermissionId::from("finance.payment.allocate")
+    }
+    pub fn finance_credit_note_read() -> PermissionId {
+        PermissionId::from("finance.credit_note.read")
+    }
+    pub fn finance_credit_note_create() -> PermissionId {
+        PermissionId::from("finance.credit_note.create")
+    }
+    pub fn finance_expense_read() -> PermissionId {
+        PermissionId::from("finance.expense.read")
+    }
+    pub fn finance_expense_create() -> PermissionId {
+        PermissionId::from("finance.expense.create")
+    }
+    pub fn finance_expense_approve() -> PermissionId {
+        PermissionId::from("finance.expense.approve")
+    }
+    pub fn finance_report_read() -> PermissionId {
+        PermissionId::from("finance.report.read")
+    }
+    pub fn finance_customer_read() -> PermissionId {
+        PermissionId::from("finance.customer.read")
+    }
+    pub fn finance_ledger_read() -> PermissionId {
+        PermissionId::from("finance.ledger.read")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -571,7 +764,14 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "sales.quote.read"
         | "sales.product.read"
         | "sales.activity.read"
-        | "sales.report.read" => Scope::Organization,
+        | "sales.report.read"
+        | "finance.invoice.read"
+        | "finance.payment.read"
+        | "finance.credit_note.read"
+        | "finance.expense.read"
+        | "finance.report.read"
+        | "finance.customer.read"
+        | "finance.ledger.read" => Scope::Organization,
         _ => Scope::Organization,
     }
 }

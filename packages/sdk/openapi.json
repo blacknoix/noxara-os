@@ -1622,7 +1622,7 @@
           "sales-quotes"
         ],
         "summary": "GET /api/v1/sales/quotes/{id}/invoice-action",
-        "description": "Always disabled in this phase \u2014 invoicing/finance integration ships later.",
+        "description": "Available when the quote is accepted \u2014 Finance creates the invoice from a\nquote snapshot (no CRM table reads on the finance side).",
         "operationId": "invoice_action",
         "responses": {
           "200": {
@@ -1704,6 +1704,715 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReportSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/credit-notes": {
+      "post": {
+        "tags": [
+          "finance-credit-notes"
+        ],
+        "summary": "POST /api/v1/finance/credit-notes \u2014 create and issue immediately.",
+        "operationId": "create_credit_note",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditNoteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/customers": {
+      "get": {
+        "tags": [
+          "finance-customers"
+        ],
+        "summary": "GET /api/v1/finance/customers",
+        "operationId": "list_customers",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search name/email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceCustomerListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/customers/{id}": {
+      "get": {
+        "tags": [
+          "finance-customers"
+        ],
+        "summary": "GET /api/v1/finance/customers/{id}",
+        "operationId": "get_customer",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceCustomerDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/finance/events/sales/apply": {
+      "post": {
+        "tags": [
+          "finance-events"
+        ],
+        "summary": "POST /api/v1/finance/events/sales/apply",
+        "operationId": "apply_sales_event_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplySalesEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplySalesEventResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/expenses": {
+      "get": {
+        "tags": [
+          "finance-expenses"
+        ],
+        "summary": "GET /api/v1/finance/expenses",
+        "operationId": "list_expenses",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-expenses"
+        ],
+        "summary": "POST /api/v1/finance/expenses",
+        "operationId": "submit_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/expenses/{id}/decide": {
+      "post": {
+        "tags": [
+          "finance-expenses"
+        ],
+        "summary": "POST /api/v1/finance/expenses/{id}/decide",
+        "operationId": "decide_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/invoices": {
+      "get": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "GET /api/v1/finance/invoices",
+        "operationId": "list_invoices",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "POST /api/v1/finance/invoices",
+        "operationId": "create_invoice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/invoices/from-quote": {
+      "post": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "POST /api/v1/finance/invoices/from-quote \u2014 snapshot only, no CRM table reads.",
+        "operationId": "create_from_quote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceFromQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/invoices/{id}": {
+      "get": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "GET /api/v1/finance/invoices/{id}",
+        "operationId": "get_invoice",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "PATCH /api/v1/finance/invoices/{id} \u2014 draft only; requires If-Match version.",
+        "operationId": "update_invoice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/invoices/{id}/issue": {
+      "post": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "POST /api/v1/finance/invoices/{id}/issue",
+        "operationId": "issue_invoice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/invoices/{id}/send": {
+      "post": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "POST /api/v1/finance/invoices/{id}/send",
+        "operationId": "send_invoice",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/invoices/{id}/void": {
+      "post": {
+        "tags": [
+          "finance-invoices"
+        ],
+        "summary": "POST /api/v1/finance/invoices/{id}/void",
+        "operationId": "void_invoice",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/payments": {
+      "get": {
+        "tags": [
+          "finance-payments"
+        ],
+        "summary": "GET /api/v1/finance/payments",
+        "operationId": "list_payments",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-payments"
+        ],
+        "summary": "POST /api/v1/finance/payments",
+        "operationId": "record_payment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/payments/{id}/allocate": {
+      "post": {
+        "tags": [
+          "finance-payments"
+        ],
+        "summary": "POST /api/v1/finance/payments/{id}/allocate",
+        "operationId": "allocate_payment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AllocatePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/recurring": {
+      "post": {
+        "tags": [
+          "finance-recurring"
+        ],
+        "summary": "POST /api/v1/finance/recurring",
+        "operationId": "create_recurring",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecurringRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringInvoiceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/recurring/run-due": {
+      "post": {
+        "tags": [
+          "finance-recurring"
+        ],
+        "summary": "POST /api/v1/finance/recurring/run-due \u2014 create draft invoices from due templates.",
+        "operationId": "run_due",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reports/summary": {
+      "get": {
+        "tags": [
+          "finance-reports"
+        ],
+        "summary": "GET /api/v1/finance/reports/summary",
+        "operationId": "report_summary",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/webhooks/stripe": {
+      "post": {
+        "tags": [
+          "finance-webhooks"
+        ],
+        "summary": "POST /api/v1/finance/webhooks/stripe",
+        "operationId": "stripe_webhook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StripeWebhookFixture"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAck"
                 }
               }
             }
@@ -4888,6 +5597,1178 @@
             "format": "int64"
           }
         }
+      },
+      "AgeingBucket": {
+        "type": "object",
+        "required": [
+          "label",
+          "amount_minor"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "AllocatePaymentRequest": {
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "amount_minor"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "invoice_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApplySalesEventRequest": {
+        "type": "object",
+        "required": [
+          "envelope"
+        ],
+        "properties": {
+          "envelope": {
+            "type": "object",
+            "description": "Full event envelope JSON (same shape as outbox payload)."
+          }
+        }
+      },
+      "ApplySalesEventResponse": {
+        "type": "object",
+        "required": [
+          "applied"
+        ],
+        "properties": {
+          "applied": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CashFlowPoint": {
+        "type": "object",
+        "required": [
+          "period",
+          "inflow_minor",
+          "outflow_minor"
+        ],
+        "properties": {
+          "inflow_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "outflow_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "period": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryAmount": {
+        "type": "object",
+        "required": [
+          "category",
+          "amount_minor"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateCreditNoteRequest": {
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "lines"
+        ],
+        "properties": {
+          "invoice_id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineInput"
+            }
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateInvoiceFromQuoteRequest": {
+        "type": "object",
+        "required": [
+          "quote_id",
+          "customer_id",
+          "customer_name",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineSnapshot"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quote_id": {
+            "type": "string"
+          },
+          "terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreateInvoiceRequest": {
+        "type": "object",
+        "required": [
+          "customer_id",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "base_currency": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string",
+            "description": "Finance customer public id (`cus_\u2026` projection) or sales customer id."
+          },
+          "due_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineInput"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateRecurringRequest": {
+        "type": "object",
+        "required": [
+          "customer_id",
+          "cadence",
+          "next_run_at",
+          "template"
+        ],
+        "properties": {
+          "cadence": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "next_run_at": {
+            "type": "string"
+          },
+          "template": {
+            "$ref": "#/components/schemas/CreateInvoiceRequest"
+          }
+        }
+      },
+      "CreditNoteDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_id",
+          "customer_id",
+          "credit_number",
+          "currency",
+          "subtotal_minor",
+          "tax_minor",
+          "total_minor",
+          "issued_at"
+        ],
+        "properties": {
+          "credit_number": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": "string"
+          },
+          "issued_at": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subtotal_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CreditNoteListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditNoteDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DecideExpenseRequest": {
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ExpenseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "currency",
+          "amount_minor",
+          "description",
+          "incurred_at",
+          "created_at"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "incurred_at": {
+            "type": "string"
+          },
+          "receipt_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "ExpenseListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FinanceCustomerDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "sales_customer_id",
+          "name",
+          "currency",
+          "outstanding_balance_minor"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "outstanding_balance_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sales_customer_id": {
+            "type": "string"
+          }
+        }
+      },
+      "FinanceCustomerListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FinanceCustomerDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "InvoiceDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "status",
+          "currency",
+          "base_currency",
+          "subtotal_minor",
+          "discount_minor",
+          "tax_minor",
+          "total_minor",
+          "base_total_minor",
+          "amount_paid_minor",
+          "amount_credited_minor",
+          "balance_minor",
+          "version",
+          "lines",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "amount_credited_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount_paid_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "balance_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "base_currency": {
+            "type": "string"
+          },
+          "base_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "due_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fx_rate_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fx_rate_den": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "fx_rate_num": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "invoice_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issue_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payment_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_quote_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InvoiceLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "quantity",
+          "unit_price_minor",
+          "discount_minor",
+          "tax_rate_bps",
+          "tax_minor",
+          "line_total_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "line_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "InvoiceLineInput": {
+        "type": "object",
+        "required": [
+          "description",
+          "quantity",
+          "unit_price_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "InvoiceListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "IssueInvoiceRequest": {
+        "type": "object",
+        "properties": {
+          "due_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fx_rate_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fx_rate_den": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fx_rate_num": {
+            "type": "integer",
+            "format": "int64",
+            "description": "FX rate as rational num/den captured at issue (document currency \u2192 base)."
+          },
+          "issue_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ListQuery": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "q": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PaymentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "currency",
+          "amount_minor",
+          "amount_allocated_minor",
+          "amount_unapplied_minor",
+          "method",
+          "received_at"
+        ],
+        "properties": {
+          "amount_allocated_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount_unapplied_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "received_at": {
+            "type": "string"
+          }
+        }
+      },
+      "PaymentListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "QuoteLineSnapshot": {
+        "type": "object",
+        "required": [
+          "description",
+          "quantity",
+          "unit_price_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RecordPaymentRequest": {
+        "type": "object",
+        "required": [
+          "customer_id",
+          "currency",
+          "amount_minor"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "received_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RecurringInvoiceDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "cadence",
+          "next_run_at",
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "cadence": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "next_run_at": {
+            "type": "string"
+          }
+        }
+      },
+      "RecurringListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecurringInvoiceDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ReportSummaryDto": {
+        "type": "object",
+        "required": [
+          "as_of",
+          "currency",
+          "revenue_minor",
+          "expenses_minor",
+          "cash_minor",
+          "receivables_minor",
+          "ageing",
+          "expenses_by_category",
+          "cash_flow"
+        ],
+        "properties": {
+          "ageing": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgeingBucket"
+            }
+          },
+          "as_of": {
+            "type": "string"
+          },
+          "cash_flow": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashFlowPoint"
+            }
+          },
+          "cash_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "expenses_by_category": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryAmount"
+            }
+          },
+          "expenses_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receivables_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revenue_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RunDueResponse": {
+        "type": "object",
+        "required": [
+          "created_invoice_ids",
+          "processed"
+        ],
+        "properties": {
+          "created_invoice_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "processed": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "StripePaymentObject": {
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "currency",
+          "customer_id",
+          "status"
+        ],
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "StripeWebhookData": {
+        "type": "object",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/StripePaymentObject"
+          }
+        }
+      },
+      "StripeWebhookFixture": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "created",
+          "data"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StripeWebhookData"
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmitExpenseRequest": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount_minor",
+          "description"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "incurred_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receipt_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateInvoiceRequest": {
+        "type": "object",
+        "properties": {
+          "due_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineInput"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "WebhookAck": {
+        "type": "object",
+        "required": [
+          "received",
+          "duplicate"
+        ],
+        "properties": {
+          "duplicate": {
+            "type": "boolean"
+          },
+          "payment_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "received": {
+            "type": "boolean"
+          }
+        }
       }
     }
   },
@@ -4947,6 +6828,42 @@
     {
       "name": "sales-reports",
       "description": "Pipeline / win-rate / forecast reports"
+    },
+    {
+      "name": "finance-customers",
+      "description": "Projected finance customers"
+    },
+    {
+      "name": "finance-invoices",
+      "description": "Invoices: draft, issue, send, void"
+    },
+    {
+      "name": "finance-payments",
+      "description": "Payments and allocations"
+    },
+    {
+      "name": "finance-credit-notes",
+      "description": "Credit notes"
+    },
+    {
+      "name": "finance-expenses",
+      "description": "Expenses and approvals"
+    },
+    {
+      "name": "finance-reports",
+      "description": "Finance summary reports"
+    },
+    {
+      "name": "finance-webhooks",
+      "description": "Provider webhooks"
+    },
+    {
+      "name": "finance-recurring",
+      "description": "Recurring invoice templates"
+    },
+    {
+      "name": "finance-events",
+      "description": "In-process sales event apply"
     }
   ]
 }

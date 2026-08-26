@@ -75,7 +75,9 @@ export default function QuoteDetailPage() {
 
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [busy, setBusy] = useState(false);
+  const [invoiceActionAvailable, setInvoiceActionAvailable] = useState(false);
   const [invoiceActionReason, setInvoiceActionReason] = useState<string | null>(null);
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
 
   const load = useCallback(async () => {
     if (!getAccessToken()) {
@@ -118,9 +120,55 @@ export default function QuoteDetailPage() {
       const res = await authFetch(`/api/v1/sales/quotes/${quoteId}/invoice-action`);
       if (!res.ok) return;
       const body = (await res.json()) as { available: boolean; reason: string };
+      setInvoiceActionAvailable(body.available);
       setInvoiceActionReason(body.available ? null : body.reason);
     })();
   }, [state, quoteId]);
+
+  const createInvoiceFromQuote = useCallback(async () => {
+    if (state.status !== 'ready') return;
+    const quote = state.quote;
+    setCreatingInvoice(true);
+    try {
+      const res = await authFetch('/api/v1/finance/invoices/from-quote', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'idempotency-key': `qte-inv-${quote.id}-${Date.now()}`,
+        },
+        body: JSON.stringify({
+          quote_id: quote.id,
+          customer_id: quote.customer_id,
+          customer_name: quote.customer_id,
+          currency: quote.currency,
+          terms: null,
+          notes: quote.notes,
+          total_minor: quote.total_minor,
+          lines: quote.lines.map((l) => ({
+            description: l.description,
+            quantity: l.quantity,
+            unit_price_minor: l.unit_price_minor,
+            discount_minor: l.discount_minor,
+            tax_rate_bps: l.tax_rate_bps,
+          })),
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(typeof body.detail === 'string' ? body.detail : 'Could not create invoice');
+      }
+      const invoice = (await res.json()) as { id: string };
+      toast({ title: 'Invoice draft created' });
+      window.location.href = `/finance/invoices/${invoice.id}`;
+    } catch (err) {
+      toast({
+        title: 'Could not create invoice',
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setCreatingInvoice(false);
+    }
+  }, [state, toast]);
 
   const send = useCallback(async () => {
     setBusy(true);
@@ -251,19 +299,29 @@ export default function QuoteDetailPage() {
             </Button>
           ) : null}
           {quote.status === 'accepted' ? (
-            <span title="Coming in Phase 1.5">
-              <Button type="button" variant="secondary" disabled>
+            invoiceActionAvailable && can('finance.invoice.create') ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={creatingInvoice}
+                onClick={() => void createInvoiceFromQuote()}
+              >
                 Create invoice from quote
               </Button>
-            </span>
+            ) : (
+              <span title={invoiceActionReason ?? 'Invoicing unavailable'}>
+                <Button type="button" variant="secondary" disabled>
+                  Create invoice from quote
+                </Button>
+              </span>
+            )
           ) : null}
         </div>
       </header>
 
       {quote.status === 'accepted' && invoiceActionReason ? (
         <p style={{ fontSize: '0.8125rem', color: 'var(--cos-color-fg-muted)' }}>
-          Invoicing unavailable ({invoiceActionReason}) — creating an invoice from this quote ships in
-          Phase 1.5.
+          Invoicing unavailable ({invoiceActionReason}).
         </p>
       ) : null}
 

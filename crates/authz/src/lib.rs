@@ -144,7 +144,24 @@ impl Role {
                 perms::workspace_role_read(),
                 perms::workspace_team_read(),
                 perms::workspace_department_read(),
+                perms::finance_invoice_read(),
+                perms::finance_invoice_create(),
+                perms::finance_invoice_update(),
+                perms::finance_invoice_issue(),
+                perms::finance_invoice_send(),
+                perms::finance_invoice_void(),
                 perms::finance_invoice_approve(),
+                perms::finance_payment_read(),
+                perms::finance_payment_create(),
+                perms::finance_payment_allocate(),
+                perms::finance_credit_note_read(),
+                perms::finance_credit_note_create(),
+                perms::finance_expense_read(),
+                perms::finance_expense_create(),
+                perms::finance_expense_approve(),
+                perms::finance_report_read(),
+                perms::finance_customer_read(),
+                perms::finance_ledger_read(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -180,6 +197,9 @@ impl Role {
                 perms::sales_activity_create(),
                 perms::sales_import_create(),
                 perms::sales_report_read(),
+                perms::finance_customer_read(),
+                perms::finance_invoice_read(),
+                perms::finance_invoice_create(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -201,6 +221,11 @@ impl Role {
                 perms::sales_product_read(),
                 perms::sales_activity_read(),
                 perms::sales_report_read(),
+                perms::finance_invoice_read(),
+                perms::finance_expense_read(),
+                perms::finance_expense_create(),
+                perms::finance_report_read(),
+                perms::finance_customer_read(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -218,6 +243,8 @@ impl Role {
                 perms::sales_product_read(),
                 perms::sales_activity_read(),
                 perms::sales_report_read(),
+                perms::finance_expense_read(),
+                perms::finance_expense_create(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -235,6 +262,9 @@ impl Role {
                 perms::sales_product_read(),
                 perms::sales_activity_read(),
                 perms::sales_report_read(),
+                perms::finance_invoice_read(),
+                perms::finance_report_read(),
+                perms::finance_customer_read(),
             ]),
         }
     }
@@ -671,12 +701,24 @@ mod tests {
             ("finance.invoice.approve", Role::ReadOnly),
             ("finance.invoice.approve", Role::Sales),
             ("finance.invoice.approve", Role::Manager),
-            ("finance.invoice.approve", Role::Admin), // Admin has it actually - skip
+            ("finance.invoice.issue", Role::Member),
+            ("finance.invoice.issue", Role::ReadOnly),
+            ("finance.invoice.issue", Role::Sales),
+            ("finance.invoice.issue", Role::Manager),
+            ("finance.invoice.void", Role::Member),
+            ("finance.invoice.void", Role::ReadOnly),
+            ("finance.invoice.void", Role::Sales),
+            ("finance.invoice.void", Role::Manager),
+            ("finance.payment.create", Role::Member),
+            ("finance.payment.create", Role::ReadOnly),
+            ("finance.payment.create", Role::Sales),
+            ("finance.payment.create", Role::Manager),
+            ("finance.expense.approve", Role::Member),
+            ("finance.expense.approve", Role::ReadOnly),
+            ("finance.expense.approve", Role::Sales),
+            ("finance.expense.approve", Role::Manager),
         ];
         for (perm, role) in deny_pairs {
-            if *role == Role::Admin && *perm == "finance.invoice.approve" {
-                continue;
-            }
             let p = Principal::with_roles(vec![*role]);
             assert!(
                 !is_allowed(&p, &PermissionId::from(*perm)),
@@ -691,15 +733,22 @@ mod tests {
                 "owner must allow {perm}"
             );
         }
-        // Finance can approve invoices
+        // Finance can issue/approve invoices and manage payments/expenses
         let finance = Principal::with_roles(vec![Role::Finance]);
         assert!(is_allowed(&finance, &perms::finance_invoice_approve()));
+        assert!(is_allowed(&finance, &perms::finance_invoice_issue()));
+        assert!(is_allowed(&finance, &perms::finance_payment_create()));
+        assert!(is_allowed(&finance, &perms::finance_expense_approve()));
+        // Member cannot issue invoices
+        let member = Principal::with_roles(vec![Role::Member]);
+        assert!(!is_allowed(&member, &perms::finance_invoice_issue()));
         // Admin can invite / assign / revoke / settings
         let admin = Principal::with_roles(vec![Role::Admin]);
         assert!(is_allowed(&admin, &perms::workspace_member_invite()));
         assert!(is_allowed(&admin, &perms::workspace_role_assign()));
         assert!(is_allowed(&admin, &perms::workspace_member_revoke()));
         assert!(is_allowed(&admin, &perms::workspace_org_update_settings()));
+        assert!(is_allowed(&admin, &perms::finance_invoice_issue()));
     }
 
     #[test]

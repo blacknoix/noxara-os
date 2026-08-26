@@ -332,6 +332,9 @@ async fn dashboard_happy_path_widgets_and_reason_codes() {
         "approvals",
         "pipeline",
         "revenue",
+        "expenses",
+        "cash",
+        "receivables",
         "team_activity",
     ] {
         assert!(ids.contains(&expected), "missing widget {expected}");
@@ -355,18 +358,23 @@ async fn dashboard_happy_path_widgets_and_reason_codes() {
     assert!(member_count >= 2, "seeded org has owner+member");
 
     let pipeline = by_id("pipeline");
-    // Phase 1.4: dashboard tries CRM over the network. Without CRM running in
-    // this suite we expect an honest unavailable + crm_unreachable (not the
-    // old module_not_enabled stub). Finance remains module_not_enabled.
+    // Phase 1.4+: dashboard tries CRM over the network. Without CRM running in
+    // this suite we expect an honest unavailable + crm_unreachable.
     assert_eq!(pipeline["status"], "unavailable");
     assert_eq!(pipeline["reason_code"], "crm_unreachable");
     assert_eq!(pipeline["stale"], false);
     assert_eq!(pipeline["kind"], "module_empty");
     assert_eq!(pipeline["payload"]["module"], "sales");
 
-    let revenue = by_id("revenue");
-    assert_eq!(revenue["status"], "unavailable");
-    assert_eq!(revenue["reason_code"], "module_not_enabled");
+    // Phase 1.5: finance widgets fetch companyos-finance. Without it running,
+    // expect finance_unreachable (not the old module_not_enabled stub).
+    for id in ["revenue", "expenses", "cash", "receivables"] {
+        let w = by_id(id);
+        assert_eq!(w["status"], "unavailable", "{id}");
+        assert_eq!(w["reason_code"], "finance_unreachable", "{id}");
+        assert_eq!(w["kind"], "stat", "{id}");
+        assert_eq!(w["payload"]["module"], "finance", "{id}");
+    }
 
     let my_work = by_id("my_work");
     assert_eq!(my_work["status"], "empty");

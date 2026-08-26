@@ -93,6 +93,10 @@ export default function CustomerRecordPage() {
   const [dealsError, setDealsError] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [quotesError, setQuotesError] = useState<string | null>(null);
+  const [outstandingBalance, setOutstandingBalance] = useState<{
+    amount_minor: number;
+    currency: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     if (!getAccessToken()) {
@@ -168,6 +172,22 @@ export default function CustomerRecordPage() {
     })();
   }, [state.status, can, customerId]);
 
+  useEffect(() => {
+    if (state.status !== 'ready' || !can('finance.customer.read')) return;
+    void (async () => {
+      const res = await authFetch(`/api/v1/finance/customers/${customerId}`);
+      if (!res.ok) return;
+      const body = (await res.json()) as {
+        outstanding_balance_minor: number;
+        currency: string;
+      };
+      setOutstandingBalance({
+        amount_minor: body.outstanding_balance_minor,
+        currency: body.currency,
+      });
+    })();
+  }, [state.status, can, customerId]);
+
   const timelineItems: TimelineItem[] = useMemo(
     () =>
       activities.map((a) => ({
@@ -237,6 +257,17 @@ export default function CustomerRecordPage() {
               <dd style={ddStyle}>{customer.phone ?? '—'}</dd>
               <dt style={dtStyle}>Website</dt>
               <dd style={ddStyle}>{customer.website ?? '—'}</dd>
+              <dt style={dtStyle}>Outstanding balance</dt>
+              <dd style={ddStyle}>
+                {outstandingBalance ? (
+                  <MoneyCell
+                    amount={outstandingBalance.amount_minor / 100}
+                    currency={outstandingBalance.currency}
+                  />
+                ) : (
+                  '—'
+                )}
+              </dd>
               <dt style={dtStyle}>Billing address</dt>
               <dd style={ddStyle}>{customer.billing_address ?? '—'}</dd>
               <dt style={dtStyle}>Notes</dt>

@@ -50,7 +50,12 @@ const GROUPS: NavGroup[] = [
   {
     id: 'finance',
     label: 'Finance',
-    items: [{ href: '/finance', label: 'Finance', short: 'F', perm: null }],
+    items: [
+      { href: '/finance', label: 'Overview', short: 'F', perm: 'finance.invoice.read' },
+      { href: '/finance/invoices', label: 'Invoices', short: 'I', perm: 'finance.invoice.read' },
+      { href: '/finance/expenses', label: 'Expenses', short: 'E', perm: 'finance.expense.read' },
+      { href: '/finance/reports', label: 'Reports', short: 'R', perm: 'finance.report.read' },
+    ],
   },
   {
     id: 'ops',
