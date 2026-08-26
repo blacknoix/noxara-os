@@ -8,7 +8,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['**/__tests__/**/*.{test,spec}.{ts,tsx}', '**/a11y/**/*.{test,spec}.{ts,tsx}'],
+    include: [
+      '**/__tests__/**/*.{test,spec}.{ts,tsx}',
+      '**/a11y/**/*.{test,spec}.{ts,tsx}',
+      'lib/**/*.{test,spec}.{ts,tsx}',
+    ],
     css: false,
   },
   resolve: {

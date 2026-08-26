@@ -28,3 +28,12 @@ Finance **projects** `sales.customer.created` (and ignores deal/quote for projec
 - `companyos.{org_}.finance.expense.submitted.v1` / `.approved.v1`
 
 Emitted in the same transaction as the domain write via the shared outbox.
+
+## Operations (Phase 1.6)
+
+- `companyos.{org_}.operations.project.created.v1`
+- `companyos.{org_}.operations.task.created.v1`
+- `companyos.{org_}.operations.task.assigned.v1`
+- `companyos.{org_}.operations.task.completed.v1`
+
+Operations **projects** `sales.deal.won` via `POST /api/v1/operations/events/sales/apply` (opaque deal/customer ids only — never reads `sales_*` tables). Mentions write `operations_notification_intent` rows for authz-allowed recipients only.

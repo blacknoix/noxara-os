@@ -2419,6 +2419,615 @@
           }
         }
       }
+    },
+    "/api/v1/operations/board": {
+      "get": {
+        "tags": [
+          "operations-board"
+        ],
+        "summary": "GET /api/v1/operations/board",
+        "operationId": "get_board",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/calendar": {
+      "get": {
+        "tags": [
+          "operations-calendar"
+        ],
+        "summary": "GET /api/v1/operations/calendar",
+        "operationId": "get_calendar",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/events/sales/apply": {
+      "post": {
+        "tags": [
+          "operations-events"
+        ],
+        "summary": "POST /api/v1/operations/events/sales/apply",
+        "operationId": "apply_sales_event",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplySalesEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplySalesEventResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/my-work": {
+      "get": {
+        "tags": [
+          "operations-my-work"
+        ],
+        "summary": "GET /api/v1/operations/my-work",
+        "operationId": "my_work",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyWorkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/projects": {
+      "get": {
+        "tags": [
+          "operations-projects"
+        ],
+        "summary": "GET /api/v1/operations/projects",
+        "operationId": "list_projects",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-projects"
+        ],
+        "summary": "POST /api/v1/operations/projects",
+        "operationId": "create_project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/projects/{id}": {
+      "get": {
+        "tags": [
+          "operations-projects"
+        ],
+        "summary": "GET /api/v1/operations/projects/{id}",
+        "operationId": "get_project",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "operations-projects"
+        ],
+        "summary": "DELETE /api/v1/operations/projects/{id} \u2014 soft delete.",
+        "operationId": "delete_project",
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "operations-projects"
+        ],
+        "summary": "PATCH /api/v1/operations/projects/{id}",
+        "operationId": "update_project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/operations/summary": {
+      "get": {
+        "tags": [
+          "operations-summary"
+        ],
+        "summary": "GET /api/v1/operations/summary",
+        "operationId": "get_summary",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/tasks": {
+      "get": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "GET /api/v1/operations/tasks",
+        "operationId": "list_tasks",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assignee_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "POST /api/v1/operations/tasks",
+        "operationId": "create_task",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/tasks/{id}": {
+      "get": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "GET /api/v1/operations/tasks/{id}",
+        "operationId": "get_task",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "DELETE /api/v1/operations/tasks/{id} \u2014 soft delete.",
+        "operationId": "delete_task",
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "PATCH /api/v1/operations/tasks/{id}",
+        "operationId": "update_task",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/operations/tasks/{id}/attachments": {
+      "post": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "POST /api/v1/operations/tasks/{id}/attachments \u2014 URL metadata only.",
+        "operationId": "create_attachment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttachmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskAttachmentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/tasks/{id}/comments": {
+      "get": {
+        "tags": [
+          "operations-comments"
+        ],
+        "summary": "GET /api/v1/operations/tasks/{id}/comments",
+        "operationId": "list_comments",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskCommentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operations-comments"
+        ],
+        "summary": "POST /api/v1/operations/tasks/{id}/comments",
+        "operationId": "create_comment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCommentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/tasks/{id}/move": {
+      "post": {
+        "tags": [
+          "operations-tasks"
+        ],
+        "summary": "POST /api/v1/operations/tasks/{id}/move \u2014 board drag (status + optional position).",
+        "operationId": "move_task",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3754,18 +4363,20 @@
       "BoardResponse": {
         "type": "object",
         "required": [
-          "pipeline",
-          "stages"
+          "columns"
         ],
         "properties": {
-          "pipeline": {
-            "$ref": "#/components/schemas/PipelineDto"
-          },
-          "stages": {
+          "columns": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/BoardStage"
+              "$ref": "#/components/schemas/BoardColumnDto"
             }
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -5636,10 +6247,7 @@
           "envelope"
         ],
         "properties": {
-          "envelope": {
-            "type": "object",
-            "description": "Full event envelope JSON (same shape as outbox payload)."
-          }
+          "envelope": {}
         }
       },
       "ApplySalesEventResponse": {
@@ -5650,6 +6258,12 @@
         "properties": {
           "applied": {
             "type": "boolean"
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -6769,6 +7383,759 @@
             "type": "boolean"
           }
         }
+      },
+      "BoardColumnDto": {
+        "type": "object",
+        "required": [
+          "status",
+          "tasks"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskDto"
+            }
+          }
+        }
+      },
+      "CalendarEventDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "due_at",
+          "status",
+          "project_id"
+        ],
+        "properties": {
+          "assignee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "CalendarResponse": {
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarEventDto"
+            }
+          }
+        }
+      },
+      "ChecklistItemDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "is_done",
+          "position"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "is_done": {
+            "type": "boolean"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateAttachmentRequest": {
+        "type": "object",
+        "required": [
+          "file_name",
+          "url"
+        ],
+        "properties": {
+          "byte_size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "content_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque Sales customer public id (`cus_\u2026`) \u2014 stored as UUID, never joined."
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque Sales deal public id (`dl_\u2026`)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateTaskRequest": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "title"
+        ],
+        "properties": {
+          "assignee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "blocked_by": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "checklist": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "labels": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "priority": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "MoveTaskRequest": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "position": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "MyWorkResponse": {
+        "type": "object",
+        "required": [
+          "assigned",
+          "mentions",
+          "total_assigned"
+        ],
+        "properties": {
+          "assigned": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskDto"
+            }
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskCommentDto"
+            }
+          },
+          "total_assigned": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "NotificationIntentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "recipient_user_id",
+          "resource_type",
+          "resource_id",
+          "kind",
+          "created_at"
+        ],
+        "properties": {
+          "body_preview": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "recipient_user_id": {
+            "type": "string"
+          },
+          "resource_id": {
+            "type": "string"
+          },
+          "resource_type": {
+            "type": "string"
+          }
+        }
+      },
+      "ProjectDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "owner_user_id",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProjectListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SummaryResponse": {
+        "type": "object",
+        "required": [
+          "open_tasks",
+          "my_open_tasks",
+          "projects_active",
+          "overdue"
+        ],
+        "properties": {
+          "my_open_tasks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "open_tasks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "overdue": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "projects_active": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "TaskAttachmentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "file_name",
+          "url",
+          "created_at"
+        ],
+        "properties": {
+          "byte_size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "content_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "TaskCommentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "author_user_id",
+          "body",
+          "created_at",
+          "mentioned_user_ids"
+        ],
+        "properties": {
+          "author_user_id": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mentioned_user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TaskDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "title",
+          "status",
+          "priority",
+          "owner_user_id",
+          "labels",
+          "position",
+          "blocked_by",
+          "checklist",
+          "attachments",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "assignee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskAttachmentDto"
+            }
+          },
+          "blocked_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItemDto"
+            }
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner_user_id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "format": "double"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TaskListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UpdateProjectRequest": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "starts_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateTaskRequest": {
+        "type": "object",
+        "properties": {
+          "assignee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "blocked_by": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "labels": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "position": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "priority": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       }
     }
   },
@@ -6863,6 +8230,38 @@
     },
     {
       "name": "finance-events",
+      "description": "In-process sales event apply"
+    },
+    {
+      "name": "operations-projects",
+      "description": "Projects (Operations)"
+    },
+    {
+      "name": "operations-tasks",
+      "description": "Tasks, board moves, attachments"
+    },
+    {
+      "name": "operations-comments",
+      "description": "Task comments and @mentions"
+    },
+    {
+      "name": "operations-board",
+      "description": "Kanban board"
+    },
+    {
+      "name": "operations-my-work",
+      "description": "Cross-project My Work"
+    },
+    {
+      "name": "operations-calendar",
+      "description": "Due-date calendar"
+    },
+    {
+      "name": "operations-summary",
+      "description": "Dashboard aggregates"
+    },
+    {
+      "name": "operations-events",
       "description": "In-process sales event apply"
     }
   ]

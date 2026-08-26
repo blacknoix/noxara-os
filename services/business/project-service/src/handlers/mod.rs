@@ -58,6 +58,8 @@ pub(crate) fn parse_public_id(kind: IdKind, raw: &str, request_id: &str) -> Resu
     Ok(pid.uuid())
 }
 
+/// Parse an optional public id field (request body) of a given kind.
+#[allow(dead_code)]
 pub(crate) fn parse_optional_public_id(
     kind: IdKind,
     raw: Option<&str>,

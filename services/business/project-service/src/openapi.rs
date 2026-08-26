@@ -36,14 +36,14 @@ use crate::types::*;
         ProjectListResponse,
         CreateProjectRequest,
         UpdateProjectRequest,
-        ChecklistItemDto,
-        TaskAttachmentDto,
-        TaskCommentDto,
         TaskDto,
         TaskListResponse,
         CreateTaskRequest,
         UpdateTaskRequest,
         MoveTaskRequest,
+        ChecklistItemDto,
+        TaskAttachmentDto,
+        TaskCommentDto,
         CreateCommentRequest,
         CreateAttachmentRequest,
         BoardColumnDto,
@@ -57,19 +57,19 @@ use crate::types::*;
         NotificationIntentDto,
     )),
     tags(
-        (name = "operations-projects", description = "Projects"),
-        (name = "operations-tasks", description = "Tasks, move, attachments"),
-        (name = "operations-comments", description = "Task comments and mentions"),
+        (name = "operations-projects", description = "Projects (Operations)"),
+        (name = "operations-tasks", description = "Tasks, board moves, attachments"),
+        (name = "operations-comments", description = "Task comments and @mentions"),
         (name = "operations-board", description = "Kanban board"),
-        (name = "operations-my-work", description = "Assignee inbox"),
+        (name = "operations-my-work", description = "Cross-project My Work"),
         (name = "operations-calendar", description = "Due-date calendar"),
-        (name = "operations-summary", description = "Operations dashboard counts"),
-        (name = "operations-events", description = "Sales event projection"),
+        (name = "operations-summary", description = "Dashboard aggregates"),
+        (name = "operations-events", description = "In-process sales event apply"),
     ),
     info(
         title = "CompanyOS Operations API",
         version = "0.1.0",
-        description = "Phase 1.6 — Projects & Tasks (Operations bounded context)."
+        description = "Phase 1.6 — Projects & Tasks bounded context."
     )
 )]
 pub struct ApiDoc;

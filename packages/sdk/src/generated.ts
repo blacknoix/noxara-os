@@ -354,8 +354,8 @@ export type LeadDto = {
 };
 
 export type BoardResponse = {
-  pipeline: PipelineDto;
-  stages: BoardStage[];
+  columns: BoardColumnDto[];
+  project_id?: string;
 };
 
 export type BoardStage = {
@@ -654,4 +654,58 @@ export type WebhookAck = {
   duplicate: boolean;
   payment_id?: string;
   received: boolean;
+};
+
+export type ProjectDto = {
+  created_at: string;
+  customer_id?: string;
+  deal_id?: string;
+  description?: string;
+  due_at?: string;
+  id: string;
+  name: string;
+  owner_user_id: string;
+  starts_at?: string;
+  status: string;
+  updated_at: string;
+  version: number;
+};
+
+export type TaskDto = {
+  assignee_id?: string;
+  attachments: TaskAttachmentDto[];
+  blocked_by: string[];
+  checklist: ChecklistItemDto[];
+  completed_at?: string;
+  created_at: string;
+  description?: string;
+  due_at?: string;
+  id: string;
+  labels: string[];
+  owner_user_id: string;
+  position: number;
+  priority: string;
+  project_id: string;
+  status: string;
+  title: string;
+  updated_at: string;
+  version: number;
+};
+
+export type BoardResponse = {
+  columns: BoardColumnDto[];
+  project_id?: string;
+};
+
+export type MyWorkResponse = {
+  assigned: TaskDto[];
+  mentions: TaskCommentDto[];
+  total_assigned: number;
+};
+
+export type SummaryResponse = {
+  my_open_tasks: number;
+  open_tasks: number;
+  overdue: number;
+  projects_active: number;
 };

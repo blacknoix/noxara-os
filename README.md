@@ -13,7 +13,8 @@ Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@c
 - **Phase 1.2** (merged): Workspace — organizations, memberships, roles, permissions, teams, invitations, OrgProvisioning.
 - **Phase 1.3** (merged): Application shell, design system, dashboard BFF, command bar, members saved views, axe CI.
 - **Phase 1.4** (merged): CRM / Sales service (`companyos-crm`), gateway proxy for `/api/v1/sales/*`, dashboard pipeline widget, merged OpenAPI.
-- **Phase 1.5** (this line of work): Finance service (`companyos-finance`), invoices/payments/journal, quote→invoice, dashboard finance widgets.
+- **Phase 1.5** (merged): Finance service (`companyos-finance`), invoices/payments/journal, quote→invoice, dashboard finance widgets.
+- **Phase 1.6** (this line of work): Projects & Tasks (`companyos-project`), `/api/v1/operations/*`, board/my-work, DealWon → project.
 
 Not in scope yet: Temporal dunning/approvals (1.7), real AI copilot (1.9), full SSO IdP, Flutter/Tauri, live payment provider keys, PDF/email.
 
@@ -25,10 +26,11 @@ See [docs/00-INDEX.md](docs/00-INDEX.md).
 
 ```text
 apps/web/                 Next.js App Router (auth pages + shell)
-services/gateway/         Axum BFF — JWT authN, tenant headers, coarse authz, core + CRM + Finance proxy
+services/gateway/         Axum BFF — JWT authN, tenant headers, coarse authz, core + CRM + Finance + Operations proxy
 services/core/            Auth + org/user/audit home + hello slice + dashboard BFF
 services/business/crm-service/  CRM / Sales API (`/api/v1/sales/...`)
 services/business/finance-service/  Finance API (`/api/v1/finance/...`)
+services/business/project-service/  Operations API (`/api/v1/operations/...`)
 crates/                   ids, money, errors, telemetry, tenancy, events, outbox, authz, auth-token, testkit
 packages/design-system/   Tokens + Table/FilterBar/shell primitives (gallery: /dev/components)
 packages/sdk/             OpenAPI + TypeScript SDK

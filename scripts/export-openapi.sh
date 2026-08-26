@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Export OpenAPI from core + CRM + Finance (offline cargo examples) and merge into packages/sdk.
+# Export OpenAPI from core + CRM + Finance + Operations (offline cargo examples) and merge into packages/sdk.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/packages/sdk/openapi.json"
 CORE_TMP="/tmp/companyos-core-openapi.json"
 CRM_TMP="/tmp/companyos-crm-openapi.json"
 FIN_TMP="/tmp/companyos-finance-openapi.json"
+OPS_TMP="/tmp/companyos-project-openapi.json"
 
 cd "$ROOT"
 
@@ -18,6 +19,9 @@ cargo run -p companyos-crm --example export_openapi >"$CRM_TMP"
 echo "==> Exporting Finance OpenAPI (offline)..."
 cargo run -p companyos-finance --example export_openapi >"$FIN_TMP"
 
+echo "==> Exporting Operations OpenAPI (offline)..."
+cargo run -p companyos-project --example export_openapi >"$OPS_TMP"
+
 export ROOT_OVERRIDE="$ROOT"
 python3 <<'PY'
 import json
@@ -29,6 +33,7 @@ docs = [
     json.loads(Path("/tmp/companyos-core-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-crm-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-finance-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-project-openapi.json").read_text()),
 ]
 
 merged = dict(docs[0])

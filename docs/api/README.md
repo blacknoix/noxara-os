@@ -4,8 +4,8 @@
 
 - `GET /healthz`, `/livez`, `/readyz`
 - `GET|POST /api/v1/hello` (tenant-scoped; LOCAL-ONLY auth)
-- `GET /api/v1/dashboard` — dashboard BFF widget snapshot (CRM + Finance aggregates)
-- `GET /api/v1/openapi.json` — core OpenAPI (merged export includes CRM + Finance)
+- `GET /api/v1/dashboard` — dashboard BFF widget snapshot (CRM + Finance + Ops aggregates)
+- `GET /api/v1/openapi.json` — core OpenAPI (merged export includes CRM + Finance + Operations)
 - `GET /api/v1/workspace/...` — orgs, members, roles, teams, capabilities
 
 ## CRM (`companyos-crm`)
@@ -35,6 +35,21 @@ Finance bounded context, mounted at **`/api/v1/finance/...`** (proxied by the ga
 
 `Idempotency-Key` on POST issue/pay/credit. `If-Match` on draft invoice PATCH only.
 
-Gateway URL: same host as core (`PUBLIC_API_URL`), path prefixes `/api/v1/sales` and `/api/v1/finance`.
+## Operations (`companyos-project`)
+
+Projects & Tasks bounded context, mounted at **`/api/v1/operations/...`** (proxied by the gateway).
+
+- `GET|POST /api/v1/operations/projects` — project CRUD (soft delete); `PATCH|DELETE .../{id}`
+- `GET|POST /api/v1/operations/tasks` — task CRUD; `POST .../{id}/move` (board); comments / attachments
+- `GET /api/v1/operations/board` — five-column kanban (`backlog`…`done`)
+- `GET /api/v1/operations/my-work` — assigned tasks + mention intents
+- `GET /api/v1/operations/calendar` — due-date events
+- `GET /api/v1/operations/summary` — open / overdue / active project counts
+- `POST /api/v1/operations/events/sales/apply` — DealWon → project (idempotent)
+- `GET /api/v1/operations/openapi.json`
+
+`If-Match` required on task/project PATCH and board move. Mentions notify only users with `operations.task.read`.
+
+Gateway URL: same host as core (`PUBLIC_API_URL`), path prefixes `/api/v1/sales`, `/api/v1/finance`, and `/api/v1/operations`.
 
 Errors use RFC 9457 `application/problem+json` with stable `code` and `request_id`.

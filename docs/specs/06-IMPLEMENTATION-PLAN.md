@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–1.4 merged; Phase 1.5 is this slice.
+Status: **Active** outline. Phase 0–1.5 merged; Phase 1.6 is this slice.
 
 ## Completed
 
@@ -11,18 +11,20 @@ Status: **Active** outline. Phase 0–1.4 merged; Phase 1.5 is this slice.
 | 1.2 | Workspace (orgs, members, roles, permissions, teams, invitations) |
 | 1.3 | Application shell, design system, dashboard BFF, members saved views, axe CI |
 | 1.4 | CRM / Sales (customers, pipeline, deals, quotes, import) |
+| 1.5 | Finance v1 (invoices, payments, journal, expenses, quote→invoice) |
 
-## Phase 1.5 — Finance v1 (this slice)
+## Phase 1.6 — Projects & Tasks / Operations (this slice)
 
-- Standalone `companyos-finance` on port 8083 (`/api/v1/finance/...`)
-- Gateway proxies `/api/v1/finance/*` (JWT; finance enforces `finance.*`)
-- Double-entry journal, immutable issued docs, gapless invoice numbers
-- Customer projection from Sales events (no CRM table reads)
-- Quote → invoice via snapshot API; CRM invoice-action CTA enabled when accepted
-- Payments + Stripe-like webhook idempotency (fixtures; no live keys / card data)
-- Expenses with workspace `approval_limit` (no Temporal)
-- Dashboard finance widgets from real aggregates (`as_of`)
-- OpenAPI merge: core + CRM + Finance → `packages/sdk/openapi.json`
+- Standalone `companyos-project` on port 8084 (`/api/v1/operations/...`)
+- Gateway proxies `/api/v1/operations/*` (JWT; service enforces `operations.*`)
+- Projects + tasks with soft delete, `If-Match` optimistic concurrency, five-column board
+- Mentions → `operations_notification_intent` only for recipients with `operations.task.read`
+- My Work (`GET /api/v1/operations/my-work`) via `operations_task_my_work_idx` (org_id, assignee_id, …)
+- DealWon sales event projection → create project (idempotent by deal_id); no CRM table reads
+- Outbox: `operations.task.created|assigned|completed.v1`, `operations.project.created.v1`
+- Web: `/ops/projects`, `/ops/tasks` (board/list/calendar), `/my-work`; sidebar Ops + Work perms
+- OpenAPI merge: core + CRM + Finance + Operations → `packages/sdk/openapi.json`
+- Integration tests in `project-service/tests/operations_phase16.rs`
 
 ## Later (not this PR)
 
@@ -36,6 +38,6 @@ Status: **Active** outline. Phase 0–1.4 merged; Phase 1.5 is this slice.
 
 ## Cut order if needed
 
-Cut PDF, email, live provider, fancy cash-flow charts, full recurring Temporal
-before journal, immutability, gapless numbers, quote→invoice, webhook
-idempotency, RLS, and authz.
+Cut calendar polish, attachment uploads, and fancy board animations before RLS,
+authz scopes, DealWon idempotency, outbox events, My Work index, and mention
+filtering.

@@ -28,7 +28,7 @@ const DEV_USER_HEADER: &str = "x-companyos-dev-user-id";
 const GW_ORG_HEADER: &str = "x-companyos-org-id";
 const GW_USER_HEADER: &str = "x-companyos-user-id";
 
-/// Authenticated caller for a Operations request.
+/// Authenticated caller for an Operations request.
 #[derive(Debug, Clone)]
 pub struct AuthCtx {
     pub ctx: RequestContext,

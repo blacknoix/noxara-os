@@ -217,4 +217,49 @@ describe('a11y', () => {
     );
     await expectNoSeriousAxeViolations(container);
   });
+
+  it('projects/tasks ops landmark has no serious/critical violations', async () => {
+    const rows = [
+      { id: 'prj_1', name: 'Acme rollout', status: 'active' },
+      { id: 'prj_2', name: 'Internal tooling', status: 'on_hold' },
+    ];
+    const { container } = render(
+      <main>
+        <h1>Projects</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'name', header: 'Name', cell: (r) => r.name },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} />,
+            },
+          ]}
+          rows={rows}
+        />
+        <h2>Tasks board</h2>
+        <KanbanBoard
+          columns={[
+            {
+              id: 'backlog',
+              title: 'Backlog',
+              cards: [{ id: 'tsk_1', title: 'Draft kickoff checklist' }],
+            },
+            {
+              id: 'todo',
+              title: 'To do',
+              cards: [{ id: 'tsk_2', title: 'Schedule kickoff' }],
+            },
+            { id: 'in_progress', title: 'In progress', cards: [] },
+            { id: 'in_review', title: 'In review', cards: [] },
+            { id: 'done', title: 'Done', cards: [] },
+          ]}
+          onCardSelect={() => {}}
+          onCardMove={() => {}}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
 });
