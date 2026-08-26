@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::auth::AuthCtx;
 use crate::gateway_client::forward_user_request;
 use crate::handlers::common::{
-    extract_bearer, load_proposal_view, resolve_principal, enforce_perm,
+    extract_bearer, load_proposal_view, resolve_principal, enforce_perm, ProposalRow,
 };
 use crate::state::AppState;
 use crate::tools::find_tool;
@@ -51,8 +51,7 @@ pub async fn list_proposals(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    let rows: Vec<(Uuid, String, String, String, serde_json::Value, String, serde_json::Value, chrono::DateTime<chrono::Utc>)> =
-        sqlx::query_as(
+    let rows: Vec<ProposalRow> = sqlx::query_as(
             r#"
             SELECT id, tool_name, action_type, status, command, rendered_diff, citations, created_at
             FROM ai_proposal

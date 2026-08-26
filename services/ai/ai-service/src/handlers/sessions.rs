@@ -13,6 +13,21 @@ use crate::state::AppState;
 use crate::types::{ChatResponse, SessionDetail, SessionSummary, SessionsListResponse, TokenUsage};
 use companyos_errors::{AppError, ErrorCode};
 
+type InteractionRow = (
+    Uuid,
+    String,
+    serde_json::Value,
+    serde_json::Value,
+    serde_json::Value,
+    Option<String>,
+    Option<String>,
+    i32,
+    i32,
+    i32,
+    i64,
+    String,
+);
+
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/v1/ai/sessions", get(list_sessions))
@@ -126,20 +141,7 @@ pub async fn get_session(
         return Err(AppError::new(ErrorCode::NotFound, &request_id, "session not found"));
     };
 
-    let interaction_rows: Vec<(
-        Uuid,
-        String,
-        serde_json::Value,
-        serde_json::Value,
-        serde_json::Value,
-        Option<String>,
-        Option<String>,
-        i32,
-        i32,
-        i32,
-        i64,
-        String,
-    )> = sqlx::query_as(
+    let interaction_rows: Vec<InteractionRow> = sqlx::query_as(
         r#"
         SELECT id, content, citations, follow_ups, tool_trace, model, prompt_template_version,
                input_tokens, output_tokens, latency_ms, cost_estimate_minor, currency

@@ -2,7 +2,7 @@
 
 use companyos_ids::new_uuid_v7;
 use companyos_tenancy::set_session_org_id;
-use serde_json::{json, Value};
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::provider::wrap_untrusted;

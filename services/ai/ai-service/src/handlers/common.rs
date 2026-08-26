@@ -15,6 +15,17 @@ use crate::types::{
 };
 use chrono::Utc;
 
+pub(crate) type ProposalRow = (
+    uuid::Uuid,
+    String,
+    String,
+    String,
+    serde_json::Value,
+    String,
+    serde_json::Value,
+    chrono::DateTime<Utc>,
+);
+
 pub fn extract_bearer(headers: &HeaderMap) -> Option<String> {
     headers
         .get(axum::http::header::AUTHORIZATION)
@@ -217,16 +228,7 @@ pub async fn load_proposal_view(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
-    let row: Option<(
-        Uuid,
-        String,
-        String,
-        String,
-        serde_json::Value,
-        String,
-        serde_json::Value,
-        chrono::DateTime<Utc>,
-    )> = sqlx::query_as(
+    let row: Option<ProposalRow> = sqlx::query_as(
         r#"
         SELECT id, tool_name, action_type, status, command, rendered_diff, citations, created_at
         FROM ai_proposal WHERE id = $1 AND org_id = $2

@@ -1,7 +1,7 @@
 //! POST /api/v1/ai/chat and streaming variant.
 
 use axum::extract::State;
-use axum::http::{HeaderMap, Method};
+use axum::http::HeaderMap;
 use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::{Json, Router};
 use axum::routing::post;
@@ -319,6 +319,7 @@ async fn resolve_session(
     Ok(session_id)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn persist_interaction(
     state: &AppState,
     org_id: Uuid,

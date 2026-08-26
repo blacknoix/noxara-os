@@ -119,3 +119,24 @@ pub async fn hybrid_retrieve(
 
     Ok(citations)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use companyos_ids::new_uuid_v7;
+
+    #[test]
+    fn retrieval_query_requires_org_id() {
+        assert!(RetrievalQuery::new(None, "x").is_err());
+        assert!(RetrievalQuery::new(Some(""), "x").is_err());
+    }
+
+    #[test]
+    fn retrieval_query_accepts_valid_org_public_id() {
+        let org = OrgId::new(new_uuid_v7());
+        let org_public = org.to_public().as_str();
+        let q = RetrievalQuery::new(Some(&org_public), "hello").unwrap();
+        assert_eq!(q.org_id(), org);
+        assert_eq!(q.query(), "hello");
+    }
+}

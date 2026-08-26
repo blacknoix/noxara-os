@@ -78,7 +78,7 @@ pub async fn get_insights(
 }
 
 fn fixture_observations() -> InsightsResponse {
-    let evidence = vec![
+    let evidence = [
         Citation {
             record_type: "invoice".into(),
             record_id: "inv_fixture".into(),
