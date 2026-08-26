@@ -48,15 +48,18 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 /// `membership` / `role_permission` / `outbox_event` / `audit_entry` on this
 /// same database — this migration only adds `sales_*` tables.
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for migration in [
-        include_str!("../migrations/001_crm.sql"),
-        include_str!("../migrations/002_quote_approval.sql"),
-    ] {
-        for stmt in split_sql(migration) {
-            sqlx::query(&stmt).execute(pool).await?;
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for migration in [
+            include_str!("../migrations/001_crm.sql"),
+            include_str!("../migrations/002_quote_approval.sql"),
+        ] {
+            for stmt in split_sql(migration) {
+                sqlx::query(&stmt).execute(pool).await?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 /// Build the full CRM axum router: `/api/v1/sales/...` handlers + OpenAPI +

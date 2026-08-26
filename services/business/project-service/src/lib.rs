@@ -71,15 +71,18 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 /// Run the Operations schema migration. Assumes core migrate has already
 /// created shared tables (`organization`, `membership`, `outbox_event`, …).
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for migration in [
-        include_str!("../migrations/001_operations.sql"),
-        include_str!("../migrations/002_approvals.sql"),
-    ] {
-        for stmt in split_sql(migration) {
-            sqlx::query(&stmt).execute(pool).await?;
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for migration in [
+            include_str!("../migrations/001_operations.sql"),
+            include_str!("../migrations/002_approvals.sql"),
+        ] {
+            for stmt in split_sql(migration) {
+                sqlx::query(&stmt).execute(pool).await?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 /// Build the full Operations axum router.

@@ -1,20 +1,11 @@
 #!/usr/bin/env bash
-# Seed one org and two users for local development (Phase 1.2 workspace model).
+# Seed one org and two users for local development (Phase 1.2+ workspace model).
+# Runs SQL inserts, then OrgProvisioning (roles, pipeline seed stages, expense cats).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATABASE_URL="${DATABASE_URL:-postgres://companyos:companyos@127.0.0.1:5432/companyos}"
 SEED_PASSWORD="${SEED_PASSWORD:-correct-horse-battery}"
-
-mkdir -p "$ROOT/.tmp"
-
-if command -v psql >/dev/null 2>&1; then
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/001_init.sql"
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/002_auth.sql"
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/003_workspace.sql"
-else
-  echo "psql not found — ensure migrations run when core starts"
-fi
 
 ORG_UUID="018f0000-0000-7000-8000-000000000001"
 USER_OWNER="018f0000-0000-7000-8000-000000000011"
@@ -24,6 +15,26 @@ MEM_MEMBER="018f0000-0000-7000-8000-000000000022"
 ORG_PUBLIC="org_${ORG_UUID}"
 OWNER_PUBLIC="usr_${USER_OWNER}"
 MEMBER_PUBLIC="usr_${USER_MEMBER}"
+
+mkdir -p "$ROOT/.tmp"
+
+if ! command -v psql >/dev/null 2>&1; then
+  echo "ERROR: psql is required for seed-dev.sh"
+  exit 1
+fi
+
+# Ensure pg_trgm exists (CRM duplicate detection). Prefer superuser when available.
+if command -v sudo >/dev/null 2>&1; then
+  sudo -u postgres psql -d companyos -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" 2>/dev/null \
+    || PGPASSWORD="${POSTGRES_PASSWORD:-postgres}" psql -h 127.0.0.1 -U postgres -d companyos -v ON_ERROR_STOP=1 \
+      -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" 2>/dev/null \
+    || true
+fi
+
+echo "==> Applying core migrations (idempotent)…"
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/001_init.sql"
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/002_auth.sql"
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/003_workspace.sql"
 
 PASS_HASH="$(cd "$ROOT" && cargo run -q -p companyos-core --example hash_password -- "$SEED_PASSWORD" | tail -n 1)"
 
@@ -60,9 +71,6 @@ VALUES
 ON CONFLICT (org_id, user_id) DO UPDATE SET role = EXCLUDED.role, revoked_at = NULL, status = 'active';
 SQL
 
-echo "==> Running OrgProvisioning via core migrate/sync (start core once, or use API)"
-echo "    Prefer: cargo run -p companyos-core (migrate + catalogue sync), then create org / register."
-
 cat > "$ROOT/.tmp/seed.env" <<EOF
 DEV_ORG_UUID=${ORG_UUID}
 DEV_ORG_PUBLIC_ID=${ORG_PUBLIC}
@@ -74,11 +82,17 @@ SEED_PASSWORD=${SEED_PASSWORD}
 SEED_OWNER_EMAIL=owner@acme.demo
 SEED_MEMBER_EMAIL=member@acme.demo
 # Owner requires MFA on login. Member can password-login without MFA.
-# LOCAL-ONLY headers (COMPANYOS_LOCAL_AUTH=1) remain for hello smoke tests.
+# LOCAL-ONLY headers (COMPANYOS_LOCAL_AUTH=1) remain for hello smoke tests only.
 EOF
+
+echo "==> Running OrgProvisioning (roles, pipeline stages, expense categories)…"
+export DATABASE_URL
+export DEV_ORG_UUID="$ORG_UUID"
+export DEV_USER_OWNER_UUID="$USER_OWNER"
+(cd "$ROOT" && cargo run -q -p companyos-core --example seed_dev)
 
 echo "Seeded org ${ORG_PUBLIC} with owner ${OWNER_PUBLIC} and member ${MEMBER_PUBLIC}"
 echo "Wrote $ROOT/.tmp/seed.env"
 echo "Member login: member@acme.demo / ${SEED_PASSWORD}"
 echo "Owner login requires MFA enrollment after password."
-echo "After core starts, POST /api/v1/workspace/organizations or register to run OrgProvisioning."
+echo "Optional sample customer: create via UI or POST /api/v1/sales/customers after services are up."

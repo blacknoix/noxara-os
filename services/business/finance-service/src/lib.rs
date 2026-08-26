@@ -75,15 +75,18 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 /// `audit_entry` on this same database — this migration only adds
 /// `finance_*` tables.
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for migration in [
-        include_str!("../migrations/001_finance.sql"),
-        include_str!("../migrations/002_approval_link.sql"),
-    ] {
-        for stmt in split_sql(migration) {
-            sqlx::query(&stmt).execute(pool).await?;
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for migration in [
+            include_str!("../migrations/001_finance.sql"),
+            include_str!("../migrations/002_approval_link.sql"),
+        ] {
+            for stmt in split_sql(migration) {
+                sqlx::query(&stmt).execute(pool).await?;
+            }
         }
-    }
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 /// Build the full Finance axum router: `/api/v1/finance/...` handlers +

@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -29,9 +30,21 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        # Notification / gateway rate-limit tests use Redis when REDIS_URL is set.
+        # No secrets required; skip/gate paths that need live AI_API_KEY.
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://companyos:companyos@127.0.0.1:5432/companyos_test
       TEST_DATABASE_URL: postgres://companyos:companyos@127.0.0.1:5432/companyos_test
+      REDIS_URL: redis://127.0.0.1:6379
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -62,6 +75,8 @@ jobs:
           AUTH_COOKIE_SECURE: "0"
           COMPANYOS_LOCAL_AUTH: "0"
           HIBP_ENABLED: "0"
+          # AI uses mock provider when AI_API_KEY is unset (Phase 1.9).
+          # Do not set AI_API_KEY in CI.
 
   typescript:
     name: TypeScript (typecheck, lint, openapi drift)

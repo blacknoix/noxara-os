@@ -30,17 +30,20 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 }
 
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for migration in [
-        include_str!("../migrations/001_init.sql"),
-        include_str!("../migrations/002_auth.sql"),
-        include_str!("../migrations/003_workspace.sql"),
-    ] {
-        for stmt in split_sql(migration) {
-            sqlx::query(&stmt).execute(pool).await?;
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for migration in [
+            include_str!("../migrations/001_init.sql"),
+            include_str!("../migrations/002_auth.sql"),
+            include_str!("../migrations/003_workspace.sql"),
+        ] {
+            for stmt in split_sql(migration) {
+                sqlx::query(&stmt).execute(pool).await?;
+            }
         }
-    }
-    workspace::sync_permission_catalogue(pool).await?;
-    Ok(())
+        workspace::sync_permission_catalogue(pool).await?;
+        Ok(())
+    })
+    .await
 }
 
 pub fn build_router(state: AppState) -> Router {
