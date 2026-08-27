@@ -69,6 +69,10 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
             "id": "hol_test",
             "holiday_date": "2026-12-25"
         }),
+        ("payroll_run", "drafted" | "calculated" | "approved" | "paid") => {
+            serde_json::json!({ "id": "payrun_test" })
+        }
+        ("payslip", "issued") => serde_json::json!({ "id": "payslip_test" }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

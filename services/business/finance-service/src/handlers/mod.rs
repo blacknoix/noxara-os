@@ -7,6 +7,7 @@ pub mod customers;
 pub mod events;
 pub mod expenses;
 pub mod invoices;
+pub mod journals;
 pub mod payments;
 pub mod recurring;
 pub mod reports;
@@ -31,6 +32,7 @@ pub fn router() -> Router<AppState> {
         .merge(webhooks::router())
         .merge(recurring::router())
         .merge(events::router())
+        .merge(journals::router())
 }
 
 /// Map a `sqlx::Error` to an internal `AppError`, capturing `request_id`.

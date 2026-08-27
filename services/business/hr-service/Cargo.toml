@@ -1,6 +1,6 @@
 [package]
 name = "companyos-hr"
-description = "CompanyOS People / HR — Phase 2.1–2.2 (business / people)"
+description = "CompanyOS People / HR — Phase 2.1–2.3 (business / people)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -47,6 +47,7 @@ rand = { workspace = true }
 [dev-dependencies]
 companyos-testkit = { workspace = true }
 companyos-core = { path = "../../core" }
+companyos-finance = { path = "../finance-service" }
 tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 axum = { workspace = true }

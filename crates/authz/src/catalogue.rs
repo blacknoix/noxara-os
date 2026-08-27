@@ -846,6 +846,47 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Approve or reject leave requests (via approval engine callback)",
         sensitive: true,
     },
+    // --- Payroll (Phase 2.3) ---
+    PermissionDef {
+        id: "hr.payroll.read",
+        context: "hr",
+        resource: "payroll",
+        action: "read",
+        description: "View payroll runs and payslips (every figure read is audited)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.payroll.write",
+        context: "hr",
+        resource: "payroll",
+        action: "write",
+        description: "Create draft payroll runs and configure earning/deduction components",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.payroll.approve",
+        context: "hr",
+        resource: "payroll",
+        action: "approve",
+        description: "Approve payroll runs (via approval engine callback or direct approve)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.payroll.run",
+        context: "hr",
+        resource: "payroll",
+        action: "run",
+        description: "Calculate and pay payroll runs (journal post via Finance API)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.journal.post",
+        context: "finance",
+        resource: "journal",
+        action: "post",
+        description: "Post balanced journal entries (payroll and other source types)",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -872,6 +913,11 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "hr.attendance.write",
     "hr.leave.write",
     "hr.leave.approve",
+    "hr.payroll.read",
+    "hr.payroll.write",
+    "hr.payroll.approve",
+    "hr.payroll.run",
+    "finance.journal.post",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1191,6 +1237,21 @@ pub mod perms {
     pub fn hr_leave_approve() -> PermissionId {
         PermissionId::from("hr.leave.approve")
     }
+    pub fn hr_payroll_read() -> PermissionId {
+        PermissionId::from("hr.payroll.read")
+    }
+    pub fn hr_payroll_write() -> PermissionId {
+        PermissionId::from("hr.payroll.write")
+    }
+    pub fn hr_payroll_approve() -> PermissionId {
+        PermissionId::from("hr.payroll.approve")
+    }
+    pub fn hr_payroll_run() -> PermissionId {
+        PermissionId::from("hr.payroll.run")
+    }
+    pub fn finance_journal_post() -> PermissionId {
+        PermissionId::from("finance.journal.post")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -1218,6 +1279,7 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "finance.report.read"
         | "finance.customer.read"
         | "finance.ledger.read"
+        | "hr.payroll.read"
         | "operations.project.read"
         | "operations.task.read"
         | "operations.approval.read"

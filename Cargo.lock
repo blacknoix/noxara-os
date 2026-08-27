@@ -801,6 +801,7 @@ dependencies = [
  "companyos-core",
  "companyos-errors",
  "companyos-events",
+ "companyos-finance",
  "companyos-ids",
  "companyos-money",
  "companyos-outbox",

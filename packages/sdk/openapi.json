@@ -2207,6 +2207,53 @@
         }
       }
     },
+    "/api/v1/finance/journals": {
+      "post": {
+        "tags": [
+          "finance-journals"
+        ],
+        "summary": "POST /api/v1/finance/journals",
+        "operationId": "post_journal_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostJournalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": ""
+          },
+          "422": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/v1/finance/payments": {
       "get": {
         "tags": [
@@ -4607,6 +4654,523 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeaveRequestListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/me/payslips": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/me/payslips",
+        "operationId": "list_my_payslips",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayslipListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/me/payslips/{id}": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/me/payslips/{id}",
+        "operationId": "get_my_payslip",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayslipDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/components": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/payroll/components",
+        "operationId": "list_components",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollComponentListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/components",
+        "operationId": "create_component",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayrollComponentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollComponentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/payslips/{id}": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/payroll/payslips/{id}",
+        "operationId": "get_payslip",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayslipDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/payroll/runs",
+        "operationId": "list_runs",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs",
+        "operationId": "create_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayrollRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/payroll/runs/{id}",
+        "operationId": "get_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/adjust": {
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs/{id}/adjust",
+        "operationId": "adjust_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/approve": {
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs/{id}/approve",
+        "operationId": "approve_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/calculate": {
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs/{id}/calculate",
+        "operationId": "calculate_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/decide": {
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs/{id}/decide",
+        "operationId": "decide_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecidePayrollRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/export": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/payroll/runs/{id}/export",
+        "operationId": "export_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ACH-style CSV payment file"
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/pay": {
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs/{id}/pay",
+        "operationId": "pay_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/payslips": {
+      "get": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "GET /api/v1/people/payroll/runs/{id}/payslips",
+        "operationId": "list_run_payslips",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayslipListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/payroll/runs/{id}/submit": {
+      "post": {
+        "tags": [
+          "people-payroll"
+        ],
+        "summary": "POST /api/v1/people/payroll/runs/{id}/submit",
+        "operationId": "submit_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunDto"
                 }
               }
             }
@@ -9275,6 +9839,67 @@
           }
         }
       },
+      "JournalEntryDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "memo",
+          "source_type",
+          "source_id",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineInput"
+            }
+          },
+          "memo": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "source_type": {
+            "type": "string"
+          }
+        }
+      },
+      "JournalLineInput": {
+        "type": "object",
+        "required": [
+          "account_code",
+          "debit_minor",
+          "credit_minor"
+        ],
+        "properties": {
+          "account_code": {
+            "type": "string"
+          },
+          "credit_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "debit_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "ListQuery": {
         "type": "object",
         "properties": {
@@ -9382,6 +10007,40 @@
           "total": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "PostJournalRequest": {
+        "type": "object",
+        "required": [
+          "source_type",
+          "source_id",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineInput"
+            }
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_id": {
+            "type": "string",
+            "description": "Internal UUID of the source document (payroll run id)."
+          },
+          "source_type": {
+            "type": "string",
+            "description": "`payroll` or `manual`."
           }
         }
       },
@@ -12063,6 +12722,71 @@
           }
         }
       },
+      "CreatePayrollComponentRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "line_kind",
+          "calc_method",
+          "config_json"
+        ],
+        "properties": {
+          "calc_method": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "config_json": {
+            "type": "object"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "line_kind": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "CreatePayrollRunRequest": {
+        "type": "object",
+        "required": [
+          "period_start",
+          "period_end",
+          "currency"
+        ],
+        "properties": {
+          "adjustment_of_run_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          }
+        }
+      },
       "CreateWorkScheduleRequest": {
         "type": "object",
         "required": [
@@ -12094,6 +12818,23 @@
         }
       },
       "DecideLeaveRequest": {
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DecidePayrollRequest": {
         "type": "object",
         "required": [
           "approve"
@@ -12968,6 +13709,313 @@
           },
           "workflow_id": {
             "type": "string"
+          }
+        }
+      },
+      "PayrollComponentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "label",
+          "line_kind",
+          "calc_method",
+          "config_json",
+          "is_active",
+          "sort_order",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "calc_method": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "config_json": {
+            "type": "object"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string"
+          },
+          "line_kind": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PayrollComponentListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayrollComponentDto"
+            }
+          }
+        }
+      },
+      "PayrollRunDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "period_start",
+          "period_end",
+          "currency",
+          "employee_count",
+          "gross_minor",
+          "deductions_minor",
+          "net_minor",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "adjustment_of_run_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approved_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "calculated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "deductions_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "employee_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gross_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "journal_public_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "net_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paid_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PayrollRunListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayrollRunDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PayslipDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "run_id",
+          "employee_id",
+          "currency",
+          "gross_minor",
+          "deductions_minor",
+          "net_minor",
+          "status",
+          "lines",
+          "created_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "deductions_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "gross_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "issued_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayslipLineDto"
+            }
+          },
+          "net_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PayslipLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "line_kind",
+          "component_code",
+          "label",
+          "amount_minor",
+          "currency",
+          "calculation_basis",
+          "sort_order"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "calculation_basis": {
+            "type": "object"
+          },
+          "component_code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "line_kind": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PayslipListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayslipDto"
+            }
           }
         }
       },
@@ -14384,6 +15432,10 @@
       "description": "In-process sales event apply"
     },
     {
+      "name": "finance-journals",
+      "description": "Balanced journal posting (payroll)"
+    },
+    {
       "name": "operations-projects",
       "description": "Projects (Operations)"
     },
@@ -14470,6 +15522,10 @@
     {
       "name": "people-leave",
       "description": "Leave types, requests, balances, carry-forward"
+    },
+    {
+      "name": "people-payroll",
+      "description": "Payroll runs, payslips, payment export"
     },
     {
       "name": "notifications",

@@ -77,6 +77,8 @@ const GROUPS: NavGroup[] = [
       { href: '/people/leave/balances', label: 'Balances', short: 'B', perm: 'hr.leave.read' },
       { href: '/people/leave/types', label: 'Leave types', short: 'T', perm: 'hr.leave.write' },
       { href: '/people/schedules', label: 'Schedules', short: 'S', perm: 'hr.attendance.read' },
+      { href: '/people/payroll', label: 'Payroll', short: 'P', perm: 'hr.payroll.read' },
+      { href: '/people/me/payslips', label: 'My payslips', short: 'W', perm: null },
     ],
   },
   {

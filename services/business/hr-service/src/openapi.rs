@@ -6,7 +6,7 @@ use utoipa::OpenApi;
 
 use crate::handlers::{
     assets, attendance, compensation, contracts, documents, employees, leave, me, offboarding,
-    onboarding, schedules, timeline,
+    onboarding, payroll, schedules, timeline,
 };
 use crate::state::AppState;
 use crate::types::*;
@@ -57,6 +57,22 @@ use crate::types::*;
         leave::absence_report,
         leave::run_carry_forward,
         leave::accrue_leave,
+        payroll::list_components,
+        payroll::create_component,
+        payroll::list_runs,
+        payroll::create_run,
+        payroll::get_run,
+        payroll::calculate_run,
+        payroll::submit_run,
+        payroll::approve_run,
+        payroll::decide_run,
+        payroll::pay_run,
+        payroll::adjust_run,
+        payroll::list_run_payslips,
+        payroll::export_run,
+        payroll::get_payslip,
+        payroll::list_my_payslips,
+        payroll::get_my_payslip,
     ),
     components(schemas(
         EmployeeDto,
@@ -114,6 +130,16 @@ use crate::types::*;
         CarryForwardResponse,
         AccrueLeaveRequest,
         LeaveLedgerEntryDto,
+        PayrollComponentDto,
+        PayrollComponentListResponse,
+        CreatePayrollComponentRequest,
+        PayrollRunDto,
+        PayrollRunListResponse,
+        CreatePayrollRunRequest,
+        PayslipLineDto,
+        PayslipDto,
+        PayslipListResponse,
+        DecidePayrollRequest,
     )),
     tags(
         (name = "people-employees", description = "Employee directory and profile"),
@@ -129,11 +155,12 @@ use crate::types::*;
         (name = "people-holidays", description = "Holiday calendars"),
         (name = "people-attendance", description = "Append-only attendance"),
         (name = "people-leave", description = "Leave types, requests, balances, carry-forward"),
+        (name = "people-payroll", description = "Payroll runs, payslips, payment export"),
     ),
     info(
         title = "CompanyOS People / HR API",
-        version = "0.2.0",
-        description = "Phase 2.1–2.2 People (HR) — employees, attendance, leave."
+        version = "0.3.0",
+        description = "Phase 2.1–2.3 People (HR) — employees, attendance, leave, payroll."
     )
 )]
 pub struct ApiDoc;

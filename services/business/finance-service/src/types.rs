@@ -359,3 +359,32 @@ pub struct ApplySalesEventRequest {
 pub struct ApplySalesEventResponse {
     pub applied: bool,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct JournalLineInput {
+    pub account_code: String,
+    pub debit_minor: i64,
+    pub credit_minor: i64,
+    pub memo: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PostJournalRequest {
+    /// `payroll` or `manual`.
+    pub source_type: String,
+    /// Internal UUID of the source document (payroll run id).
+    pub source_id: String,
+    pub currency: String,
+    pub memo: Option<String>,
+    pub lines: Vec<JournalLineInput>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct JournalEntryDto {
+    pub id: String,
+    pub memo: String,
+    pub source_type: String,
+    pub source_id: String,
+    pub currency: String,
+    pub lines: Vec<JournalLineInput>,
+}
