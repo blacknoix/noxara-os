@@ -27,7 +27,7 @@ use crate::auth::AuthCtx;
 use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
-use crate::types::{OnboardRequest, OnboardResponse, TaskDto};
+use crate::types::{OnboardRequest, OnboardResponse, HrTaskDto};
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/api/v1/people/employees/onboard", post(onboard))
@@ -61,7 +61,7 @@ async fn insert_task(
     title: &str,
     workflow_id: &str,
     assignee: Option<Uuid>,
-) -> Result<TaskDto, sqlx::Error> {
+) -> Result<HrTaskDto, sqlx::Error> {
     let pid = PublicId::generate(IdKind::HrTask);
     let id = pid.uuid();
     sqlx::query(
@@ -81,7 +81,7 @@ async fn insert_task(
     .bind(workflow_id)
     .execute(&mut **tx)
     .await?;
-    Ok(TaskDto {
+    Ok(HrTaskDto {
         id: pid.as_str(),
         employee_id: PublicId::new(IdKind::Employee, employee_id).as_str(),
         kind: kind.to_string(),
@@ -228,7 +228,7 @@ pub async fn onboard(
     }
 
     let fail_after = body.fail_after.as_deref();
-    let mut tasks: Vec<TaskDto> = Vec::new();
+    let mut tasks: Vec<HrTaskDto> = Vec::new();
 
     // ---- create_employee ----
     let manager_id =

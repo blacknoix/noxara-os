@@ -50,3 +50,4 @@ companyos-core = { path = "../../core" }
 tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 axum = { workspace = true }
+base64 = { workspace = true }

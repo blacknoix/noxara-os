@@ -217,7 +217,7 @@ pub struct CreateAssetRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct TaskDto {
+pub struct HrTaskDto {
     pub id: String,
     pub employee_id: String,
     pub kind: String,
@@ -230,8 +230,8 @@ pub struct TaskDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct TaskListResponse {
-    pub items: Vec<TaskDto>,
+pub struct HrTaskListResponse {
+    pub items: Vec<HrTaskDto>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -272,7 +272,7 @@ pub struct OnboardRequest {
 pub struct OnboardResponse {
     pub employee: EmployeeDto,
     pub workflow_id: String,
-    pub tasks: Vec<TaskDto>,
+    pub tasks: Vec<HrTaskDto>,
     pub status: String,
 }
 

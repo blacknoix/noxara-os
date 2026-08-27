@@ -66,6 +66,14 @@ const GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: 'people',
+    label: 'People',
+    items: [
+      { href: '/people', label: 'Directory', short: 'E', perm: 'hr.employee.read' },
+      { href: '/people/me', label: 'My profile', short: 'Y', perm: null },
+    ],
+  },
+  {
     id: 'insights',
     label: 'Insights',
     items: [{ href: '/insights', label: 'Insights', short: 'N', perm: null }],

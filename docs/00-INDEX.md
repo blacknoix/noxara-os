@@ -26,7 +26,7 @@ CompanyOS (repo `noxara-os`) is an AI-native, multi-tenant Business Operating Sy
 
 ## ADRs
 
-Accepted ADRs [001–018](adrs/) document foundational decisions. ADR [019](adrs/019-finance-ledger-layout.md) documents Finance v1 posting rules (**not** finance-reviewer signed-off).
+Accepted ADRs [001–020](adrs/) document foundational decisions. ADR [019](adrs/019-finance-ledger-layout.md) documents Finance v1 posting rules (**not** finance-reviewer signed-off). ADR [020](adrs/020-hr-departments-and-reporting.md) documents People/HR department + reporting-line ownership.
 
 ## Other
 

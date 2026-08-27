@@ -60,6 +60,15 @@ Operations **projects** `sales.deal.won` via `POST /api/v1/operations/events/sal
 
 Emitted in the same transaction as the approval write. Finance/CRM call the Operations approval API (no cross-context table reads); Temporal activities call service APIs with `on_behalf_of` recorded on decisions.
 
+## People / HR (Phase 2.1)
+
+- `companyos.{org_}.people.employee.created.v1`
+- `companyos.{org_}.people.employee.updated.v1`
+- `companyos.{org_}.people.employee.onboarded.v1`
+- `companyos.{org_}.people.employee.offboarded.v1`
+
+Restricted fields (compensation, government IDs, bank/tax) are never included in event payloads. Departments remain Workspace-owned (`dep_`); HR stores opaque department ids (ADR 020).
+
 ## Platform consumers (Phase 1.8)
 
 - Outbox → NATS via `companyos-outbox-relay` (`scripts/nats-bootstrap.sh` creates

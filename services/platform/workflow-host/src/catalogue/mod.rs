@@ -1,7 +1,9 @@
-//! Workflow catalogue — Phase 1.8 types hosted by companyos-workflow-host.
+//! Workflow catalogue — Phase 1.8 + Phase 2.1 types hosted by companyos-workflow-host.
 
 pub mod approval_process;
 pub mod data_import;
+pub mod employee_offboarding;
+pub mod employee_onboarding;
 pub mod expense_approval;
 pub mod invoice_dunning;
 pub mod org_provisioning;
@@ -22,6 +24,8 @@ pub enum WorkflowType {
     DataImport,
     UserOffboarding,
     TenantDeletion,
+    EmployeeOnboarding,
+    EmployeeOffboarding,
 }
 
 impl WorkflowType {
@@ -35,6 +39,8 @@ impl WorkflowType {
             Self::DataImport => "DataImport",
             Self::UserOffboarding => "UserOffboarding",
             Self::TenantDeletion => "TenantDeletion",
+            Self::EmployeeOnboarding => "EmployeeOnboarding",
+            Self::EmployeeOffboarding => "EmployeeOffboarding",
         }
     }
 
@@ -48,6 +54,8 @@ impl WorkflowType {
             Self::DataImport,
             Self::UserOffboarding,
             Self::TenantDeletion,
+            Self::EmployeeOnboarding,
+            Self::EmployeeOffboarding,
         ]
     }
 }

@@ -74,6 +74,17 @@ for (const name of ['ProjectDto', 'TaskDto']) {
   }
 }
 
+if (!doc.paths['/api/v1/people/employees']) {
+  console.error('OpenAPI drift: missing /api/v1/people/employees');
+  process.exit(1);
+}
+for (const name of ['EmployeeDto', 'OnboardRequest', 'OffboardResponse']) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing schema ${name}`);
+    process.exit(1);
+  }
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);

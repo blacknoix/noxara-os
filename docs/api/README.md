@@ -55,6 +55,23 @@ Projects & Tasks bounded context, mounted at **`/api/v1/operations/...`** (proxi
 
 `If-Match` required on task/project PATCH and board move. Mentions notify only users with `operations.task.read`.
 
-Gateway URL: same host as core (`PUBLIC_API_URL`), path prefixes `/api/v1/sales`, `/api/v1/finance`, and `/api/v1/operations`.
+## People / HR (`companyos-hr`)
+
+People bounded context, mounted at **`/api/v1/people/...`** (proxied by the gateway).
+
+- `GET|POST /api/v1/people/employees` — directory + create (restricted fields omitted on list)
+- `GET|PATCH /api/v1/people/employees/{id}` — detail; sensitive fields require `hr.employee.read_sensitive`
+- `GET|PATCH /api/v1/people/me` — self-service non-restricted profile
+- `GET|POST /api/v1/people/employees/{id}/compensation` — versioned components (`amount_minor` + currency)
+- `GET|POST /api/v1/people/employees/{id}/contracts` — employment contracts
+- `GET|POST /api/v1/people/employees/{id}/documents` — documents + expiry (`file_id` via file-service)
+- `GET|POST /api/v1/people/employees/{id}/assets` — simple HR asset assignments
+- `GET /api/v1/people/employees/{id}/timeline`
+- `POST /api/v1/people/employees/onboard` — `Idempotency-Key`; starts EmployeeOnboarding
+- `POST /api/v1/people/employees/{id}/offboard` — `Idempotency-Key`; starts EmployeeOffboarding + access revoke
+- `GET /api/v1/people/employees/{id}/access-audit` — membership/session checklist
+- `GET /api/v1/people/openapi.json`
+
+Gateway URL: same host as core (`PUBLIC_API_URL`), path prefixes `/api/v1/sales`, `/api/v1/finance`, `/api/v1/operations`, and `/api/v1/people`.
 
 Errors use RFC 9457 `application/problem+json` with stable `code` and `request_id`.

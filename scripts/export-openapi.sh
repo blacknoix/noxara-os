@@ -8,6 +8,7 @@ CORE_TMP="/tmp/companyos-core-openapi.json"
 CRM_TMP="/tmp/companyos-crm-openapi.json"
 FIN_TMP="/tmp/companyos-finance-openapi.json"
 OPS_TMP="/tmp/companyos-project-openapi.json"
+HR_TMP="/tmp/companyos-hr-openapi.json"
 NOTIF_TMP="/tmp/companyos-notification-openapi.json"
 SEARCH_TMP="/tmp/companyos-search-openapi.json"
 FILE_TMP="/tmp/companyos-file-openapi.json"
@@ -26,6 +27,9 @@ cargo run -p companyos-finance --example export_openapi >"$FIN_TMP"
 
 echo "==> Exporting Operations OpenAPI (offline)..."
 cargo run -p companyos-project --example export_openapi >"$OPS_TMP"
+
+echo "==> Exporting People/HR OpenAPI (offline)..."
+cargo run -p companyos-hr --example export_openapi >"$HR_TMP"
 
 echo "==> Exporting Notification OpenAPI (offline)..."
 cargo run -p companyos-notification --example export_openapi >"$NOTIF_TMP"
@@ -51,6 +55,7 @@ docs = [
     json.loads(Path("/tmp/companyos-crm-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-finance-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-project-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-hr-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-notification-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-search-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-file-openapi.json").read_text()),

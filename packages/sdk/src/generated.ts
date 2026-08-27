@@ -967,3 +967,239 @@ export type SuggestionChip = {
 export type SuggestionsResponse = {
   chips: SuggestionChip[];
 };
+
+export type EmployeeDto = {
+  bank_details?: string;
+  created_at: string;
+  department_id?: string;
+  display_name: string;
+  end_date?: string;
+  /** Present only when caller holds `hr.employee.read_sensitive`. */
+  government_id?: string;
+  id: string;
+  legal_first_name?: string;
+  legal_last_name?: string;
+  location?: string;
+  manager_employee_id?: string;
+  owner_user_id: string;
+  personal_email?: string;
+  phone?: string;
+  start_date?: string;
+  status: string;
+  tax_id?: string;
+  title?: string;
+  updated_at: string;
+  user_id?: string;
+  version: number;
+  work_email?: string;
+};
+
+export type EmployeeListResponse = {
+  items: EmployeeDto[];
+  total: number;
+};
+
+export type CreateEmployeeRequest = {
+  bank_details?: string;
+  /** Opaque Workspace department public id (`dep_…`). */
+  department_id?: string;
+  display_name: string;
+  /** Restricted — encrypted at rest; requires write + stored for sensitive read. */
+  government_id?: string;
+  legal_first_name?: string;
+  legal_last_name?: string;
+  location?: string;
+  /** Manager employee public id (`emp_…`). */
+  manager_employee_id?: string;
+  personal_email?: string;
+  phone?: string;
+  start_date?: string;
+  status?: string;
+  tax_id?: string;
+  title?: string;
+  user_id?: string;
+  work_email?: string;
+};
+
+export type UpdateEmployeeRequest = {
+  bank_details?: string;
+  department_id?: string;
+  display_name?: string;
+  end_date?: string;
+  government_id?: string;
+  legal_first_name?: string;
+  legal_last_name?: string;
+  location?: string;
+  manager_employee_id?: string;
+  personal_email?: string;
+  phone?: string;
+  start_date?: string;
+  status?: string;
+  tax_id?: string;
+  title?: string;
+  user_id?: string;
+  work_email?: string;
+};
+
+export type UpdateSelfProfileRequest = {
+  display_name?: string;
+  location?: string;
+  personal_email?: string;
+  phone?: string;
+};
+
+export type CompensationComponentDto = {
+  amount_minor: number;
+  component_type: string;
+  contract_id?: string;
+  created_at: string;
+  currency: string;
+  effective_from: string;
+  effective_to?: string;
+  employee_id: string;
+  id: string;
+  label: string;
+  version: number;
+};
+
+export type CompensationListResponse = {
+  items: CompensationComponentDto[];
+};
+
+export type CreateCompensationRequest = {
+  amount_minor: number;
+  component_type?: string;
+  contract_id?: string;
+  currency: string;
+  effective_from: string;
+  effective_to?: string;
+  label: string;
+};
+
+export type ContractDto = {
+  contract_type: string;
+  created_at: string;
+  effective_from: string;
+  effective_to?: string;
+  employee_id: string;
+  id: string;
+  notes?: string;
+  title?: string;
+  version: number;
+};
+
+export type DocumentDto = {
+  collected: boolean;
+  created_at: string;
+  doc_type: string;
+  employee_id: string;
+  expires_at?: string;
+  file_id?: string;
+  id: string;
+  title: string;
+  version: number;
+};
+
+export type AssetDto = {
+  asset_tag?: string;
+  assigned_at: string;
+  employee_id: string;
+  id: string;
+  label: string;
+  returned_at?: string;
+  status: string;
+};
+
+export type TaskDto = {
+  assignee_id?: string;
+  attachments: TaskAttachmentDto[];
+  blocked_by: string[];
+  checklist: ChecklistItemDto[];
+  completed_at?: string;
+  created_at: string;
+  description?: string;
+  due_at?: string;
+  id: string;
+  labels: string[];
+  owner_user_id: string;
+  position: number;
+  priority: string;
+  project_id: string;
+  status: string;
+  title: string;
+  updated_at: string;
+  version: number;
+};
+
+export type TimelineEventDto = {
+  actor_user_id?: string;
+  event_type: string;
+  id: string;
+  metadata: Record<string, unknown>;
+  occurred_at: string;
+  summary: string;
+};
+
+export type OnboardRequest = {
+  asset_labels?: string;
+  department_id?: string;
+  display_name: string;
+  document_titles?: string;
+  /** Test hook: inject activity failure after this step for compensation tests. */
+  fail_after?: string;
+  manager_employee_id?: string;
+  /** Role key to assign via membership update activity (opaque; applied by access step). */
+  role?: string;
+  start_date?: string;
+  task_titles?: string;
+  title?: string;
+  /** Link existing user (`usr_…`); otherwise user_id stays null until linked. */
+  user_id?: string;
+  work_email?: string;
+};
+
+export type OnboardResponse = {
+  employee: EmployeeDto;
+  status: string;
+  tasks: HrTaskDto[];
+  workflow_id: string;
+};
+
+export type OffboardRequest = {
+  end_date?: string;
+  fail_after?: string;
+  reason?: string;
+  reassign_manager_to?: string;
+};
+
+export type OffboardResponse = {
+  checklist: AccessChecklistItem[];
+  employee: EmployeeDto;
+  status: string;
+  workflow_id: string;
+};
+
+export type AccessChecklistItem = {
+  cleared: boolean;
+  detail: string;
+  path: string;
+};
+
+export type AccessAuditResponse = {
+  all_cleared: boolean;
+  checklist: AccessChecklistItem[];
+  employee_id: string;
+  user_id?: string;
+};
+
+export type HrTaskDto = {
+  assignee_user_id?: string;
+  completed_at?: string;
+  due_at?: string;
+  employee_id: string;
+  id: string;
+  kind: string;
+  status: string;
+  title: string;
+  workflow_id?: string;
+};

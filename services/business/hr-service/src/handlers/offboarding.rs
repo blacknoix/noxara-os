@@ -27,7 +27,7 @@ use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
 use crate::types::{
-    AccessAuditResponse, AccessChecklistItem, OffboardRequest, OffboardResponse, TaskDto,
+    AccessAuditResponse, AccessChecklistItem, OffboardRequest, OffboardResponse, HrTaskDto,
 };
 
 pub fn router() -> Router<AppState> {
@@ -70,7 +70,7 @@ async fn insert_offboard_task(
     title: &str,
     workflow_id: &str,
     assignee: Option<Uuid>,
-) -> Result<TaskDto, sqlx::Error> {
+) -> Result<HrTaskDto, sqlx::Error> {
     let pid = PublicId::generate(IdKind::HrTask);
     let id = pid.uuid();
     sqlx::query(
@@ -90,7 +90,7 @@ async fn insert_offboard_task(
     .bind(workflow_id)
     .execute(&mut **tx)
     .await?;
-    Ok(TaskDto {
+    Ok(HrTaskDto {
         id: pid.as_str(),
         employee_id: PublicId::new(IdKind::Employee, employee_id).as_str(),
         kind: kind.to_string(),
