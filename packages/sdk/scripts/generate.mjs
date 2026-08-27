@@ -172,7 +172,6 @@ const emit = [
   'ContractDto',
   'DocumentDto',
   'AssetDto',
-  'TaskDto',
   'TimelineEventDto',
   'OnboardRequest',
   'OnboardResponse',
@@ -183,13 +182,20 @@ const emit = [
   'HrTaskDto',
 ];
 
+const seen = new Set();
+const uniqueEmit = emit.filter((name) => {
+  if (seen.has(name)) return false;
+  seen.add(name);
+  return true;
+});
+
 const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Run pnpm generate:sdk */\n`;
 const types = `${banner}
-${emit
+${uniqueEmit
   .filter((name) => schemas[name])
   .map((name) => `export type ${name} = {\n${propsToTs(schemas[name])}\n};`)
   .join('\n\n')}
 `;
 
 writeFileSync(join(root, 'src/generated.ts'), types);
-console.log(`wrote src/generated.ts (${emit.length} types)`);
+console.log(`wrote src/generated.ts (${uniqueEmit.length} types)`);

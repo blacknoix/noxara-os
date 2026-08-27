@@ -18,10 +18,7 @@ use crate::state::AppState;
 use crate::types::{TimelineEventDto, TimelineResponse};
 
 pub fn router() -> Router<AppState> {
-    Router::new().route(
-        "/api/v1/people/employees/{id}/timeline",
-        get(get_timeline),
-    )
+    Router::new().route("/api/v1/people/employees/{id}/timeline", get(get_timeline))
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]

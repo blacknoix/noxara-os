@@ -297,9 +297,8 @@ async fn call(
     let val = if bytes.is_empty() {
         Value::Null
     } else {
-        serde_json::from_slice(&bytes).unwrap_or(Value::String(
-            String::from_utf8_lossy(&bytes).to_string(),
-        ))
+        serde_json::from_slice(&bytes)
+            .unwrap_or(Value::String(String::from_utf8_lossy(&bytes).to_string()))
     };
     (status, val)
 }
@@ -469,11 +468,16 @@ async fn onboarding_creates_tasks_and_compensates_on_fail_after() {
             "asset_labels": ["Badge"],
             "fail_after": "allocate_assets"
         })),
-        &[("idempotency-key", &format!("onboard-fail-{}", new_uuid_v7()))],
+        &[(
+            "idempotency-key",
+            &format!("onboard-fail-{}", new_uuid_v7()),
+        )],
     )
     .await;
     assert!(
-        st == StatusCode::CONFLICT || st.is_server_error() || st == StatusCode::UNPROCESSABLE_ENTITY,
+        st == StatusCode::CONFLICT
+            || st.is_server_error()
+            || st == StatusCode::UNPROCESSABLE_ENTITY,
         "expected compensation failure status, got {st}: {fail}"
     );
 }
@@ -513,7 +517,11 @@ async fn offboarding_revokes_access_and_last_owner_blocked() {
     )
     .await;
     assert_eq!(st, StatusCode::OK, "{off}");
-    assert!(off["checklist"].as_array().unwrap().iter().all(|c| c["cleared"] == true));
+    assert!(off["checklist"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|c| c["cleared"] == true));
 
     let (st, audit) = call(
         app.clone(),

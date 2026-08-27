@@ -144,9 +144,8 @@ pub async fn revoke_all_access_paths(
         Ok(res.rows_affected())
     }
     .await;
-    let n = sessions.map_err(|e: sqlx::Error| {
-        AppError::new(ErrorCode::Internal, request_id, e.to_string())
-    })?;
+    let n = sessions
+        .map_err(|e: sqlx::Error| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
     checklist.push(AccessChecklistItem {
         path: "sessions".into(),
         cleared: true,

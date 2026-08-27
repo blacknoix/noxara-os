@@ -27,7 +27,7 @@ use crate::auth::AuthCtx;
 use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
-use crate::types::{OnboardRequest, OnboardResponse, HrTaskDto};
+use crate::types::{HrTaskDto, OnboardRequest, OnboardResponse};
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/api/v1/people/employees/onboard", post(onboard))
@@ -42,7 +42,11 @@ const STEPS: &[&str] = &[
     "notify",
 ];
 
-fn check_fail_after(fail_after: Option<&str>, step: &str, request_id: &str) -> Result<(), AppError> {
+fn check_fail_after(
+    fail_after: Option<&str>,
+    step: &str,
+    request_id: &str,
+) -> Result<(), AppError> {
     if fail_after == Some(step) {
         Err(conflict(
             request_id,
@@ -231,9 +235,13 @@ pub async fn onboard(
     let mut tasks: Vec<HrTaskDto> = Vec::new();
 
     // ---- create_employee ----
-    let manager_id =
-        resolve_manager_id(&mut tx, org_id, body.manager_employee_id.as_deref(), &request_id)
-            .await?;
+    let manager_id = resolve_manager_id(
+        &mut tx,
+        org_id,
+        body.manager_employee_id.as_deref(),
+        &request_id,
+    )
+    .await?;
     let (department_id, department_public_id) = match &dept {
         Some((u, p)) => (Some(*u), Some(p.clone())),
         None => (None, None),

@@ -72,10 +72,7 @@ impl State {
     pub fn signal_advance(&mut self, step: &str) -> bool {
         if matches!(
             self.status,
-            Status::Completed
-                | Status::Compensated
-                | Status::Failed
-                | Status::BlockedLastOwner
+            Status::Completed | Status::Compensated | Status::Failed | Status::BlockedLastOwner
         ) {
             return false;
         }
@@ -108,8 +105,10 @@ impl State {
     }
 
     pub fn signal_compensate(&mut self) -> bool {
-        if matches!(self.status, Status::Completed | Status::Compensated | Status::BlockedLastOwner)
-        {
+        if matches!(
+            self.status,
+            Status::Completed | Status::Compensated | Status::BlockedLastOwner
+        ) {
             return false;
         }
         self.status = Status::Compensated;

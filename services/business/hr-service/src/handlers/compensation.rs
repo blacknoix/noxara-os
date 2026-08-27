@@ -22,9 +22,7 @@ use crate::auth::AuthCtx;
 use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
-use crate::types::{
-    CompensationComponentDto, CompensationListResponse, CreateCompensationRequest,
-};
+use crate::types::{CompensationComponentDto, CompensationListResponse, CreateCompensationRequest};
 
 pub fn router() -> Router<AppState> {
     Router::new().route(
@@ -215,10 +213,18 @@ pub async fn create_compensation(
     if body.label.trim().is_empty() {
         return Err(validation(&request_id, "label must not be empty"));
     }
-    let currency = Currency::new(&body.currency)
-        .map_err(|_| validation(&request_id, "currency must be ISO 4217 (3-letter uppercase)"))?;
-    let effective_from = parse_optional_date(Some(body.effective_from.as_str()), "effective_from", &request_id)?
-        .ok_or_else(|| validation(&request_id, "effective_from is required"))?;
+    let currency = Currency::new(&body.currency).map_err(|_| {
+        validation(
+            &request_id,
+            "currency must be ISO 4217 (3-letter uppercase)",
+        )
+    })?;
+    let effective_from = parse_optional_date(
+        Some(body.effective_from.as_str()),
+        "effective_from",
+        &request_id,
+    )?
+    .ok_or_else(|| validation(&request_id, "effective_from is required"))?;
     let effective_to =
         parse_optional_date(body.effective_to.as_deref(), "effective_to", &request_id)?;
     let component_type = body
@@ -283,7 +289,10 @@ pub async fn create_compensation(
             .await
             .map_err(internal(&request_id))?;
             if ok.is_none() {
-                return Err(validation(&request_id, "contract_id not found for employee"));
+                return Err(validation(
+                    &request_id,
+                    "contract_id not found for employee",
+                ));
             }
             Some(cid)
         }

@@ -27,15 +27,12 @@ use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
 use crate::types::{
-    AccessAuditResponse, AccessChecklistItem, OffboardRequest, OffboardResponse, HrTaskDto,
+    AccessAuditResponse, AccessChecklistItem, HrTaskDto, OffboardRequest, OffboardResponse,
 };
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/api/v1/people/employees/{id}/offboard",
-            post(offboard),
-        )
+        .route("/api/v1/people/employees/{id}/offboard", post(offboard))
         .route(
             "/api/v1/people/employees/{id}/access-audit",
             get(access_audit),
@@ -51,7 +48,11 @@ const STEPS: &[&str] = &[
     "notify",
 ];
 
-fn check_fail_after(fail_after: Option<&str>, step: &str, request_id: &str) -> Result<(), AppError> {
+fn check_fail_after(
+    fail_after: Option<&str>,
+    step: &str,
+    request_id: &str,
+) -> Result<(), AppError> {
     if fail_after == Some(step) {
         Err(conflict(
             request_id,
@@ -261,9 +262,7 @@ pub async fn offboard(
 
     let end_date = parse_optional_date(body.end_date.as_deref(), "end_date", &request_id)?;
     let reassign_to = match body.reassign_manager_to.as_deref() {
-        Some(s) if !s.trim().is_empty() => {
-            Some(parse_public_id(IdKind::Employee, s, &request_id)?)
-        }
+        Some(s) if !s.trim().is_empty() => Some(parse_public_id(IdKind::Employee, s, &request_id)?),
         _ => None,
     };
 

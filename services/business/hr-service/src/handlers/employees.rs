@@ -535,9 +535,13 @@ pub async fn create_employee(
         }
     }
 
-    let manager_id =
-        resolve_manager_id(&mut tx, org_id, body.manager_employee_id.as_deref(), &request_id)
-            .await?;
+    let manager_id = resolve_manager_id(
+        &mut tx,
+        org_id,
+        body.manager_employee_id.as_deref(),
+        &request_id,
+    )
+    .await?;
 
     let (department_id, department_public_id) = match &dept {
         Some((u, p)) => (Some(*u), Some(p.clone())),

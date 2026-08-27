@@ -1110,27 +1110,6 @@ export type AssetDto = {
   status: string;
 };
 
-export type TaskDto = {
-  assignee_id?: string;
-  attachments: TaskAttachmentDto[];
-  blocked_by: string[];
-  checklist: ChecklistItemDto[];
-  completed_at?: string;
-  created_at: string;
-  description?: string;
-  due_at?: string;
-  id: string;
-  labels: string[];
-  owner_user_id: string;
-  position: number;
-  priority: string;
-  project_id: string;
-  status: string;
-  title: string;
-  updated_at: string;
-  version: number;
-};
-
 export type TimelineEventDto = {
   actor_user_id?: string;
   event_type: string;

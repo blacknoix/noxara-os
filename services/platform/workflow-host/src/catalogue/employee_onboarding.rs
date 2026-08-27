@@ -67,9 +67,14 @@ impl State {
             return false;
         }
         if self.status == Status::Compensating {
-            self.steps_done.retain(|s| s != step && s != &format!("undo:{step}"));
+            self.steps_done
+                .retain(|s| s != step && s != &format!("undo:{step}"));
             self.steps_done.push(format!("undo:{step}"));
-            if self.steps_done.iter().filter(|s| s.starts_with("undo:")).count()
+            if self
+                .steps_done
+                .iter()
+                .filter(|s| s.starts_with("undo:"))
+                .count()
                 >= self
                     .steps_done
                     .iter()

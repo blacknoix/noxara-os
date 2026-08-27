@@ -56,7 +56,9 @@ impl FieldEncryptor {
     }
 
     pub fn from_base64(b64: &str, key_id: &str) -> Result<Self, CryptoError> {
-        let bytes = B64.decode(b64.trim()).map_err(|_| CryptoError::MissingKey)?;
+        let bytes = B64
+            .decode(b64.trim())
+            .map_err(|_| CryptoError::MissingKey)?;
         if bytes.len() != 32 {
             return Err(CryptoError::MissingKey);
         }
@@ -125,11 +127,7 @@ mod tests {
 
     #[test]
     fn round_trip_string_and_i64() {
-        let enc = FieldEncryptor::from_base64(
-            &B64.encode([7u8; 32]),
-            "test",
-        )
-        .unwrap();
+        let enc = FieldEncryptor::from_base64(&B64.encode([7u8; 32]), "test").unwrap();
         let ct = enc.encrypt_str("SSN-SECRET").unwrap();
         assert!(!ct.windows(6).any(|w| w == b"SECRET"));
         assert_eq!(enc.decrypt_str(&ct).unwrap(), "SSN-SECRET");

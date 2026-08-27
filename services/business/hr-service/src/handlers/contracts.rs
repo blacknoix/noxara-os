@@ -168,8 +168,12 @@ pub async fn create_contract(
         &request_id,
     )?;
 
-    let effective_from = parse_optional_date(Some(body.effective_from.as_str()), "effective_from", &request_id)?
-        .ok_or_else(|| validation(&request_id, "effective_from is required"))?;
+    let effective_from = parse_optional_date(
+        Some(body.effective_from.as_str()),
+        "effective_from",
+        &request_id,
+    )?
+    .ok_or_else(|| validation(&request_id, "effective_from is required"))?;
     let effective_to =
         parse_optional_date(body.effective_to.as_deref(), "effective_to", &request_id)?;
     let contract_type = body
