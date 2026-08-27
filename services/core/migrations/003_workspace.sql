@@ -56,8 +56,7 @@ CREATE INDEX IF NOT EXISTS org_role_org_id_idx ON org_role (org_id);
 ALTER TABLE org_role ENABLE ROW LEVEL SECURITY;
 ALTER TABLE org_role FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS org_role_tenant_isolation ON org_role;
-CREATE POLICY org_role_tenant_isolation ON org_role
+CREATE POLICY IF NOT EXISTS org_role_tenant_isolation ON org_role
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -79,8 +78,7 @@ CREATE INDEX IF NOT EXISTS role_permission_role_id_idx ON role_permission (role_
 ALTER TABLE role_permission ENABLE ROW LEVEL SECURITY;
 ALTER TABLE role_permission FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS role_permission_tenant_isolation ON role_permission;
-CREATE POLICY role_permission_tenant_isolation ON role_permission
+CREATE POLICY IF NOT EXISTS role_permission_tenant_isolation ON role_permission
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -127,8 +125,7 @@ CREATE INDEX IF NOT EXISTS department_org_id_idx ON department (org_id);
 ALTER TABLE department ENABLE ROW LEVEL SECURITY;
 ALTER TABLE department FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS department_tenant_isolation ON department;
-CREATE POLICY department_tenant_isolation ON department
+CREATE POLICY IF NOT EXISTS department_tenant_isolation ON department
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -150,8 +147,7 @@ CREATE INDEX IF NOT EXISTS team_org_id_idx ON team (org_id);
 ALTER TABLE team ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS team_tenant_isolation ON team;
-CREATE POLICY team_tenant_isolation ON team
+CREATE POLICY IF NOT EXISTS team_tenant_isolation ON team
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -193,8 +189,7 @@ CREATE INDEX IF NOT EXISTS invitation_email_idx ON invitation (email_normalized)
 ALTER TABLE invitation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitation FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS invitation_tenant_isolation ON invitation;
-CREATE POLICY invitation_tenant_isolation ON invitation
+CREATE POLICY IF NOT EXISTS invitation_tenant_isolation ON invitation
     USING (
         org_id = NULLIF(current_setting('app.org_id', true), '')::uuid
         OR token_hash = NULLIF(current_setting('app.invite_token_hash', true), '')
@@ -227,8 +222,7 @@ CREATE INDEX IF NOT EXISTS workspace_command_pending_idx
 ALTER TABLE workspace_command ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workspace_command FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS workspace_command_tenant_isolation ON workspace_command;
-CREATE POLICY workspace_command_tenant_isolation ON workspace_command
+CREATE POLICY IF NOT EXISTS workspace_command_tenant_isolation ON workspace_command
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -247,8 +241,7 @@ CREATE TABLE IF NOT EXISTS workspace_seed_pipeline_stage (
 ALTER TABLE workspace_seed_pipeline_stage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workspace_seed_pipeline_stage FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS workspace_seed_pipeline_stage_tenant ON workspace_seed_pipeline_stage;
-CREATE POLICY workspace_seed_pipeline_stage_tenant ON workspace_seed_pipeline_stage
+CREATE POLICY IF NOT EXISTS workspace_seed_pipeline_stage_tenant ON workspace_seed_pipeline_stage
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -263,8 +256,7 @@ CREATE TABLE IF NOT EXISTS workspace_seed_expense_category (
 ALTER TABLE workspace_seed_expense_category ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workspace_seed_expense_category FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS workspace_seed_expense_category_tenant ON workspace_seed_expense_category;
-CREATE POLICY workspace_seed_expense_category_tenant ON workspace_seed_expense_category
+CREATE POLICY IF NOT EXISTS workspace_seed_expense_category_tenant ON workspace_seed_expense_category
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
