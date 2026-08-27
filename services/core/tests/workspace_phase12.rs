@@ -431,6 +431,25 @@ async fn system_role_deny_matrix_unit() {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
+            // Phase 2.1 People: Finance may read sensitive compensation/IDs.
+            if *role == Role::Finance && *perm == "hr.employee.read_sensitive" {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
+            // Phase 2.1 People: Manager may write/onboard/offboard and read sensitive.
+            if *role == Role::Manager
+                && matches!(
+                    *perm,
+                    "hr.employee.read_sensitive"
+                        | "hr.employee.write"
+                        | "hr.employee.onboard"
+                        | "hr.employee.offboard"
+                        | "hr.document.write"
+                )
+            {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
             assert!(
                 !is_allowed(&p, &PermissionId::from(*perm)),
                 "{role:?} must deny {perm}"
