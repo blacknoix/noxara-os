@@ -17,6 +17,9 @@ pub fn required_permission_for_event(envelope: &EventEnvelope) -> Option<Permiss
         (Context::Operations, "project") => "operations.project.read",
         (Context::Operations, "approval") => "operations.approval.read",
         (Context::People, "employee") => "hr.employee.read",
+        (Context::People, "leave") => "hr.leave.read",
+        (Context::People, "attendance") => "hr.attendance.read",
+        (Context::People, "holiday") => "hr.attendance.read",
         _ => {
             tracing::debug!(%key, "no permission mapping for event; skip notify");
             return None;

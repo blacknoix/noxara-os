@@ -805,6 +805,47 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Attach and manage employee HR documents",
         sensitive: true,
     },
+    // --- Attendance / leave (Phase 2.2) ---
+    PermissionDef {
+        id: "hr.attendance.read",
+        context: "hr",
+        resource: "attendance",
+        action: "read",
+        description: "View attendance records (scoped)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "hr.attendance.write",
+        context: "hr",
+        resource: "attendance",
+        action: "write",
+        description: "Record attendance, manage schedules and holidays",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.leave.read",
+        context: "hr",
+        resource: "leave",
+        action: "read",
+        description: "View leave types, balances, requests, and team calendar",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "hr.leave.write",
+        context: "hr",
+        resource: "leave",
+        action: "write",
+        description: "Request leave, manage leave types, run carry-forward",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.leave.approve",
+        context: "hr",
+        resource: "leave",
+        action: "approve",
+        description: "Approve or reject leave requests (via approval engine callback)",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -828,6 +869,9 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "hr.employee.onboard",
     "hr.employee.offboard",
     "hr.document.write",
+    "hr.attendance.write",
+    "hr.leave.write",
+    "hr.leave.approve",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1131,6 +1175,21 @@ pub mod perms {
     }
     pub fn hr_document_write() -> PermissionId {
         PermissionId::from("hr.document.write")
+    }
+    pub fn hr_attendance_read() -> PermissionId {
+        PermissionId::from("hr.attendance.read")
+    }
+    pub fn hr_attendance_write() -> PermissionId {
+        PermissionId::from("hr.attendance.write")
+    }
+    pub fn hr_leave_read() -> PermissionId {
+        PermissionId::from("hr.leave.read")
+    }
+    pub fn hr_leave_write() -> PermissionId {
+        PermissionId::from("hr.leave.write")
+    }
+    pub fn hr_leave_approve() -> PermissionId {
+        PermissionId::from("hr.leave.approve")
     }
 }
 

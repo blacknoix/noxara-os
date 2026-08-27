@@ -306,3 +306,322 @@ pub struct AccessAuditResponse {
     pub checklist: Vec<AccessChecklistItem>,
     pub all_cleared: bool,
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2.2 — Attendance & Leave
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WorkScheduleDto {
+    pub id: String,
+    pub name: String,
+    pub timezone: String,
+    pub weekly_hours: serde_json::Value,
+    pub location: Option<String>,
+    pub is_default: bool,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WorkScheduleListResponse {
+    pub items: Vec<WorkScheduleDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateWorkScheduleRequest {
+    pub name: String,
+    pub timezone: Option<String>,
+    pub weekly_hours: Option<serde_json::Value>,
+    pub location: Option<String>,
+    pub is_default: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct HolidayDto {
+    pub id: String,
+    pub name: String,
+    pub holiday_date: String,
+    pub location: Option<String>,
+    pub is_half_day: bool,
+    pub half_day_period: Option<String>,
+    pub created_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct HolidayListResponse {
+    pub items: Vec<HolidayDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateHolidayRequest {
+    pub name: String,
+    pub holiday_date: String,
+    pub location: Option<String>,
+    pub is_half_day: Option<bool>,
+    pub half_day_period: Option<String>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct AttendanceListQuery {
+    pub employee_id: Option<String>,
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AttendanceDto {
+    pub id: String,
+    pub employee_id: String,
+    pub entry_kind: String,
+    pub recorded_at: String,
+    pub local_date: String,
+    pub timezone: String,
+    pub source: String,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+    pub accuracy_meters: Option<f64>,
+    pub note: Option<String>,
+    pub reverses_id: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AttendanceListResponse {
+    pub items: Vec<AttendanceDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RecordAttendanceRequest {
+    pub employee_id: Option<String>,
+    pub entry_kind: String,
+    pub recorded_at: Option<String>,
+    pub timezone: Option<String>,
+    pub source: Option<String>,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+    pub accuracy_meters: Option<f64>,
+    pub note: Option<String>,
+    /// Public id of the fact row to reverse (creates append-only reversal).
+    pub reverses_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AttendanceImportRequest {
+    /// CSV body: employee_id,entry_kind,recorded_at[,timezone,latitude,longitude,accuracy_meters,note]
+    pub csv: String,
+    pub batch_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AttendanceImportResponse {
+    pub imported: i64,
+    pub skipped: i64,
+    pub items: Vec<AttendanceDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveTypeDto {
+    pub id: String,
+    pub code: String,
+    pub name: String,
+    pub category: String,
+    pub accrual_cadence: String,
+    pub accrual_units_milli: i32,
+    pub carry_forward_cap_milli: Option<i32>,
+    pub expiry_days: Option<i32>,
+    pub allows_half_day: bool,
+    pub requires_approval: bool,
+    pub is_active: bool,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveTypeListResponse {
+    pub items: Vec<LeaveTypeDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateLeaveTypeRequest {
+    pub code: String,
+    pub name: String,
+    pub category: Option<String>,
+    pub accrual_cadence: Option<String>,
+    pub accrual_units_milli: Option<i32>,
+    pub carry_forward_cap_milli: Option<i32>,
+    pub expiry_days: Option<i32>,
+    pub allows_half_day: Option<bool>,
+    pub requires_approval: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveRequestDto {
+    pub id: String,
+    pub employee_id: String,
+    pub leave_type_id: String,
+    pub status: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub start_period: String,
+    pub end_period: String,
+    pub units_milli: i32,
+    pub units_days: String,
+    pub timezone: String,
+    pub reason: Option<String>,
+    pub approval_id: Option<String>,
+    pub decided_at: Option<String>,
+    pub decision_note: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveRequestListResponse {
+    pub items: Vec<LeaveRequestDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct LeaveRequestListQuery {
+    pub employee_id: Option<String>,
+    pub status: Option<String>,
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateLeaveRequestRequest {
+    pub employee_id: Option<String>,
+    pub leave_type_id: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub start_period: Option<String>,
+    pub end_period: Option<String>,
+    pub timezone: Option<String>,
+    pub reason: Option<String>,
+    /// When true, immediately submit into the approval engine.
+    pub submit: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DecideLeaveRequest {
+    pub approve: bool,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveBalanceDto {
+    pub employee_id: String,
+    pub leave_type_id: String,
+    pub leave_type_code: String,
+    pub leave_type_name: String,
+    pub balance_units_milli: i32,
+    pub balance_days: String,
+    pub as_of: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveBalanceListResponse {
+    pub items: Vec<LeaveBalanceDto>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct LeaveBalanceQuery {
+    pub employee_id: Option<String>,
+    pub as_of: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveCalendarEntryDto {
+    pub leave_request_id: String,
+    pub employee_id: String,
+    pub employee_display_name: String,
+    pub leave_type_code: String,
+    pub status: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub start_period: String,
+    pub end_period: String,
+    pub units_milli: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveCalendarResponse {
+    pub items: Vec<LeaveCalendarEntryDto>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct LeaveCalendarQuery {
+    pub from: Option<String>,
+    pub to: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AbsenceReportRowDto {
+    pub employee_id: String,
+    pub employee_display_name: String,
+    pub leave_type_code: String,
+    pub units_milli: i32,
+    pub units_days: String,
+    pub request_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AbsenceReportResponse {
+    pub items: Vec<AbsenceReportRowDto>,
+    pub from: String,
+    pub to: String,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct AbsenceReportQuery {
+    pub from: Option<String>,
+    pub to: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CarryForwardRequest {
+    pub year: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CarryForwardResponse {
+    pub workflow_id: String,
+    pub year: i32,
+    pub status: String,
+    pub entries_posted: i32,
+    pub idempotent_replay: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AccrueLeaveRequest {
+    pub employee_id: String,
+    pub leave_type_id: String,
+    pub units_milli: Option<i32>,
+    pub effective_date: Option<String>,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LeaveLedgerEntryDto {
+    pub id: String,
+    pub employee_id: String,
+    pub leave_type_id: String,
+    pub entry_kind: String,
+    pub units_milli: i32,
+    pub effective_date: String,
+    pub expires_on: Option<String>,
+    pub leave_request_id: Option<String>,
+    pub note: Option<String>,
+    pub created_at: String,
+}

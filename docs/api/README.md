@@ -70,7 +70,21 @@ People bounded context, mounted at **`/api/v1/people/...`** (proxied by the gate
 - `POST /api/v1/people/employees/onboard` — `Idempotency-Key`; starts EmployeeOnboarding
 - `POST /api/v1/people/employees/{id}/offboard` — `Idempotency-Key`; starts EmployeeOffboarding + access revoke
 - `GET /api/v1/people/employees/{id}/access-audit` — membership/session checklist
+- `GET|POST /api/v1/people/schedules` — work schedules (`sch_`)
+- `GET|POST /api/v1/people/holidays` — holiday calendar (`hol_`)
+- `GET|POST /api/v1/people/attendance` — append-only attendance (`att_`); `POST .../import` CSV
+- `GET /api/v1/people/me/attendance`
+- `GET|POST /api/v1/people/leave-types` — leave type catalogue (`lvt_`)
+- `GET|POST /api/v1/people/leave-requests` — leave requests (`lvr_`); submit / cancel / decide
+- `GET /api/v1/people/me/leave` — self-service leave list
+- `GET /api/v1/people/leave/balances` — ledger-derived balances
+- `GET /api/v1/people/leave/calendar` — team leave calendar (permission-scoped)
+- `GET /api/v1/people/leave/reports/absences` — absence report
+- `POST /api/v1/people/leave/carry-forward` — idempotent year-end (`{org}:LeaveCarryForward:{year}`)
+- `POST /api/v1/people/leave/accrue` — post accrual ledger entry
 - `GET /api/v1/people/openapi.json`
+
+Leave requests with `requires_approval` route through Operations ApprovalProcess (`subject_type=leave_request`).
 
 Gateway URL: same host as core (`PUBLIC_API_URL`), path prefixes `/api/v1/sales`, `/api/v1/finance`, `/api/v1/operations`, and `/api/v1/people`.
 

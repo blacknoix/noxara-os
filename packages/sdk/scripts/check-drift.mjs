@@ -85,6 +85,25 @@ for (const name of ['EmployeeDto', 'OnboardRequest', 'OffboardResponse']) {
   }
 }
 
+if (!doc.paths['/api/v1/people/attendance'] || !doc.paths['/api/v1/people/leave-requests']) {
+  console.error('OpenAPI drift: missing attendance/leave paths');
+  process.exit(1);
+}
+for (const name of [
+  'AttendanceDto',
+  'LeaveRequestDto',
+  'LeaveTypeDto',
+  'LeaveBalanceDto',
+  'CarryForwardResponse',
+  'WorkScheduleDto',
+  'HolidayDto',
+]) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing schema ${name}`);
+    process.exit(1);
+  }
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);

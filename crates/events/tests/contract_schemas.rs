@@ -53,6 +53,22 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
         ("employee", "created" | "updated" | "onboarded" | "offboarded") => {
             serde_json::json!({ "id": "emp_test", "display_name": "Test Employee" })
         }
+        ("attendance", "recorded") => serde_json::json!({
+            "id": "att_test",
+            "employee_id": "emp_test",
+            "entry_kind": "check_in"
+        }),
+        ("leave", "requested" | "approved" | "rejected" | "cancelled" | "ledger_posted") => {
+            serde_json::json!({ "id": "lvr_test", "employee_id": "emp_test" })
+        }
+        ("leave", "carry_forward") => serde_json::json!({
+            "workflow_id": "org_test:LeaveCarryForward:2026",
+            "year": 2026
+        }),
+        ("holiday", "created") => serde_json::json!({
+            "id": "hol_test",
+            "holiday_date": "2026-12-25"
+        }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

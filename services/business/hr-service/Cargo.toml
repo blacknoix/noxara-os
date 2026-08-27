@@ -1,6 +1,6 @@
 [package]
 name = "companyos-hr"
-description = "CompanyOS People / HR v1 — Phase 2.1 (business / people)"
+description = "CompanyOS People / HR — Phase 2.1–2.2 (business / people)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -51,3 +51,4 @@ tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 axum = { workspace = true }
 base64 = { workspace = true }
+proptest = { workspace = true }

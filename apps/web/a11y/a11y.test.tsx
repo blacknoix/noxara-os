@@ -157,6 +157,61 @@ describe('a11y', () => {
     await expectNoSeriousAxeViolations(container);
   });
 
+  it('people attendance and leave landmarks have no serious/critical violations', async () => {
+    const attendance = [
+      {
+        id: 'att_1',
+        local_date: '2026-03-02',
+        entry_kind: 'check_in',
+        recorded_at: '2026-03-02T09:00:00Z',
+        source: 'manual',
+      },
+    ];
+    const leave = [
+      {
+        id: 'lvr_1',
+        start_date: '2026-03-10',
+        end_date: '2026-03-12',
+        status: 'approved',
+        units_days: '3',
+      },
+    ];
+    const { container } = render(
+      <main>
+        <h1>Attendance</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'local_date', header: 'Date', cell: (r) => r.local_date },
+            {
+              key: 'entry_kind',
+              header: 'Kind',
+              cell: (r) => <StatusCell status={r.entry_kind} />,
+            },
+            { key: 'source', header: 'Source', cell: (r) => r.source },
+          ]}
+          rows={attendance}
+        />
+        <h2>My leave</h2>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'start_date', header: 'Start', cell: (r) => r.start_date },
+            { key: 'end_date', header: 'End', cell: (r) => r.end_date },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} />,
+            },
+            { key: 'units_days', header: 'Days', cell: (r) => r.units_days },
+          ]}
+          rows={leave}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
   it('sales pipeline board (kanban columns) has no serious/critical violations', async () => {
     const { container } = render(
       <main>
