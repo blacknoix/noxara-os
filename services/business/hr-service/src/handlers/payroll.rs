@@ -2207,7 +2207,7 @@ async fn post_payroll_journal(
     request_id: &str,
 ) -> Result<(String, Option<Uuid>), AppError> {
     let finance_url = std::env::var("FINANCE_SERVICE_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:8085".into());
+        .unwrap_or_else(|_| "http://127.0.0.1:8083".into());
     let url = format!(
         "{}/api/v1/finance/journals",
         finance_url.trim_end_matches('/')

@@ -208,6 +208,19 @@ const emit = [
   'CarryForwardResponse',
   'AccrueLeaveRequest',
   'LeaveLedgerEntryDto',
+  'PayrollComponentDto',
+  'PayrollComponentListResponse',
+  'CreatePayrollComponentRequest',
+  'PayrollRunDto',
+  'PayrollRunListResponse',
+  'CreatePayrollRunRequest',
+  'PayslipLineDto',
+  'PayslipDto',
+  'PayslipListResponse',
+  'DecidePayrollRequest',
+  'JournalLineInput',
+  'PostJournalRequest',
+  'JournalEntryDto',
 ];
 
 const seen = new Set();

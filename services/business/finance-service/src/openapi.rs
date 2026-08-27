@@ -5,7 +5,8 @@ use axum::{Json, Router};
 use utoipa::OpenApi;
 
 use crate::handlers::{
-    credit_notes, customers, events, expenses, invoices, payments, recurring, reports, webhooks,
+    credit_notes, customers, events, expenses, invoices, journals, payments, recurring, reports,
+    webhooks,
 };
 use crate::state::AppState;
 use crate::types::*;
@@ -35,6 +36,7 @@ use crate::types::*;
         recurring::create_recurring,
         recurring::run_due,
         events::apply_sales_event_handler,
+        journals::post_journal_handler,
     ),
     components(schemas(
         FinanceCustomerDto,
@@ -74,6 +76,9 @@ use crate::types::*;
         ApplySalesEventRequest,
         ApplySalesEventResponse,
         ListQuery,
+        JournalLineInput,
+        PostJournalRequest,
+        JournalEntryDto,
     )),
     tags(
         (name = "finance-customers", description = "Projected finance customers"),
@@ -85,11 +90,12 @@ use crate::types::*;
         (name = "finance-webhooks", description = "Provider webhooks"),
         (name = "finance-recurring", description = "Recurring invoice templates"),
         (name = "finance-events", description = "In-process sales event apply"),
+        (name = "finance-journals", description = "Balanced journal posting (payroll)"),
     ),
     info(
         title = "CompanyOS Finance API",
         version = "0.1.0",
-        description = "Phase 1.5 — Finance bounded context: invoices, payments, credit notes, expenses, and reporting."
+        description = "Phase 1.5–2.3 — Finance: invoices, payments, expenses, payroll journals."
     )
 )]
 pub struct ApiDoc;

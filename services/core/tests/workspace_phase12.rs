@@ -448,6 +448,16 @@ async fn system_role_deny_matrix_unit() {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
+            // Phase 2.3: Finance may read/approve payroll and post journals.
+            if *role == Role::Finance
+                && matches!(
+                    *perm,
+                    "hr.payroll.read" | "hr.payroll.approve" | "finance.journal.post"
+                )
+            {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
             // Phase 2.1 People: Manager may write/onboard/offboard and read sensitive.
             if *role == Role::Manager
                 && matches!(
@@ -460,6 +470,11 @@ async fn system_role_deny_matrix_unit() {
                         | "hr.attendance.write"
                         | "hr.leave.write"
                         | "hr.leave.approve"
+                        | "hr.payroll.read"
+                        | "hr.payroll.write"
+                        | "hr.payroll.approve"
+                        | "hr.payroll.run"
+                        | "finance.journal.post"
                 )
             {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));

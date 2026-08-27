@@ -637,6 +637,7 @@ pub struct PayrollComponentDto {
     pub label: String,
     pub line_kind: String,
     pub calc_method: String,
+    #[schema(value_type = Object)]
     pub config_json: serde_json::Value,
     pub currency: Option<String>,
     pub is_active: bool,
@@ -657,6 +658,7 @@ pub struct CreatePayrollComponentRequest {
     pub label: String,
     pub line_kind: String,
     pub calc_method: String,
+    #[schema(value_type = Object)]
     pub config_json: Option<serde_json::Value>,
     pub currency: Option<String>,
     pub sort_order: Option<i32>,

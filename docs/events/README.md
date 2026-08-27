@@ -72,6 +72,13 @@ Emitted in the same transaction as the approval write. Finance/CRM call the Oper
 - `companyos.{org_}.people.leave.carry_forward.v1`
 - `companyos.{org_}.people.holiday.created.v1`
 
+## People / Payroll (Phase 2.3)
+
+- `companyos.{org_}.people.payroll_run.drafted.v1` / `.calculated.v1` / `.approved.v1` / `.paid.v1`
+- `companyos.{org_}.people.payslip.issued.v1`
+
+Salary / payslip amounts are not included in event payloads. Journals for paid runs are posted through Finance HTTP APIs (`source_type=payroll`).
+
 Restricted fields (compensation, government IDs, bank/tax) are never included in event payloads. Departments remain Workspace-owned (`dep_`); HR stores opaque department ids (ADR 020). Leave balances are derived from the append-only leave ledger; attendance facts are append-only (corrections are reversing entries).
 
 ## Platform consumers (Phase 1.8)

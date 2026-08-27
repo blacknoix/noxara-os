@@ -82,9 +82,17 @@ People bounded context, mounted at **`/api/v1/people/...`** (proxied by the gate
 - `GET /api/v1/people/leave/reports/absences` — absence report
 - `POST /api/v1/people/leave/carry-forward` — idempotent year-end (`{org}:LeaveCarryForward:{year}`)
 - `POST /api/v1/people/leave/accrue` — post accrual ledger entry
+- `GET|POST /api/v1/people/payroll/runs` — payroll run lifecycle (`payrun_`)
+- `POST /api/v1/people/payroll/runs/{id}/calculate|submit|approve|decide|pay|adjust` — `Idempotency-Key` on calculate/approve/pay
+- `GET /api/v1/people/payroll/runs/{id}/payslips` / `.../export` — payslips + CSV payment batch
+- `GET /api/v1/people/payroll/payslips/{id}` — audited figure read (`hr.payroll.read`)
+- `GET /api/v1/people/me/payslips` — employee self-service (own payslip only)
+- `GET|POST /api/v1/people/payroll/components` — configurable earning/deduction components
+- `POST /api/v1/finance/journals` — balanced journal post (`finance.journal.post`; payroll source)
 - `GET /api/v1/people/openapi.json`
 
 Leave requests with `requires_approval` route through Operations ApprovalProcess (`subject_type=leave_request`).
+Payroll submit uses ApprovalProcess (`subject_type=payroll_run`) plus `hr.payroll.approve` on decide (ADR 021).
 
 Gateway URL: same host as core (`PUBLIC_API_URL`), path prefixes `/api/v1/sales`, `/api/v1/finance`, `/api/v1/operations`, and `/api/v1/people`.
 

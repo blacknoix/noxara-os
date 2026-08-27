@@ -21,6 +21,12 @@ pub mod codes {
     pub const TAX_PAYABLE: &str = "2100";
     pub const REVENUE: &str = "4000";
     pub const EXPENSE: &str = "5000";
+    /// Wages / salary expense (payroll).
+    pub const WAGES_EXPENSE: &str = "5100";
+    /// Statutory & other payroll deductions payable.
+    pub const PAYROLL_DEDUCTIONS: &str = "2300";
+    /// Net pay clearing (ACH/CSV batch).
+    pub const NET_PAY_CLEARING: &str = "2400";
 }
 
 #[derive(Debug, Clone)]
@@ -218,6 +224,54 @@ pub fn expense_entry(
     Ok(draft)
 }
 
+/// Payroll run posting: Dr Wages, Cr Deductions Payable, Cr Net Pay Clearing.
+pub fn payroll_entry(
+    run_id: Uuid,
+    currency: Currency,
+    gross_minor: i64,
+    deductions_minor: i64,
+    net_minor: i64,
+) -> Result<JournalDraft, MoneyError> {
+    if gross_minor
+        .checked_sub(deductions_minor)
+        .ok_or(MoneyError::Overflow)?
+        != net_minor
+    {
+        return Err(MoneyError::Overflow);
+    }
+    let mut lines = vec![LedgerLine {
+        account_code: codes::WAGES_EXPENSE,
+        debit_minor: gross_minor,
+        credit_minor: 0,
+        memo: Some("Wages expense".into()),
+    }];
+    if deductions_minor > 0 {
+        lines.push(LedgerLine {
+            account_code: codes::PAYROLL_DEDUCTIONS,
+            debit_minor: 0,
+            credit_minor: deductions_minor,
+            memo: Some("Payroll deductions payable".into()),
+        });
+    }
+    if net_minor > 0 {
+        lines.push(LedgerLine {
+            account_code: codes::NET_PAY_CLEARING,
+            debit_minor: 0,
+            credit_minor: net_minor,
+            memo: Some("Net pay clearing".into()),
+        });
+    }
+    let draft = JournalDraft {
+        memo: format!("Payroll run {run_id}"),
+        source_type: "payroll",
+        source_id: run_id,
+        currency,
+        lines,
+    };
+    draft.assert_balanced()?;
+    Ok(draft)
+}
+
 /// Ensure standard ledger accounts exist for `org_id` (idempotent).
 pub async fn ensure_ledger_accounts(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
@@ -235,6 +289,19 @@ pub async fn ensure_ledger_accounts(
         ),
         (codes::REVENUE, "Revenue", "revenue", "credit"),
         (codes::EXPENSE, "Operating Expenses", "expense", "debit"),
+        (codes::WAGES_EXPENSE, "Wages Expense", "expense", "debit"),
+        (
+            codes::PAYROLL_DEDUCTIONS,
+            "Payroll Deductions Payable",
+            "liability",
+            "credit",
+        ),
+        (
+            codes::NET_PAY_CLEARING,
+            "Net Pay Clearing",
+            "liability",
+            "credit",
+        ),
     ];
     for (code, name, ty, normal) in accounts {
         sqlx::query(
@@ -359,6 +426,18 @@ mod tests {
     fn expense_balances() {
         let d = expense_entry(Uuid::nil(), Currency::USD, 12345).unwrap();
         d.assert_balanced().unwrap();
+    }
+
+    #[test]
+    fn payroll_balances() {
+        let d = payroll_entry(Uuid::nil(), Currency::USD, 10_000, 2_000, 8_000).unwrap();
+        d.assert_balanced().unwrap();
+        assert_eq!(d.source_type, "payroll");
+    }
+
+    #[test]
+    fn payroll_rejects_unbalanced_net() {
+        assert!(payroll_entry(Uuid::nil(), Currency::USD, 10_000, 2_000, 7_000).is_err());
     }
 
     #[test]

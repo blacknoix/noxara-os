@@ -12,6 +12,7 @@ pub fn permission_for_doc_type(doc_type: &str) -> Option<PermissionId> {
         "employee" => "hr.employee.read",
         "leave_request" => "hr.leave.read",
         "attendance" => "hr.attendance.read",
+        "payroll_run" | "payslip" => "hr.payroll.read",
         _ => return None,
     };
     Some(PermissionId::from(perm))
@@ -27,6 +28,8 @@ pub fn doc_type_from_aggregate(aggregate: &str) -> Option<&'static str> {
         "employee" => Some("employee"),
         "leave" => Some("leave_request"),
         "attendance" => Some("attendance"),
+        "payroll_run" => Some("payroll_run"),
+        "payslip" => Some("payslip"),
         _ => None,
     }
 }

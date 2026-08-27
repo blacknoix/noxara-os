@@ -1,6 +1,6 @@
 [package]
 name = "companyos-hr"
-description = "CompanyOS People / HR — Phase 2.1–2.2 (business / people)"
+description = "CompanyOS People / HR — Phase 2.1–2.3 (business / people)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

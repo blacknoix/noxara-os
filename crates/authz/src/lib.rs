@@ -180,6 +180,9 @@ impl Role {
                 perms::hr_document_read(),
                 perms::hr_attendance_read(),
                 perms::hr_leave_read(),
+                perms::hr_payroll_read(),
+                perms::hr_payroll_approve(),
+                perms::finance_journal_post(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -300,6 +303,11 @@ impl Role {
                 perms::hr_leave_read(),
                 perms::hr_leave_write(),
                 perms::hr_leave_approve(),
+                perms::hr_payroll_read(),
+                perms::hr_payroll_write(),
+                perms::hr_payroll_approve(),
+                perms::hr_payroll_run(),
+                perms::finance_journal_post(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -834,6 +842,22 @@ mod tests {
             ("operations.approval.manage", Role::Sales),
             ("operations.approval.manage", Role::Finance),
             ("operations.approval.manage", Role::Manager),
+            ("hr.payroll.read", Role::Member),
+            ("hr.payroll.read", Role::ReadOnly),
+            ("hr.payroll.read", Role::Sales),
+            ("hr.payroll.write", Role::Member),
+            ("hr.payroll.write", Role::ReadOnly),
+            ("hr.payroll.write", Role::Sales),
+            ("hr.payroll.write", Role::Finance),
+            ("hr.payroll.approve", Role::Member),
+            ("hr.payroll.approve", Role::ReadOnly),
+            ("hr.payroll.approve", Role::Sales),
+            ("hr.payroll.run", Role::Member),
+            ("hr.payroll.run", Role::ReadOnly),
+            ("hr.payroll.run", Role::Sales),
+            ("finance.journal.post", Role::Member),
+            ("finance.journal.post", Role::ReadOnly),
+            ("finance.journal.post", Role::Sales),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);
@@ -860,7 +884,13 @@ mod tests {
         assert!(is_allowed(&finance, &perms::hr_employee_read_sensitive()));
         assert!(!is_allowed(&finance, &perms::hr_employee_write()));
         assert!(!is_allowed(&finance, &perms::hr_employee_offboard()));
-        // Manager can run People write/onboard/offboard
+        // Phase 2.3: Finance can read/approve payroll and post journals; cannot draft/run
+        assert!(is_allowed(&finance, &perms::hr_payroll_read()));
+        assert!(is_allowed(&finance, &perms::hr_payroll_approve()));
+        assert!(is_allowed(&finance, &perms::finance_journal_post()));
+        assert!(!is_allowed(&finance, &perms::hr_payroll_write()));
+        assert!(!is_allowed(&finance, &perms::hr_payroll_run()));
+        // Manager can run People write/onboard/offboard + payroll
         let manager = Principal::with_roles(vec![Role::Manager]);
         assert!(is_allowed(&manager, &perms::hr_employee_write()));
         assert!(is_allowed(&manager, &perms::hr_employee_onboard()));
@@ -869,7 +899,12 @@ mod tests {
         assert!(is_allowed(&manager, &perms::hr_attendance_write()));
         assert!(is_allowed(&manager, &perms::hr_leave_write()));
         assert!(is_allowed(&manager, &perms::hr_leave_approve()));
-        // Member cannot issue invoices or read HR sensitive
+        assert!(is_allowed(&manager, &perms::hr_payroll_read()));
+        assert!(is_allowed(&manager, &perms::hr_payroll_write()));
+        assert!(is_allowed(&manager, &perms::hr_payroll_approve()));
+        assert!(is_allowed(&manager, &perms::hr_payroll_run()));
+        assert!(is_allowed(&manager, &perms::finance_journal_post()));
+        // Member cannot issue invoices or read HR sensitive / others' payslips
         let member = Principal::with_roles(vec![Role::Member]);
         assert!(!is_allowed(&member, &perms::finance_invoice_issue()));
         assert!(!is_allowed(&member, &perms::hr_employee_read_sensitive()));
@@ -877,6 +912,11 @@ mod tests {
         assert!(is_allowed(&member, &perms::hr_leave_write()));
         assert!(is_allowed(&member, &perms::hr_attendance_write()));
         assert!(!is_allowed(&member, &perms::hr_leave_approve()));
+        assert!(!is_allowed(&member, &perms::hr_payroll_read()));
+        assert!(!is_allowed(&member, &perms::hr_payroll_write()));
+        assert!(!is_allowed(&member, &perms::hr_payroll_approve()));
+        assert!(!is_allowed(&member, &perms::hr_payroll_run()));
+        assert!(!is_allowed(&member, &perms::finance_journal_post()));
         // Admin can invite / assign / revoke / settings
         let admin = Principal::with_roles(vec![Role::Admin]);
         assert!(is_allowed(&admin, &perms::workspace_member_invite()));

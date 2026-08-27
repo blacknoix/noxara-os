@@ -63,6 +63,11 @@ pub enum IdKind {
     LeaveType,
     LeaveRequest,
     LeaveLedgerEntry,
+    PayrollRun,
+    Payslip,
+    PayrollEarningLine,
+    PayrollDeductionLine,
+    PayrollComponent,
 }
 
 impl IdKind {
@@ -107,6 +112,11 @@ impl IdKind {
             Self::LeaveType => "lvt_",
             Self::LeaveRequest => "lvr_",
             Self::LeaveLedgerEntry => "lv_",
+            Self::PayrollRun => "payrun_",
+            Self::Payslip => "payslip_",
+            Self::PayrollEarningLine => "earning_",
+            Self::PayrollDeductionLine => "deduction_",
+            Self::PayrollComponent => "pcomp_",
         }
     }
 
@@ -116,6 +126,8 @@ impl IdKind {
             "usr_" => Some(Self::User),
             "inv_" => Some(Self::Invoice),
             "cn_" => Some(Self::CreditNote),
+            "payrun_" => Some(Self::PayrollRun),
+            "payslip_" => Some(Self::Payslip),
             "pay_" => Some(Self::Payment),
             "exp_" => Some(Self::Expense),
             "dl_" => Some(Self::Deal),
@@ -151,6 +163,9 @@ impl IdKind {
             "lvt_" => Some(Self::LeaveType),
             "lvr_" => Some(Self::LeaveRequest),
             "lv_" => Some(Self::LeaveLedgerEntry),
+            "earning_" => Some(Self::PayrollEarningLine),
+            "deduction_" => Some(Self::PayrollDeductionLine),
+            "pcomp_" => Some(Self::PayrollComponent),
             _ => None,
         }
     }
@@ -211,6 +226,8 @@ impl FromStr for PublicId {
             ("org_", IdKind::Org),
             ("usr_", IdKind::User),
             ("inv_", IdKind::Invoice),
+            ("payrun_", IdKind::PayrollRun),
+            ("payslip_", IdKind::Payslip),
             ("pay_", IdKind::Payment),
             ("exp_", IdKind::Expense),
             ("cus_", IdKind::Customer),
@@ -244,6 +261,9 @@ impl FromStr for PublicId {
             ("lvt_", IdKind::LeaveType),
             ("lvr_", IdKind::LeaveRequest),
             ("lv_", IdKind::LeaveLedgerEntry),
+            ("earning_", IdKind::PayrollEarningLine),
+            ("deduction_", IdKind::PayrollDeductionLine),
+            ("pcomp_", IdKind::PayrollComponent),
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
             ("cn_", IdKind::CreditNote),
@@ -362,6 +382,11 @@ mod tests {
             IdKind::LeaveType,
             IdKind::LeaveRequest,
             IdKind::LeaveLedgerEntry,
+            IdKind::PayrollRun,
+            IdKind::Payslip,
+            IdKind::PayrollEarningLine,
+            IdKind::PayrollDeductionLine,
+            IdKind::PayrollComponent,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

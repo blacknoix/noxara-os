@@ -1111,6 +1111,36 @@ async fn apply_subject_side_effect(
                 );
             let _ = req.send().await;
         }
+        "payroll_run" => {
+            let hr_url =
+                std::env::var("HR_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8088".into());
+            let url = format!(
+                "{}/api/v1/people/payroll/runs/{}/decide",
+                hr_url.trim_end_matches('/'),
+                dto.subject_id
+            );
+            let client = reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(5))
+                .build()?;
+            let mut req = client.post(&url).json(&serde_json::json!({
+                "approve": approve,
+                "note": dto.decision_note,
+            }));
+            req = req
+                .header(
+                    "x-companyos-dev-org-id",
+                    auth.ctx.org_id.to_public().as_str(),
+                )
+                .header(
+                    "x-companyos-dev-user-id",
+                    PublicId::new(IdKind::User, auth.ctx.actor.user_id).as_str(),
+                )
+                .header(
+                    "x-companyos-on-behalf-of",
+                    user_pub(auth.ctx.actor.on_behalf_of),
+                );
+            let _ = req.send().await;
+        }
         _ => {}
     }
     Ok(())

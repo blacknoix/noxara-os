@@ -104,6 +104,24 @@ for (const name of [
   }
 }
 
+if (!doc.paths['/api/v1/people/payroll/runs'] || !doc.paths['/api/v1/finance/journals']) {
+  console.error('OpenAPI drift: missing payroll/journal paths');
+  process.exit(1);
+}
+for (const name of [
+  'PayrollRunDto',
+  'PayslipDto',
+  'PayslipLineDto',
+  'PayrollComponentDto',
+  'JournalEntryDto',
+  'PostJournalRequest',
+]) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing schema ${name}`);
+    process.exit(1);
+  }
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);
