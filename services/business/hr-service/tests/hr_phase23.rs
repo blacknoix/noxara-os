@@ -95,7 +95,9 @@ impl Drop for FinanceServer {
 async fn spawn_finance_server(pool: PgPool, ring: KeyRing) -> FinanceServer {
     let _guard = FINANCE_SPAWN_LOCK.lock().await;
     std::env::set_var("COMPANYOS_LOCAL_AUTH", "1");
-    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind finance");
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind finance");
     let addr = listener.local_addr().expect("local addr");
     let url = format!("http://{addr}");
     std::env::set_var("FINANCE_SERVICE_URL", &url);
@@ -568,7 +570,10 @@ async fn payslip_lines_include_calculation_basis() {
                 "line {:?} missing calculation_basis",
                 line["component_code"]
             );
-            assert!(basis.get("method").is_some(), "basis missing method: {basis}");
+            assert!(
+                basis.get("method").is_some(),
+                "basis missing method: {basis}"
+            );
         }
     }
 }
@@ -580,10 +585,8 @@ async fn unpaid_leave_reduces_gross_pay() {
         return;
     };
     let app = hr_app(seed.pool.clone(), seed.ring.clone());
-    let emp_leave =
-        link_employee(&app, &seed.owner_token, seed.member_user_id, "Leave Emp").await;
-    let emp_clean =
-        link_employee(&app, &seed.owner_token, seed.manager_user_id, "Clean Emp").await;
+    let emp_leave = link_employee(&app, &seed.owner_token, seed.member_user_id, "Leave Emp").await;
+    let emp_clean = link_employee(&app, &seed.owner_token, seed.manager_user_id, "Clean Emp").await;
     add_compensation(&app, &seed.owner_token, &emp_leave, 100_000).await;
     add_compensation(&app, &seed.owner_token, &emp_clean, 100_000).await;
 
@@ -679,9 +682,9 @@ async fn member_denied_others_payslips_and_runs() {
         return;
     };
     let app = hr_app(seed.pool.clone(), seed.ring.clone());
-    let member_emp = link_employee(&app, &seed.owner_token, seed.member_user_id, "Member Emp").await;
-    let other_emp =
-        link_employee(&app, &seed.owner_token, seed.manager_user_id, "Other Emp").await;
+    let member_emp =
+        link_employee(&app, &seed.owner_token, seed.member_user_id, "Member Emp").await;
+    let other_emp = link_employee(&app, &seed.owner_token, seed.manager_user_id, "Other Emp").await;
     add_compensation(&app, &seed.owner_token, &member_emp, 60_000).await;
     add_compensation(&app, &seed.owner_token, &other_emp, 70_000).await;
 
@@ -878,7 +881,10 @@ async fn finance_journal_balanced_and_idempotent() {
     .await
     .unwrap();
     tx.commit().await.unwrap();
-    assert_eq!(count.0, 1, "expected exactly one journal entry for source_id");
+    assert_eq!(
+        count.0, 1,
+        "expected exactly one journal entry for source_id"
+    );
 
     assert_journals_balanced(&seed.pool, seed.org).await;
 }

@@ -16,7 +16,10 @@ use sqlx::{Postgres, QueryBuilder, Transaction};
 use uuid::Uuid;
 
 use super::employees::{fetch_employee_by_user, EmployeeRow};
-use super::{conflict, crypto_err, internal, normalize_paging, not_found, parse_optional_public_id, parse_public_id, validation};
+use super::{
+    conflict, crypto_err, internal, normalize_paging, not_found, parse_optional_public_id,
+    parse_public_id, validation,
+};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
@@ -54,7 +57,10 @@ pub fn router() -> Router<AppState> {
             post(calculate_run),
         )
         .route("/api/v1/people/payroll/runs/{id}/submit", post(submit_run))
-        .route("/api/v1/people/payroll/runs/{id}/approve", post(approve_run))
+        .route(
+            "/api/v1/people/payroll/runs/{id}/approve",
+            post(approve_run),
+        )
         .route("/api/v1/people/payroll/runs/{id}/decide", post(decide_run))
         .route("/api/v1/people/payroll/runs/{id}/pay", post(pay_run))
         .route("/api/v1/people/payroll/runs/{id}/adjust", post(adjust_run))
@@ -218,11 +224,7 @@ pub async fn list_components(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_read(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -396,11 +398,7 @@ pub async fn list_runs(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_read(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -620,11 +618,7 @@ pub async fn get_run(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_read(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -672,11 +666,7 @@ pub async fn calculate_run(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_run(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_run(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -743,10 +733,7 @@ pub async fn calculate_run(
 
     let working_days = count_weekdays(run.period_start, run.period_end);
     if working_days == 0 {
-        return Err(validation(
-            &request_id,
-            "pay period has no working days",
-        ));
+        return Err(validation(&request_id, "pay period has no working days"));
     }
 
     let mut total_gross: i64 = 0;
@@ -828,13 +815,8 @@ pub async fn calculate_run(
             if comp.calc_method == "percent_of_gross" {
                 continue;
             }
-            let (amount, basis) = compute_line_amount(
-                comp,
-                salary,
-                unpaid_milli,
-                working_days,
-                ot_hours_milli,
-            );
+            let (amount, basis) =
+                compute_line_amount(comp, salary, unpaid_milli, working_days, ot_hours_milli);
             if amount == 0 {
                 continue;
             }
@@ -1007,13 +989,19 @@ pub async fn calculate_run(
     .await
     .map_err(internal(&request_id))?;
 
-    let body_json = serde_json::to_value(&dto).map_err(|e| {
-        AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string())
-    })?;
+    let body_json = serde_json::to_value(&dto)
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
     if let Some(key) = idempotency::header_key(&headers) {
-        idempotency::put(&mut *tx, org_id, "payroll.calculate", &key, 200, body_json.clone())
-            .await
-            .map_err(internal(&request_id))?;
+        idempotency::put(
+            &mut *tx,
+            org_id,
+            "payroll.calculate",
+            &key,
+            200,
+            body_json.clone(),
+        )
+        .await
+        .map_err(internal(&request_id))?;
     }
 
     tx.commit().await.map_err(internal(&request_id))?;
@@ -1136,10 +1124,9 @@ pub async fn approve_run(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idempotency::header_key(&headers) {
-        if let Some((status, cached)) =
-            idempotency::get(&mut *tx, org_id, "payroll.approve", &key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, cached)) = idempotency::get(&mut *tx, org_id, "payroll.approve", &key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             return Ok((
@@ -1153,9 +1140,8 @@ pub async fn approve_run(
     let run = fetch_run(&mut tx, org_id, run_id, &request_id).await?;
     if run.status == "approved" || run.status == "paid" {
         let dto = run.into_dto();
-        let body_json = serde_json::to_value(&dto).map_err(|e| {
-            AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string())
-        })?;
+        let body_json = serde_json::to_value(&dto)
+            .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
         tx.commit().await.map_err(internal(&request_id))?;
         return Ok((StatusCode::OK, Json(body_json)).into_response());
     }
@@ -1168,13 +1154,19 @@ pub async fn approve_run(
 
     let dto = do_approve_run(&mut tx, &auth, org_id, run_id, None, &request_id).await?;
 
-    let body_json = serde_json::to_value(&dto).map_err(|e| {
-        AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string())
-    })?;
+    let body_json = serde_json::to_value(&dto)
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
     if let Some(key) = idempotency::header_key(&headers) {
-        idempotency::put(&mut *tx, org_id, "payroll.approve", &key, 200, body_json.clone())
-            .await
-            .map_err(internal(&request_id))?;
+        idempotency::put(
+            &mut *tx,
+            org_id,
+            "payroll.approve",
+            &key,
+            200,
+            body_json.clone(),
+        )
+        .await
+        .map_err(internal(&request_id))?;
     }
 
     tx.commit().await.map_err(internal(&request_id))?;
@@ -1227,7 +1219,15 @@ pub async fn decide_run(
     }
 
     let dto = if body.approve {
-        do_approve_run(&mut tx, &auth, org_id, run_id, body.note.as_deref(), &request_id).await?
+        do_approve_run(
+            &mut tx,
+            &auth,
+            org_id,
+            run_id,
+            body.note.as_deref(),
+            &request_id,
+        )
+        .await?
     } else {
         let updated: RunRow = sqlx::query_as(&format!(
             r#"
@@ -1269,11 +1269,7 @@ pub async fn pay_run(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_run(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_run(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -1297,9 +1293,8 @@ pub async fn pay_run(
     let run = fetch_run(&mut tx, org_id, run_id, &request_id).await?;
     if run.status == "paid" {
         let dto = run.into_dto();
-        let body_json = serde_json::to_value(&dto).map_err(|e| {
-            AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string())
-        })?;
+        let body_json = serde_json::to_value(&dto)
+            .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
         tx.commit().await.map_err(internal(&request_id))?;
         return Ok((StatusCode::OK, Json(body_json)).into_response());
     }
@@ -1311,13 +1306,8 @@ pub async fn pay_run(
     }
 
     let idem_key = idempotency::header_key(&headers);
-    let (journal_public_id, journal_entry_id) = post_payroll_journal(
-        &auth,
-        &run,
-        idem_key.as_deref(),
-        &request_id,
-    )
-    .await?;
+    let (journal_public_id, journal_entry_id) =
+        post_payroll_journal(&auth, &run, idem_key.as_deref(), &request_id).await?;
 
     let updated: RunRow = sqlx::query_as(&format!(
         r#"
@@ -1418,13 +1408,19 @@ pub async fn pay_run(
     .await
     .map_err(internal(&request_id))?;
 
-    let body_json = serde_json::to_value(&dto).map_err(|e| {
-        AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string())
-    })?;
+    let body_json = serde_json::to_value(&dto)
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
     if let Some(key) = idempotency::header_key(&headers) {
-        idempotency::put(&mut *tx, org_id, "payroll.pay", &key, 200, body_json.clone())
-            .await
-            .map_err(internal(&request_id))?;
+        idempotency::put(
+            &mut *tx,
+            org_id,
+            "payroll.pay",
+            &key,
+            200,
+            body_json.clone(),
+        )
+        .await
+        .map_err(internal(&request_id))?;
     }
 
     tx.commit().await.map_err(internal(&request_id))?;
@@ -1550,11 +1546,7 @@ pub async fn list_run_payslips(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_read(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -1602,11 +1594,7 @@ pub async fn export_run(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_read(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -1653,11 +1641,7 @@ pub async fn export_run(
         ));
     }
 
-    Ok((
-        StatusCode::OK,
-        [("content-type", "text/csv")],
-        csv,
-    ))
+    Ok((StatusCode::OK, [("content-type", "text/csv")], csv))
 }
 
 /// GET /api/v1/people/payroll/payslips/{id}
@@ -1680,11 +1664,7 @@ pub async fn get_payslip(
         &request_id,
     )
     .await?;
-    enforce_any_scope(
-        &membership.principal,
-        perms::hr_payroll_read(),
-        &request_id,
-    )?;
+    enforce_any_scope(&membership.principal, perms::hr_payroll_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -1753,10 +1733,7 @@ pub async fn list_my_payslips(
 
     let mut items = Vec::with_capacity(rows.len());
     for row in rows {
-        items.push(
-            load_payslip_dto(&mut tx, org_id, row.id, true, &request_id)
-                .await?,
-        );
+        items.push(load_payslip_dto(&mut tx, org_id, row.id, true, &request_id).await?);
         insert_audit(
             &mut *tx,
             org_id,
@@ -2141,8 +2118,14 @@ fn compute_line_amount(
                 }),
             )
         }
-        "percent_of_gross" => (0, serde_json::json!({ "method": "percent_of_gross", "inputs": {} })),
-        _ => (0, serde_json::json!({ "method": comp.calc_method, "inputs": {} })),
+        "percent_of_gross" => (
+            0,
+            serde_json::json!({ "method": "percent_of_gross", "inputs": {} }),
+        ),
+        _ => (
+            0,
+            serde_json::json!({ "method": comp.calc_method, "inputs": {} }),
+        ),
     }
 }
 
@@ -2206,8 +2189,8 @@ async fn post_payroll_journal(
     idem_key: Option<&str>,
     request_id: &str,
 ) -> Result<(String, Option<Uuid>), AppError> {
-    let finance_url = std::env::var("FINANCE_SERVICE_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:8083".into());
+    let finance_url =
+        std::env::var("FINANCE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8083".into());
     let url = format!(
         "{}/api/v1/finance/journals",
         finance_url.trim_end_matches('/')
@@ -2285,9 +2268,10 @@ async fn post_payroll_journal(
         ));
     }
 
-    let body: serde_json::Value = resp.json().await.map_err(|e| {
-        AppError::new(ErrorCode::Internal, request_id, e.to_string())
-    })?;
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
     let journal_public_id = body
         .get("id")
         .and_then(|v| v.as_str())
@@ -2456,10 +2440,7 @@ async fn load_payslips_for_run(
 
     let mut items = Vec::with_capacity(rows.len());
     for row in rows {
-        items.push(
-            load_payslip_dto(tx, org_id, row.id, with_lines, request_id)
-                .await?,
-        );
+        items.push(load_payslip_dto(tx, org_id, row.id, with_lines, request_id).await?);
     }
     Ok(items)
 }

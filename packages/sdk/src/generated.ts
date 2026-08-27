@@ -1432,3 +1432,126 @@ export type LeaveLedgerEntryDto = {
   note?: string;
   units_milli: number;
 };
+
+export type PayrollComponentDto = {
+  calc_method: string;
+  code: string;
+  config_json: Record<string, unknown>;
+  created_at: string;
+  currency?: string;
+  id: string;
+  is_active: boolean;
+  label: string;
+  line_kind: string;
+  sort_order: number;
+  updated_at: string;
+  version: number;
+};
+
+export type PayrollComponentListResponse = {
+  items: PayrollComponentDto[];
+};
+
+export type CreatePayrollComponentRequest = {
+  calc_method: string;
+  code: string;
+  config_json: Record<string, unknown>;
+  currency?: string;
+  label: string;
+  line_kind: string;
+  sort_order?: string;
+};
+
+export type PayrollRunDto = {
+  adjustment_of_run_id?: string;
+  approval_id?: string;
+  approved_at?: string;
+  calculated_at?: string;
+  created_at: string;
+  currency: string;
+  deductions_minor: number;
+  employee_count: number;
+  gross_minor: number;
+  id: string;
+  journal_public_id?: string;
+  net_minor: number;
+  paid_at?: string;
+  period_end: string;
+  period_start: string;
+  status: string;
+  updated_at: string;
+  version: number;
+};
+
+export type PayrollRunListResponse = {
+  items: PayrollRunDto[];
+  total: number;
+};
+
+export type CreatePayrollRunRequest = {
+  adjustment_of_run_id?: string;
+  currency: string;
+  period_end: string;
+  period_start: string;
+};
+
+export type PayslipLineDto = {
+  amount_minor: number;
+  calculation_basis: Record<string, unknown>;
+  component_code: string;
+  currency: string;
+  id: string;
+  label: string;
+  line_kind: string;
+  sort_order: number;
+};
+
+export type PayslipDto = {
+  created_at: string;
+  currency: string;
+  deductions_minor: number;
+  employee_id: string;
+  gross_minor: number;
+  id: string;
+  issued_at?: string;
+  lines: PayslipLineDto[];
+  net_minor: number;
+  run_id: string;
+  status: string;
+  version: number;
+};
+
+export type PayslipListResponse = {
+  items: PayslipDto[];
+};
+
+export type DecidePayrollRequest = {
+  approve: boolean;
+  note?: string;
+};
+
+export type JournalLineInput = {
+  account_code: string;
+  credit_minor: number;
+  debit_minor: number;
+  memo?: string;
+};
+
+export type PostJournalRequest = {
+  currency: string;
+  lines: JournalLineInput[];
+  memo?: string;
+  /** Internal UUID of the source document (payroll run id). */
+  source_id: string;
+  /** `payroll` or `manual`. */
+  source_type: string;
+};
+
+export type JournalEntryDto = {
+  currency: string;
+  id: string;
+  lines: JournalLineInput[];
+  memo: string;
+  source_id: string;
+  source_type: string;
+};

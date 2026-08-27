@@ -117,9 +117,10 @@ pub async fn post_journal_handler(
     }
 
     let draft = JournalDraft {
-        memo: body.memo.clone().unwrap_or_else(|| {
-            format!("{source_type} journal for {source_id}")
-        }),
+        memo: body
+            .memo
+            .clone()
+            .unwrap_or_else(|| format!("{source_type} journal for {source_id}")),
         source_type: if source_type == "payroll" {
             "payroll"
         } else {
@@ -140,15 +141,15 @@ pub async fn post_journal_handler(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(ref key) = idem_key {
-        if let Some((status, prev)) =
-            idempotency::get(&mut *tx, org_id, "journal.post", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((_status, prev)) = idempotency::get(&mut *tx, org_id, "journal.post", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             let dto: JournalEntryDto = serde_json::from_value(prev).map_err(|e| {
                 AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string())
             })?;
-            return Ok((StatusCode::from_u16(status as u16).unwrap_or(StatusCode::OK), Json(dto)));
+            // Idempotent replay always surfaces as 200 (original may have been 201).
+            return Ok((StatusCode::OK, Json(dto)));
         }
     }
 
@@ -278,12 +279,14 @@ async fn fetch_by_source(
         currency,
         lines: lines
             .into_iter()
-            .map(|(account_code, debit_minor, credit_minor, memo)| JournalLineInput {
-                account_code,
-                debit_minor,
-                credit_minor,
-                memo,
-            })
+            .map(
+                |(account_code, debit_minor, credit_minor, memo)| JournalLineInput {
+                    account_code,
+                    debit_minor,
+                    credit_minor,
+                    memo,
+                },
+            )
             .collect(),
     }))
 }

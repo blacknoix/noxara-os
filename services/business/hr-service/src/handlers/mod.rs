@@ -8,9 +8,9 @@ pub mod documents;
 pub mod employees;
 pub mod leave;
 pub mod me;
-pub mod payroll;
 pub mod offboarding;
 pub mod onboarding;
+pub mod payroll;
 pub mod schedules;
 pub mod timeline;
 
