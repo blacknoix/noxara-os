@@ -33,7 +33,6 @@ CREATE INDEX IF NOT EXISTS hello_message_org_id_idx ON hello_message (org_id);
 ALTER TABLE hello_message ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hello_message FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS hello_tenant_isolation ON hello_message;
 CREATE POLICY hello_tenant_isolation ON hello_message
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -56,7 +55,6 @@ CREATE INDEX IF NOT EXISTS audit_entry_org_id_idx ON audit_entry (org_id);
 ALTER TABLE audit_entry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_entry FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS audit_tenant_isolation ON audit_entry;
 CREATE POLICY audit_tenant_isolation ON audit_entry
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -81,7 +79,6 @@ CREATE INDEX IF NOT EXISTS outbox_event_org_id_idx ON outbox_event (org_id);
 ALTER TABLE outbox_event ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outbox_event FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS outbox_tenant_isolation ON outbox_event;
 CREATE POLICY outbox_tenant_isolation ON outbox_event
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

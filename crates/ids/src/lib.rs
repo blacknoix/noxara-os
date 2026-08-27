@@ -51,6 +51,12 @@ pub enum IdKind {
     Department,
     Invitation,
     Membership,
+    Employee,
+    EmploymentContract,
+    CompensationComponent,
+    EmployeeDocument,
+    HrAsset,
+    HrTask,
 }
 
 impl IdKind {
@@ -83,6 +89,12 @@ impl IdKind {
             Self::Department => "dep_",
             Self::Invitation => "ivt_",
             Self::Membership => "mem_",
+            Self::Employee => "emp_",
+            Self::EmploymentContract => "ect_",
+            Self::CompensationComponent => "cmp_",
+            Self::EmployeeDocument => "edc_",
+            Self::HrAsset => "has_",
+            Self::HrTask => "htk_",
         }
     }
 
@@ -115,6 +127,12 @@ impl IdKind {
             "dep_" => Some(Self::Department),
             "ivt_" => Some(Self::Invitation),
             "mem_" => Some(Self::Membership),
+            "emp_" => Some(Self::Employee),
+            "ect_" => Some(Self::EmploymentContract),
+            "cmp_" => Some(Self::CompensationComponent),
+            "edc_" => Some(Self::EmployeeDocument),
+            "has_" => Some(Self::HrAsset),
+            "htk_" => Some(Self::HrTask),
             _ => None,
         }
     }
@@ -196,6 +214,12 @@ impl FromStr for PublicId {
             ("dep_", IdKind::Department),
             ("ivt_", IdKind::Invitation),
             ("mem_", IdKind::Membership),
+            ("emp_", IdKind::Employee),
+            ("ect_", IdKind::EmploymentContract),
+            ("cmp_", IdKind::CompensationComponent),
+            ("edc_", IdKind::EmployeeDocument),
+            ("has_", IdKind::HrAsset),
+            ("htk_", IdKind::HrTask),
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
             ("cn_", IdKind::CreditNote),
@@ -302,6 +326,12 @@ mod tests {
             IdKind::Department,
             IdKind::Invitation,
             IdKind::Membership,
+            IdKind::Employee,
+            IdKind::EmploymentContract,
+            IdKind::CompensationComponent,
+            IdKind::EmployeeDocument,
+            IdKind::HrAsset,
+            IdKind::HrTask,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

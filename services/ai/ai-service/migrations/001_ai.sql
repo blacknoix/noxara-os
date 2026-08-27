@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS ai_org_settings (
 );
 
 ALTER TABLE ai_org_settings ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS ai_org_settings_tenant ON ai_org_settings;
 CREATE POLICY ai_org_settings_tenant ON ai_org_settings
     USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
@@ -31,7 +30,6 @@ CREATE TABLE IF NOT EXISTS ai_session (
 CREATE INDEX IF NOT EXISTS ai_session_org_user_idx ON ai_session (org_id, user_id, updated_at DESC);
 
 ALTER TABLE ai_session ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS ai_session_tenant ON ai_session;
 CREATE POLICY ai_session_tenant ON ai_session
     USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
@@ -59,7 +57,6 @@ CREATE TABLE IF NOT EXISTS ai_interaction (
 CREATE INDEX IF NOT EXISTS ai_interaction_session_idx ON ai_interaction (org_id, session_id, created_at);
 
 ALTER TABLE ai_interaction ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS ai_interaction_tenant ON ai_interaction;
 CREATE POLICY ai_interaction_tenant ON ai_interaction
     USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
@@ -87,7 +84,6 @@ CREATE INDEX IF NOT EXISTS ai_proposal_org_user_idx ON ai_proposal (org_id, user
 CREATE INDEX IF NOT EXISTS ai_proposal_status_idx ON ai_proposal (org_id, status);
 
 ALTER TABLE ai_proposal ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS ai_proposal_tenant ON ai_proposal;
 CREATE POLICY ai_proposal_tenant ON ai_proposal
     USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
@@ -107,7 +103,6 @@ CREATE TABLE IF NOT EXISTS ai_document_review (
 );
 
 ALTER TABLE ai_document_review ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS ai_document_review_tenant ON ai_document_review;
 CREATE POLICY ai_document_review_tenant ON ai_document_review
     USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);

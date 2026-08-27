@@ -13,12 +13,10 @@ CREATE INDEX IF NOT EXISTS search_index_job_org_idx ON search_index_job (org_id,
 ALTER TABLE search_index_job ENABLE ROW LEVEL SECURITY;
 ALTER TABLE search_index_job FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS search_index_job_tenant_isolation ON search_index_job;
 CREATE POLICY search_index_job_tenant_isolation ON search_index_job
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
-DROP POLICY IF EXISTS search_index_job_ingest ON search_index_job;
 CREATE POLICY search_index_job_ingest ON search_index_job
     USING (current_setting('app.search_ingest', true) = '1')
     WITH CHECK (current_setting('app.search_ingest', true) = '1');

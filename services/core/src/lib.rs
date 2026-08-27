@@ -37,7 +37,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/003_workspace.sql"),
         ] {
             for stmt in split_sql(migration) {
-                sqlx::query(&stmt).execute(pool).await?;
+                companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
             }
         }
         workspace::sync_permission_catalogue(pool).await?;

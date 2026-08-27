@@ -31,6 +31,7 @@ fn parse_schema_name(stem: &str) -> (Context, &str, &str, u32) {
         "sales" => Context::Sales,
         "finance" => Context::Finance,
         "operations" => Context::Operations,
+        "people" => Context::People,
         other => panic!("unknown context {other}"),
     };
     (context, parts[1], parts[2], version)
@@ -49,6 +50,9 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
         ("project", "created") => serde_json::json!({ "project_id": "prj_test" }),
         ("task", "created" | "completed") => serde_json::json!({ "task_id": "tsk_test" }),
         ("approval", "requested" | "decided") => serde_json::json!({ "approval_id": "apr_test" }),
+        ("employee", "created" | "updated" | "onboarded" | "offboarded") => {
+            serde_json::json!({ "id": "emp_test", "display_name": "Test Employee" })
+        }
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

@@ -163,6 +163,20 @@ pub async fn clear_session_org_id(conn: &mut sqlx::PgConnection) -> Result<(), T
 /// 500s on register/migrate. Production multi-process startup is also safe.
 pub const SCHEMA_MIGRATION_LOCK_KEY: i64 = 0x0043_4F53_4D49_4701; // "COSMIG\x01"
 
+/// Execute one migration statement, ignoring Postgres `duplicate_object` (42710).
+///
+/// Prefer idempotent DDL (`CREATE TABLE IF NOT EXISTS`, …). For `CREATE POLICY`,
+/// Postgres has no `IF NOT EXISTS` (as of PG 16), so re-running migrations must
+/// tolerate an existing policy — and must not `DROP POLICY` under `FORCE ROW
+/// LEVEL SECURITY`, which briefly denies concurrent tenant inserts.
+pub async fn execute_migration_stmt(pool: &sqlx::PgPool, stmt: &str) -> Result<(), sqlx::Error> {
+    match sqlx::query(stmt).execute(pool).await {
+        Ok(_) => Ok(()),
+        Err(sqlx::Error::Database(e)) if e.code().as_deref() == Some("42710") => Ok(()),
+        Err(e) => Err(e),
+    }
+}
+
 /// Run `f` while holding the shared schema-migration advisory lock.
 ///
 /// Uses `pg_try_advisory_lock` and releases the pool connection while waiting,

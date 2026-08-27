@@ -16,6 +16,7 @@ Starts Docker Compose services needed for the hello/auth/CRM/finance path (**Pos
 | crm | 8082 |
 | finance | 8083 |
 | project (+ worker) | 8084 |
+| hr / people | 8088 |
 | notification | 8085 |
 | search | 8086 |
 | analytics | 8087 |

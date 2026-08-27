@@ -115,6 +115,48 @@ describe('a11y', () => {
     await expectNoSeriousAxeViolations(container);
   });
 
+  it('people directory table has no serious/critical violations', async () => {
+    const rows = [
+      {
+        id: 'emp_1',
+        name: 'Ada Lovelace',
+        title: 'Engineer',
+        status: 'active',
+        department_id: 'dep_eng',
+        start_date: '2024-01-15',
+      },
+      {
+        id: 'emp_2',
+        name: 'Grace Hopper',
+        title: 'Director',
+        status: 'onboarding',
+        department_id: 'dep_ops',
+        start_date: '2026-09-01',
+      },
+    ];
+    const { container } = render(
+      <main>
+        <h1>People</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'name', header: 'Name', cell: (r) => r.name },
+            { key: 'title', header: 'Title', cell: (r) => r.title },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} />,
+            },
+            { key: 'department_id', header: 'Department', cell: (r) => r.department_id },
+            { key: 'start_date', header: 'Start date', cell: (r) => r.start_date },
+          ]}
+          rows={rows}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
   it('sales pipeline board (kanban columns) has no serious/critical violations', async () => {
     const { container } = render(
       <main>

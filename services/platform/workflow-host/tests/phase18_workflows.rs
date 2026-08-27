@@ -53,8 +53,16 @@ fn workflow_id_and_namespace_defaults() {
         workflow_id("org_abc", WorkflowType::InvoiceDunning, "inv_1"),
         "org_abc:InvoiceDunning:inv_1"
     );
+    assert_eq!(
+        workflow_id("org_abc", WorkflowType::EmployeeOnboarding, "emp_1"),
+        "org_abc:EmployeeOnboarding:emp_1"
+    );
+    assert_eq!(
+        workflow_id("org_abc", WorkflowType::EmployeeOffboarding, "emp_1"),
+        "org_abc:EmployeeOffboarding:emp_1"
+    );
     // Default when env unset in unit test process — may already be set in CI.
     let ns = temporal_namespace();
     assert!(ns == "companyos-local" || ns == "companyos-ci" || !ns.is_empty());
-    assert_eq!(WorkflowType::all().len(), 8);
+    assert_eq!(WorkflowType::all().len(), 10);
 }

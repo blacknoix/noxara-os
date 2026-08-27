@@ -32,6 +32,7 @@ cargo run -p companyos-core              # :8081
 cargo run -p companyos-crm               # :8082
 cargo run -p companyos-finance           # :8083
 cargo run -p companyos-project           # :8084
+cargo run -p companyos-hr                # :8088 People / HR
 cargo run -p companyos-notification      # :8085
 cargo run -p companyos-search            # :8086
 cargo run -p companyos-analytics         # :8087

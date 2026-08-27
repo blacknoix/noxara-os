@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS finance_customer (
 CREATE INDEX IF NOT EXISTS finance_customer_org_idx ON finance_customer (org_id);
 ALTER TABLE finance_customer ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_customer FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_customer_tenant_isolation ON finance_customer;
 CREATE POLICY finance_customer_tenant_isolation ON finance_customer
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -43,7 +42,6 @@ CREATE TABLE IF NOT EXISTS finance_tax_rate (
 CREATE INDEX IF NOT EXISTS finance_tax_rate_org_idx ON finance_tax_rate (org_id);
 ALTER TABLE finance_tax_rate ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_tax_rate FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_tax_rate_tenant_isolation ON finance_tax_rate;
 CREATE POLICY finance_tax_rate_tenant_isolation ON finance_tax_rate
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -66,7 +64,6 @@ CREATE TABLE IF NOT EXISTS finance_ledger_account (
 CREATE INDEX IF NOT EXISTS finance_ledger_account_org_idx ON finance_ledger_account (org_id);
 ALTER TABLE finance_ledger_account ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_ledger_account FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_ledger_account_tenant_isolation ON finance_ledger_account;
 CREATE POLICY finance_ledger_account_tenant_isolation ON finance_ledger_account
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -82,7 +79,6 @@ CREATE TABLE IF NOT EXISTS finance_invoice_seq (
 );
 ALTER TABLE finance_invoice_seq ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_invoice_seq FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_invoice_seq_tenant_isolation ON finance_invoice_seq;
 CREATE POLICY finance_invoice_seq_tenant_isolation ON finance_invoice_seq
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -135,7 +131,6 @@ CREATE INDEX IF NOT EXISTS finance_invoice_customer_idx ON finance_invoice (org_
 CREATE INDEX IF NOT EXISTS finance_invoice_status_idx ON finance_invoice (org_id, status);
 ALTER TABLE finance_invoice ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_invoice FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_invoice_tenant_isolation ON finance_invoice;
 CREATE POLICY finance_invoice_tenant_isolation ON finance_invoice
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -159,7 +154,6 @@ CREATE TABLE IF NOT EXISTS finance_invoice_line (
 CREATE INDEX IF NOT EXISTS finance_invoice_line_inv_idx ON finance_invoice_line (invoice_id);
 ALTER TABLE finance_invoice_line ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_invoice_line FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_invoice_line_tenant_isolation ON finance_invoice_line;
 CREATE POLICY finance_invoice_line_tenant_isolation ON finance_invoice_line
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -189,7 +183,6 @@ CREATE TABLE IF NOT EXISTS finance_credit_note (
 CREATE INDEX IF NOT EXISTS finance_credit_note_org_idx ON finance_credit_note (org_id);
 ALTER TABLE finance_credit_note ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_credit_note FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_credit_note_tenant_isolation ON finance_credit_note;
 CREATE POLICY finance_credit_note_tenant_isolation ON finance_credit_note
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -208,7 +201,6 @@ CREATE TABLE IF NOT EXISTS finance_credit_note_line (
 );
 ALTER TABLE finance_credit_note_line ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_credit_note_line FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_credit_note_line_tenant_isolation ON finance_credit_note_line;
 CREATE POLICY finance_credit_note_line_tenant_isolation ON finance_credit_note_line
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -242,7 +234,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS finance_payment_provider_event_uidx
 CREATE INDEX IF NOT EXISTS finance_payment_org_idx ON finance_payment (org_id);
 ALTER TABLE finance_payment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_payment FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_payment_tenant_isolation ON finance_payment;
 CREATE POLICY finance_payment_tenant_isolation ON finance_payment
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -259,7 +250,6 @@ CREATE INDEX IF NOT EXISTS finance_payment_alloc_pay_idx ON finance_payment_allo
 CREATE INDEX IF NOT EXISTS finance_payment_alloc_inv_idx ON finance_payment_allocation (invoice_id);
 ALTER TABLE finance_payment_allocation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_payment_allocation FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_payment_allocation_tenant_isolation ON finance_payment_allocation;
 CREATE POLICY finance_payment_allocation_tenant_isolation ON finance_payment_allocation
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -277,7 +267,6 @@ CREATE TABLE IF NOT EXISTS finance_expense_category (
 );
 ALTER TABLE finance_expense_category ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_expense_category FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_expense_category_tenant_isolation ON finance_expense_category;
 CREATE POLICY finance_expense_category_tenant_isolation ON finance_expense_category
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -307,7 +296,6 @@ CREATE TABLE IF NOT EXISTS finance_expense (
 CREATE INDEX IF NOT EXISTS finance_expense_org_idx ON finance_expense (org_id);
 ALTER TABLE finance_expense ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_expense FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_expense_tenant_isolation ON finance_expense;
 CREATE POLICY finance_expense_tenant_isolation ON finance_expense
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -332,7 +320,6 @@ CREATE TABLE IF NOT EXISTS finance_journal_entry (
 CREATE INDEX IF NOT EXISTS finance_journal_entry_org_idx ON finance_journal_entry (org_id);
 ALTER TABLE finance_journal_entry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_journal_entry FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_journal_entry_tenant_isolation ON finance_journal_entry;
 CREATE POLICY finance_journal_entry_tenant_isolation ON finance_journal_entry
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -354,7 +341,6 @@ CREATE TABLE IF NOT EXISTS finance_journal_line (
 CREATE INDEX IF NOT EXISTS finance_journal_line_entry_idx ON finance_journal_line (entry_id);
 ALTER TABLE finance_journal_line ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_journal_line FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_journal_line_tenant_isolation ON finance_journal_line;
 CREATE POLICY finance_journal_line_tenant_isolation ON finance_journal_line
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -378,7 +364,6 @@ CREATE TABLE IF NOT EXISTS finance_recurring_invoice (
 );
 ALTER TABLE finance_recurring_invoice ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_recurring_invoice FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_recurring_invoice_tenant_isolation ON finance_recurring_invoice;
 CREATE POLICY finance_recurring_invoice_tenant_isolation ON finance_recurring_invoice
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -398,7 +383,6 @@ CREATE TABLE IF NOT EXISTS finance_idempotency (
 );
 ALTER TABLE finance_idempotency ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_idempotency FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_idempotency_tenant_isolation ON finance_idempotency;
 CREATE POLICY finance_idempotency_tenant_isolation ON finance_idempotency
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -416,7 +400,6 @@ CREATE TABLE IF NOT EXISTS finance_webhook_event (
 );
 ALTER TABLE finance_webhook_event ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_webhook_event FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS finance_webhook_event_tenant_isolation ON finance_webhook_event;
 CREATE POLICY finance_webhook_event_tenant_isolation ON finance_webhook_event
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

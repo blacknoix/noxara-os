@@ -29,7 +29,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_policy_org_idx
     WHERE is_active;
 ALTER TABLE operations_approval_policy ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_policy FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS operations_approval_policy_tenant_isolation ON operations_approval_policy;
 CREATE POLICY operations_approval_policy_tenant_isolation ON operations_approval_policy
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -50,7 +49,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_policy_version_org_idx
     ON operations_approval_policy_version (org_id, policy_id, version);
 ALTER TABLE operations_approval_policy_version ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_policy_version FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS operations_approval_policy_version_tenant_isolation
     ON operations_approval_policy_version;
 CREATE POLICY operations_approval_policy_version_tenant_isolation
     ON operations_approval_policy_version
@@ -104,7 +102,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_org_requester_idx
     ON operations_approval (org_id, requester_user_id);
 ALTER TABLE operations_approval ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS operations_approval_tenant_isolation ON operations_approval;
 CREATE POLICY operations_approval_tenant_isolation ON operations_approval
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -137,7 +134,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_step_active_idx
     WHERE status = 'active';
 ALTER TABLE operations_approval_step ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_step FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS operations_approval_step_tenant_isolation ON operations_approval_step;
 CREATE POLICY operations_approval_step_tenant_isolation ON operations_approval_step
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
@@ -164,7 +160,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_decision_org_idx
     ON operations_approval_decision (org_id, approval_id, created_at);
 ALTER TABLE operations_approval_decision ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_decision FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS operations_approval_decision_tenant_isolation
     ON operations_approval_decision;
 CREATE POLICY operations_approval_decision_tenant_isolation
     ON operations_approval_decision
@@ -193,7 +188,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_delegation_org_idx
     WHERE revoked_at IS NULL;
 ALTER TABLE operations_approval_delegation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_delegation FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS operations_approval_delegation_tenant_isolation
     ON operations_approval_delegation;
 CREATE POLICY operations_approval_delegation_tenant_isolation
     ON operations_approval_delegation

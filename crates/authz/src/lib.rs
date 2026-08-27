@@ -175,6 +175,9 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
+                perms::hr_employee_read_sensitive(),
+                perms::hr_document_read(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -230,6 +233,7 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -280,6 +284,13 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
+                perms::hr_employee_read_sensitive(),
+                perms::hr_employee_write(),
+                perms::hr_employee_onboard(),
+                perms::hr_employee_offboard(),
+                perms::hr_document_read(),
+                perms::hr_document_write(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -314,6 +325,8 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
+                perms::hr_document_read(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -344,6 +357,8 @@ impl Role {
                 perms::ai_copilot_use(),
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
+                perms::hr_employee_read(),
+                perms::hr_document_read(),
             ]),
         }
     }
@@ -826,9 +841,21 @@ mod tests {
         assert!(is_allowed(&finance, &perms::finance_invoice_issue()));
         assert!(is_allowed(&finance, &perms::finance_payment_create()));
         assert!(is_allowed(&finance, &perms::finance_expense_approve()));
-        // Member cannot issue invoices
+        // Phase 2.1: Finance can read HR sensitive fields (compensation/IDs)
+        assert!(is_allowed(&finance, &perms::hr_employee_read_sensitive()));
+        assert!(!is_allowed(&finance, &perms::hr_employee_write()));
+        assert!(!is_allowed(&finance, &perms::hr_employee_offboard()));
+        // Manager can run People write/onboard/offboard
+        let manager = Principal::with_roles(vec![Role::Manager]);
+        assert!(is_allowed(&manager, &perms::hr_employee_write()));
+        assert!(is_allowed(&manager, &perms::hr_employee_onboard()));
+        assert!(is_allowed(&manager, &perms::hr_employee_offboard()));
+        assert!(is_allowed(&manager, &perms::hr_employee_read_sensitive()));
+        // Member cannot issue invoices or read HR sensitive
         let member = Principal::with_roles(vec![Role::Member]);
         assert!(!is_allowed(&member, &perms::finance_invoice_issue()));
+        assert!(!is_allowed(&member, &perms::hr_employee_read_sensitive()));
+        assert!(!is_allowed(&member, &perms::hr_employee_write()));
         // Admin can invite / assign / revoke / settings
         let admin = Principal::with_roles(vec![Role::Admin]);
         assert!(is_allowed(&admin, &perms::workspace_member_invite()));

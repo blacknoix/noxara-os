@@ -9,6 +9,7 @@ pub fn permission_for_doc_type(doc_type: &str) -> Option<PermissionId> {
         "invoice" => "finance.invoice.read",
         "task" => "operations.task.read",
         "project" => "operations.project.read",
+        "employee" => "hr.employee.read",
         _ => return None,
     };
     Some(PermissionId::from(perm))
@@ -21,6 +22,7 @@ pub fn doc_type_from_aggregate(aggregate: &str) -> Option<&'static str> {
         "invoice" => Some("invoice"),
         "task" => Some("task"),
         "project" => Some("project"),
+        "employee" => Some("employee"),
         _ => None,
     }
 }

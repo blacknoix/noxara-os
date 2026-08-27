@@ -748,6 +748,63 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Run Document AI extraction into expense/invoice draft proposals",
         sensitive: false,
     },
+    // --- People / HR (Phase 2.1) — permission context `hr`, event context `people` ---
+    PermissionDef {
+        id: "hr.employee.read",
+        context: "hr",
+        resource: "employee",
+        action: "read",
+        description: "View employee directory and non-restricted profile fields",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "hr.employee.read_sensitive",
+        context: "hr",
+        resource: "employee",
+        action: "read_sensitive",
+        description: "View compensation, government IDs, bank/tax identifiers",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.employee.write",
+        context: "hr",
+        resource: "employee",
+        action: "write",
+        description: "Create and update employee records (non-restricted fields)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.employee.onboard",
+        context: "hr",
+        resource: "employee",
+        action: "onboard",
+        description: "Start EmployeeOnboarding Temporal workflow",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.employee.offboard",
+        context: "hr",
+        resource: "employee",
+        action: "offboard",
+        description: "Start EmployeeOffboarding Temporal workflow and revoke access",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.document.read",
+        context: "hr",
+        resource: "document",
+        action: "read",
+        description: "View employee HR documents metadata",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "hr.document.write",
+        context: "hr",
+        resource: "document",
+        action: "write",
+        description: "Attach and manage employee HR documents",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -766,6 +823,11 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "operations.approval.decide",
     "operations.approval.manage",
     "ai.settings.manage",
+    "hr.employee.read_sensitive",
+    "hr.employee.write",
+    "hr.employee.onboard",
+    "hr.employee.offboard",
+    "hr.document.write",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1048,6 +1110,27 @@ pub mod perms {
     }
     pub fn ai_document_extract() -> PermissionId {
         PermissionId::from("ai.document.extract")
+    }
+    pub fn hr_employee_read() -> PermissionId {
+        PermissionId::from("hr.employee.read")
+    }
+    pub fn hr_employee_read_sensitive() -> PermissionId {
+        PermissionId::from("hr.employee.read_sensitive")
+    }
+    pub fn hr_employee_write() -> PermissionId {
+        PermissionId::from("hr.employee.write")
+    }
+    pub fn hr_employee_onboard() -> PermissionId {
+        PermissionId::from("hr.employee.onboard")
+    }
+    pub fn hr_employee_offboard() -> PermissionId {
+        PermissionId::from("hr.employee.offboard")
+    }
+    pub fn hr_document_read() -> PermissionId {
+        PermissionId::from("hr.document.read")
+    }
+    pub fn hr_document_write() -> PermissionId {
+        PermissionId::from("hr.document.write")
     }
 }
 

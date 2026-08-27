@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–1.8 merged; Phase 1.9 is this slice.
+Status: **Active** outline. Phase 0–1.9 merged; Phase 2.1 is this slice.
 
 ## Completed
 
@@ -15,27 +15,34 @@ Status: **Active** outline. Phase 0–1.8 merged; Phase 1.9 is this slice.
 | 1.6 | Projects & Tasks / Operations (`companyos-project`) |
 | 1.7 | Approval engine (operations / Temporal) |
 | 1.8 | Platform events, notifications, search, analytics, files, outbox relay |
+| 1.9 | AI Assistant MVP (copilot, proposals, retrieval) |
 
-## Phase 1.9 — AI copilot (`companyos-ai`) (this slice)
+## Phase 2.1 — People / HR v1 (`companyos-hr`) (this slice)
 
-- Authz catalogue: `ai.copilot.use`, `ai.proposal.create`, `ai.proposal.commit`, `ai.settings.*`, `ai.insights.read`, `ai.document.extract`
-- Gateway proxy `/api/v1/ai/*` → `AI_SERVICE_URL` (`:8092`)
-- AI service: chat/ask/stream, hybrid retrieval (org_id required), tool registry with authz trace, propose-then-commit writes, insights, document extract, org settings
-- Mock LLM when `AI_API_KEY` unset; OpenAI-compatible when set
-- Integration tests: `services/ai/ai-service/tests/phase19_ai.rs` (authz deny, retrieval tenant guard, injection, proposal pending until confirm)
-- OpenAPI merge includes AI; `dev-up` starts `companyos-ai`; SDK types for AI DTOs
+- Authz: `hr.employee.read|read_sensitive|write|onboard|offboard`, `hr.document.read|write`
+- Own schema (`people_*`), API `/api/v1/people/...`, events under `Context::People`
+- Restricted-field AES-GCM encryption; money as `amount_minor` + ISO currency
+- Temporal catalogue: `EmployeeOnboarding` / `EmployeeOffboarding` (workflow ids `{org}:…:{emp_}`)
+- Offboarding access checklist (membership + sessions; API keys / integration tokens N/A)
+- Departments: Workspace SoT (ADR 020); reporting line mastered in People
+- UI: People directory, employee record tabs, onboard, self-service profile
+- Search indexer: `employee` → `hr.employee.read`
+- Cut: ATS, performance reviews, asset depreciation, fancy org-chart — before employee master, encryption+authz, onboarding/offboarding, directory, access checklist
 
 ## Later (not this PR)
 
 | Phase | Notes |
 |-------|--------|
-| InvoiceDunning | Temporal dunning (separate from this approval engine) |
-| PDF / email | Nice-to-have; local logs payment URL |
-| Live provider | Stub webhook only |
-| Mobile | Flutter / Tauri — inbox is responsive at existing breakpoints |
+| 2.2 | Attendance / leave |
+| 2.3 | Payroll calculation |
+| 2.4 | CoA / month-end |
+| 2.5 | Inventory |
+| InvoiceDunning | Temporal dunning polish |
+| PDF / email | Nice-to-have |
+| Mobile | Flutter / Tauri |
 
 ## Cut order if needed
 
-Cut fancy search ranking, ClickHouse-backed analytics UI, and Temporal
-NotificationDigest workflow before authz enforcement, gateway SSE, outbox
-relay/DLQ, and feed/search/file wiring.
+Cut ATS, performance reviews, asset depreciation, and fancy org-chart viz before
+employee master data, sensitive-field encryption + authz, onboarding/offboarding
+workflows, directory, and the offboarding access checklist.

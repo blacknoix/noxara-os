@@ -3343,6 +3343,680 @@
         }
       }
     },
+    "/api/v1/people/employees": {
+      "get": {
+        "tags": [
+          "people-employees"
+        ],
+        "summary": "GET /api/v1/people/employees",
+        "operationId": "list_employees",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-employees"
+        ],
+        "summary": "POST /api/v1/people/employees",
+        "operationId": "create_employee",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/onboard": {
+      "post": {
+        "tags": [
+          "people-onboarding"
+        ],
+        "summary": "POST /api/v1/people/employees/onboard",
+        "operationId": "onboard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}": {
+      "get": {
+        "tags": [
+          "people-employees"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}",
+        "operationId": "get_employee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Employee public id (emp_\u2026)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "people-employees"
+        ],
+        "summary": "PATCH /api/v1/people/employees/{id}",
+        "operationId": "update_employee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmployeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/access-audit": {
+      "get": {
+        "tags": [
+          "people-offboarding"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}/access-audit",
+        "operationId": "access_audit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessAuditResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/assets": {
+      "get": {
+        "tags": [
+          "people-assets"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}/assets",
+        "operationId": "list_assets",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-assets"
+        ],
+        "summary": "POST /api/v1/people/employees/{id}/assets",
+        "operationId": "create_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/compensation": {
+      "get": {
+        "tags": [
+          "people-compensation"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}/compensation",
+        "operationId": "list_compensation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-compensation"
+        ],
+        "summary": "POST /api/v1/people/employees/{id}/compensation",
+        "operationId": "create_compensation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompensationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationComponentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/contracts": {
+      "get": {
+        "tags": [
+          "people-contracts"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}/contracts",
+        "operationId": "list_contracts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-contracts"
+        ],
+        "summary": "POST /api/v1/people/employees/{id}/contracts",
+        "operationId": "create_contract",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/documents": {
+      "get": {
+        "tags": [
+          "people-documents"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}/documents",
+        "operationId": "list_documents",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-documents"
+        ],
+        "summary": "POST /api/v1/people/employees/{id}/documents",
+        "operationId": "create_document",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/offboard": {
+      "post": {
+        "tags": [
+          "people-offboarding"
+        ],
+        "summary": "POST /api/v1/people/employees/{id}/offboard",
+        "operationId": "offboard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OffboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffboardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/employees/{id}/timeline": {
+      "get": {
+        "tags": [
+          "people-timeline"
+        ],
+        "summary": "GET /api/v1/people/employees/{id}/timeline",
+        "operationId": "get_timeline",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/me": {
+      "get": {
+        "tags": [
+          "people-me"
+        ],
+        "summary": "GET /api/v1/people/me",
+        "operationId": "get_me",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "people-me"
+        ],
+        "summary": "PATCH /api/v1/people/me",
+        "operationId": "patch_me",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSelfProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/v1/notifications/feed": {
       "get": {
         "tags": [
@@ -9834,6 +10508,1093 @@
           }
         }
       },
+      "AccessAuditResponse": {
+        "type": "object",
+        "required": [
+          "employee_id",
+          "checklist",
+          "all_cleared"
+        ],
+        "properties": {
+          "all_cleared": {
+            "type": "boolean"
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessChecklistItem"
+            }
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AccessChecklistItem": {
+        "type": "object",
+        "required": [
+          "path",
+          "cleared",
+          "detail"
+        ],
+        "properties": {
+          "cleared": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "AssetDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "label",
+          "status",
+          "assigned_at"
+        ],
+        "properties": {
+          "asset_tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assigned_at": {
+            "type": "string"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "returned_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "AssetListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDto"
+            }
+          }
+        }
+      },
+      "CompensationComponentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "component_type",
+          "label",
+          "amount_minor",
+          "currency",
+          "effective_from",
+          "created_at",
+          "version"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "component_type": {
+            "type": "string"
+          },
+          "contract_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CompensationListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompensationComponentDto"
+            }
+          }
+        }
+      },
+      "ContractDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "contract_type",
+          "effective_from",
+          "created_at",
+          "version"
+        ],
+        "properties": {
+          "contract_type": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ContractListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractDto"
+            }
+          }
+        }
+      },
+      "CreateAssetRequest": {
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "asset_tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateCompensationRequest": {
+        "type": "object",
+        "required": [
+          "label",
+          "amount_minor",
+          "currency",
+          "effective_from"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "component_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contract_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateContractRequest": {
+        "type": "object",
+        "required": [
+          "effective_from"
+        ],
+        "properties": {
+          "contract_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateDocumentRequest": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "doc_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateEmployeeRequest": {
+        "type": "object",
+        "required": [
+          "display_name"
+        ],
+        "properties": {
+          "bank_details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "department_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque Workspace department public id (`dep_\u2026`)."
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "government_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Restricted \u2014 encrypted at rest; requires write + stored for sensitive read."
+          },
+          "legal_first_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legal_last_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manager_employee_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Manager employee public id (`emp_\u2026`)."
+          },
+          "personal_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "work_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DocumentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "title",
+          "doc_type",
+          "collected",
+          "created_at",
+          "version"
+        ],
+        "properties": {
+          "collected": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "doc_type": {
+            "type": "string"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DocumentListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentDto"
+            }
+          }
+        }
+      },
+      "EmployeeDto": {
+        "type": "object",
+        "description": "Directory / non-sensitive employee projection.",
+        "required": [
+          "id",
+          "display_name",
+          "status",
+          "owner_user_id",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "bank_details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "department_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "government_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Present only when caller holds `hr.employee.read_sensitive`."
+          },
+          "id": {
+            "type": "string"
+          },
+          "legal_first_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legal_last_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manager_employee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": "string"
+          },
+          "personal_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "tax_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "work_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "EmployeeListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "HrTaskDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "kind",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "assignee_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "workflow_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "HrTaskListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrTaskDto"
+            }
+          }
+        }
+      },
+      "OffboardRequest": {
+        "type": "object",
+        "properties": {
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fail_after": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reassign_manager_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "OffboardResponse": {
+        "type": "object",
+        "required": [
+          "employee",
+          "workflow_id",
+          "checklist",
+          "status"
+        ],
+        "properties": {
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessChecklistItem"
+            }
+          },
+          "employee": {
+            "$ref": "#/components/schemas/EmployeeDto"
+          },
+          "status": {
+            "type": "string"
+          },
+          "workflow_id": {
+            "type": "string"
+          }
+        }
+      },
+      "OnboardRequest": {
+        "type": "object",
+        "required": [
+          "display_name"
+        ],
+        "properties": {
+          "asset_labels": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "department_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "document_titles": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "fail_after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Test hook: inject activity failure after this step for compensation tests."
+          },
+          "manager_employee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Role key to assign via membership update activity (opaque; applied by access step)."
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "task_titles": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Link existing user (`usr_\u2026`); otherwise user_id stays null until linked."
+          },
+          "work_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "OnboardResponse": {
+        "type": "object",
+        "required": [
+          "employee",
+          "workflow_id",
+          "tasks",
+          "status"
+        ],
+        "properties": {
+          "employee": {
+            "$ref": "#/components/schemas/EmployeeDto"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrTaskDto"
+            }
+          },
+          "workflow_id": {
+            "type": "string"
+          }
+        }
+      },
+      "TimelineEventDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "summary",
+          "metadata",
+          "occurred_at"
+        ],
+        "properties": {
+          "actor_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "metadata": {},
+          "occurred_at": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      },
+      "TimelineResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimelineEventDto"
+            }
+          }
+        }
+      },
+      "UpdateEmployeeRequest": {
+        "type": "object",
+        "properties": {
+          "bank_details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "department_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "government_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legal_first_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legal_last_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manager_employee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "personal_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "work_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateSelfProfileRequest": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "personal_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "FeedResponse": {
         "type": "object",
         "required": [
@@ -10973,6 +12734,42 @@
     {
       "name": "operations-approvals",
       "description": "Approval engine (Phase 1.7)"
+    },
+    {
+      "name": "people-employees",
+      "description": "Employee directory and profile"
+    },
+    {
+      "name": "people-me",
+      "description": "Self-service non-restricted profile"
+    },
+    {
+      "name": "people-compensation",
+      "description": "Encrypted compensation components"
+    },
+    {
+      "name": "people-contracts",
+      "description": "Employment contracts"
+    },
+    {
+      "name": "people-documents",
+      "description": "HR documents (opaque fil_ ids)"
+    },
+    {
+      "name": "people-assets",
+      "description": "HR asset assignments"
+    },
+    {
+      "name": "people-timeline",
+      "description": "Employee activity timeline"
+    },
+    {
+      "name": "people-onboarding",
+      "description": "EmployeeOnboarding saga"
+    },
+    {
+      "name": "people-offboarding",
+      "description": "EmployeeOffboarding + access audit"
     },
     {
       "name": "notifications",

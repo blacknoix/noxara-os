@@ -37,6 +37,7 @@ export CORE_SERVICE_URL="${CORE_SERVICE_URL:-http://127.0.0.1:8081}"
 export CRM_SERVICE_URL="${CRM_SERVICE_URL:-http://127.0.0.1:8082}"
 export FINANCE_SERVICE_URL="${FINANCE_SERVICE_URL:-http://127.0.0.1:8083}"
 export PROJECT_SERVICE_URL="${PROJECT_SERVICE_URL:-http://127.0.0.1:8084}"
+export HR_SERVICE_URL="${HR_SERVICE_URL:-http://127.0.0.1:8088}"
 export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://127.0.0.1:8085}"
 export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL:-http://127.0.0.1:8086}"
 export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL:-http://127.0.0.1:8087}"
@@ -89,7 +90,7 @@ bash "$ROOT/scripts/seed-dev.sh"
 echo "==> Building platform + business + gateway + AI..."
 mkdir -p "$ROOT/.tmp"
 cargo build -p companyos-core -p companyos-crm -p companyos-finance -p companyos-project \
-  -p companyos-gateway -p companyos-outbox-relay -p companyos-notification \
+  -p companyos-hr -p companyos-gateway -p companyos-outbox-relay -p companyos-notification \
   -p companyos-search -p companyos-analytics -p companyos-file -p companyos-workflow-host \
   -p companyos-ai
 
@@ -98,6 +99,7 @@ pkill -f "target/debug/companyos-crm" 2>/dev/null || true
 pkill -f "target/debug/companyos-finance" 2>/dev/null || true
 pkill -f "target/debug/companyos-project-worker" 2>/dev/null || true
 pkill -f "target/debug/companyos-project" 2>/dev/null || true
+pkill -f "target/debug/companyos-hr" 2>/dev/null || true
 pkill -f "target/debug/companyos-gateway" 2>/dev/null || true
 pkill -f "target/debug/companyos-outbox-relay" 2>/dev/null || true
 pkill -f "target/debug/companyos-notification" 2>/dev/null || true
@@ -131,6 +133,8 @@ nohup env "${COMMON_ENV[@]}" PROJECT_BIND="${PROJECT_BIND:-0.0.0.0:8084}" FINANC
   "$ROOT/target/debug/companyos-project" >"$ROOT/.tmp/project.log" 2>&1 &
 nohup env "${COMMON_ENV[@]}" TEMPORAL_ADDRESS="$TEMPORAL_ADDRESS" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-project-worker" >"$ROOT/.tmp/project-worker.log" 2>&1 &
+nohup env "${COMMON_ENV[@]}" HR_BIND="${HR_BIND:-0.0.0.0:8088}" COMPANYOS_LOCAL_AUTH="$COMPANYOS_LOCAL_AUTH" \
+  "$ROOT/target/debug/companyos-hr" >"$ROOT/.tmp/hr.log" 2>&1 &
 
 nohup env "${COMMON_ENV[@]}" \
   "$ROOT/target/debug/companyos-outbox-relay" >"$ROOT/.tmp/outbox-relay.log" 2>&1 &
@@ -151,6 +155,7 @@ nohup env "${COMMON_ENV[@]}" AI_BIND="${AI_BIND:-0.0.0.0:8092}" GATEWAY_URL="$GA
 
 nohup env "${COMMON_ENV[@]}" CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
   FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
+  HR_SERVICE_URL="$HR_SERVICE_URL" \
   NOTIFICATION_SERVICE_URL="$NOTIFICATION_SERVICE_URL" SEARCH_SERVICE_URL="$SEARCH_SERVICE_URL" \
   ANALYTICS_SERVICE_URL="$ANALYTICS_SERVICE_URL" FILE_SERVICE_URL="$FILE_SERVICE_URL" \
   AI_SERVICE_URL="$AI_SERVICE_URL" \
@@ -162,6 +167,7 @@ curl -sf "http://127.0.0.1:8081/healthz" && echo " core ok"
 curl -sf "http://127.0.0.1:8082/healthz" && echo " crm ok"
 curl -sf "http://127.0.0.1:8083/healthz" && echo " finance ok"
 curl -sf "http://127.0.0.1:8084/healthz" && echo " project ok"
+curl -sf "http://127.0.0.1:8088/healthz" && echo " hr ok"
 curl -sf "http://127.0.0.1:8085/healthz" && echo " notification ok"
 curl -sf "http://127.0.0.1:8086/healthz" && echo " search ok"
 curl -sf "http://127.0.0.1:8087/healthz" && echo " analytics ok"
@@ -170,13 +176,14 @@ curl -sf "http://127.0.0.1:8092/healthz" && echo " ai ok"
 curl -sf "http://127.0.0.1:8080/healthz" && echo " gateway ok"
 
 echo ""
-echo "Dev stack is up (Phase 1.9)."
+echo "Dev stack is up (Phase 2.1)."
 echo "  COMPANYOS_LOCAL_AUTH=$COMPANYOS_LOCAL_AUTH (default 0 — JWT auth)"
 echo "  Gateway:       http://127.0.0.1:8080"
 echo "  Core:          http://127.0.0.1:8081"
 echo "  CRM:           http://127.0.0.1:8082"
 echo "  Finance:       http://127.0.0.1:8083"
 echo "  Project:       http://127.0.0.1:8084"
+echo "  HR / People:   http://127.0.0.1:8088"
 echo "  Notification:  http://127.0.0.1:8085"
 echo "  Search:        http://127.0.0.1:8086"
 echo "  Analytics:     http://127.0.0.1:8087"

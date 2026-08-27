@@ -1,6 +1,7 @@
 //! Phase 1.2 Workspace DoD integration tests.
 //! Requires TEST_DATABASE_URL / DATABASE_URL (non-superuser).
 
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use axum::body::Body;
@@ -15,8 +16,13 @@ use companyos_tenancy::{set_session_org_id, OrgId};
 use companyos_testkit::test_database_url;
 use http_body_util::BodyExt;
 use serde_json::Value;
+use tokio::sync::Mutex as AsyncMutex;
 use tower::ServiceExt;
 use uuid::Uuid;
+
+/// Migrate once — concurrent DROP/CREATE POLICY under FORCE RLS races inserts.
+static MIGRATED: OnceLock<()> = OnceLock::new();
+static MIGRATE_LOCK: AsyncMutex<()> = AsyncMutex::const_new(());
 
 async fn pool() -> Option<sqlx::PgPool> {
     let url = test_database_url()?;
@@ -25,7 +31,13 @@ async fn pool() -> Option<sqlx::PgPool> {
         .connect(&url)
         .await
         .ok()?;
-    migrate(&pool).await.ok()?;
+    if MIGRATED.get().is_none() {
+        let _guard = MIGRATE_LOCK.lock().await;
+        if MIGRATED.get().is_none() {
+            migrate(&pool).await.ok()?;
+            let _ = MIGRATED.set(());
+        }
+    }
     Some(pool)
 }
 
@@ -428,6 +440,25 @@ async fn system_role_deny_matrix_unit() {
             }
             // Manager may invite
             if *role == Role::Manager && *perm == "workspace.member.invite" {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
+            // Phase 2.1 People: Finance may read sensitive compensation/IDs.
+            if *role == Role::Finance && *perm == "hr.employee.read_sensitive" {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
+            // Phase 2.1 People: Manager may write/onboard/offboard and read sensitive.
+            if *role == Role::Manager
+                && matches!(
+                    *perm,
+                    "hr.employee.read_sensitive"
+                        | "hr.employee.write"
+                        | "hr.employee.onboard"
+                        | "hr.employee.offboard"
+                        | "hr.document.write"
+                )
+            {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }

@@ -40,7 +40,6 @@ CREATE INDEX IF NOT EXISTS membership_user_id_idx ON membership (user_id);
 ALTER TABLE membership ENABLE ROW LEVEL SECURITY;
 ALTER TABLE membership FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS membership_tenant_isolation ON membership;
 -- Tenant writes/reads when app.org_id is set. Auth login may list a user's
 -- memberships across orgs by setting app.auth_lookup_user = user uuid.
 CREATE POLICY membership_tenant_isolation ON membership
@@ -159,7 +158,6 @@ CREATE INDEX IF NOT EXISTS sso_configuration_org_id_idx ON sso_configuration (or
 ALTER TABLE sso_configuration ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sso_configuration FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS sso_tenant_isolation ON sso_configuration;
 CREATE POLICY sso_tenant_isolation ON sso_configuration
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
