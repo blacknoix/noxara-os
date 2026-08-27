@@ -1,4 +1,4 @@
-//! CompanyOS People / HR service (library) — Phase 2.1.
+//! CompanyOS People / HR service (library) — Phase 2.1 + 2.2.
 //!
 //! Bounded context: **People** (`people_*` tables, `Context::People` events).
 //! Routes mount under `/api/v1/people/...`. Standalone network service (own
@@ -6,6 +6,9 @@
 //! `membership` / `role_permission` / `org_role` for authz, and **never**
 //! joins Workspace department tables or invents a second department SoT.
 //! `companyos_authz` remains the sole PDP.
+//!
+//! Phase 2.2 adds attendance (append-only) and leave (ledger-true balances,
+//! approval-routed requests, Temporal year-end carry-forward).
 
 pub mod access;
 pub mod audit;
@@ -13,6 +16,7 @@ pub mod auth;
 pub mod crypto;
 pub mod handlers;
 pub mod idempotency;
+pub mod leave_balance;
 pub mod openapi;
 pub mod principal;
 pub mod scope;
@@ -69,9 +73,13 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 /// created shared tables (`organization`, `membership`, `outbox_event`, …).
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     companyos_tenancy::with_schema_migration_lock(pool, || async {
-        let migration = include_str!("../migrations/001_people.sql");
-        for stmt in split_sql(migration) {
-            companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+        for file in [
+            include_str!("../migrations/001_people.sql"),
+            include_str!("../migrations/002_attendance_leave.sql"),
+        ] {
+            for stmt in split_sql(file) {
+                companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+            }
         }
         Ok(())
     })

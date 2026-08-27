@@ -1,13 +1,16 @@
 //! HTTP handlers for `/api/v1/people/...`.
 
 pub mod assets;
+pub mod attendance;
 pub mod compensation;
 pub mod contracts;
 pub mod documents;
 pub mod employees;
+pub mod leave;
 pub mod me;
 pub mod offboarding;
 pub mod onboarding;
+pub mod schedules;
 pub mod timeline;
 
 use axum::http::HeaderMap;
@@ -29,6 +32,9 @@ pub fn router() -> Router<AppState> {
         .merge(timeline::router())
         .merge(onboarding::router())
         .merge(offboarding::router())
+        .merge(schedules::router())
+        .merge(attendance::router())
+        .merge(leave::router())
 }
 
 pub(crate) fn internal(request_id: &str) -> impl Fn(sqlx::Error) -> AppError + '_ {

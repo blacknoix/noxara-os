@@ -3343,6 +3343,87 @@
         }
       }
     },
+    "/api/v1/people/attendance": {
+      "get": {
+        "tags": [
+          "people-attendance"
+        ],
+        "summary": "GET /api/v1/people/attendance",
+        "operationId": "list_attendance",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-attendance"
+        ],
+        "summary": "POST /api/v1/people/attendance",
+        "operationId": "record_attendance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAttendanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/attendance/import": {
+      "post": {
+        "tags": [
+          "people-attendance"
+        ],
+        "summary": "POST /api/v1/people/attendance/import",
+        "operationId": "import_attendance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceImportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/people/employees": {
       "get": {
         "tags": [
@@ -3961,6 +4042,480 @@
         }
       }
     },
+    "/api/v1/people/holidays": {
+      "get": {
+        "tags": [
+          "people-holidays"
+        ],
+        "summary": "GET /api/v1/people/holidays",
+        "operationId": "list_holidays",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-holidays"
+        ],
+        "summary": "POST /api/v1/people/holidays",
+        "operationId": "create_holiday",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHolidayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/holidays/{id}": {
+      "get": {
+        "tags": [
+          "people-holidays"
+        ],
+        "summary": "GET /api/v1/people/holidays/{id}",
+        "operationId": "get_holiday",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-requests": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave-requests",
+        "operationId": "list_leave_requests",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave-requests",
+        "operationId": "create_leave_request",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-requests/{id}": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave-requests/{id}",
+        "operationId": "get_leave_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-requests/{id}/cancel": {
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave-requests/{id}/cancel",
+        "operationId": "cancel_leave_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-requests/{id}/decide": {
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave-requests/{id}/decide \u2014 approval engine callback.",
+        "operationId": "decide_leave_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideLeaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-requests/{id}/submit": {
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave-requests/{id}/submit",
+        "operationId": "submit_leave_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-types": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave-types",
+        "operationId": "list_leave_types",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave-types",
+        "operationId": "create_leave_type",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveTypeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave-types/{id}": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave-types/{id}",
+        "operationId": "get_leave_type",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveTypeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave/accrue": {
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave/accrue \u2014 post an accrual ledger entry (admin).",
+        "operationId": "accrue_leave",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccrueLeaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveLedgerEntryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave/balances": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave/balances",
+        "operationId": "list_balances",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveBalanceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave/calendar": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave/calendar",
+        "operationId": "team_calendar",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveCalendarResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave/carry-forward": {
+      "post": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "POST /api/v1/people/leave/carry-forward \u2014 idempotent Temporal-style workflow.",
+        "operationId": "run_carry_forward",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarryForwardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarryForwardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/leave/reports/absences": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/leave/reports/absences",
+        "operationId": "absence_report",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbsenceReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/people/me": {
       "get": {
         "tags": [
@@ -4007,6 +4562,132 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmployeeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/people/me/attendance": {
+      "get": {
+        "tags": [
+          "people-attendance"
+        ],
+        "summary": "GET /api/v1/people/me/attendance",
+        "operationId": "list_my_attendance",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/me/leave": {
+      "get": {
+        "tags": [
+          "people-leave"
+        ],
+        "summary": "GET /api/v1/people/me/leave",
+        "operationId": "list_my_leave",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/schedules": {
+      "get": {
+        "tags": [
+          "people-schedules"
+        ],
+        "summary": "GET /api/v1/people/schedules",
+        "operationId": "list_schedules",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkScheduleListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "people-schedules"
+        ],
+        "summary": "POST /api/v1/people/schedules",
+        "operationId": "create_schedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkScheduleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/schedules/{id}": {
+      "get": {
+        "tags": [
+          "people-schedules"
+        ],
+        "summary": "GET /api/v1/people/schedules/{id}",
+        "operationId": "get_schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkScheduleDto"
                 }
               }
             }
@@ -10508,6 +11189,61 @@
           }
         }
       },
+      "AbsenceReportResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbsenceReportRowDto"
+            }
+          },
+          "to": {
+            "type": "string"
+          }
+        }
+      },
+      "AbsenceReportRowDto": {
+        "type": "object",
+        "required": [
+          "employee_id",
+          "employee_display_name",
+          "leave_type_code",
+          "units_milli",
+          "units_days",
+          "request_count"
+        ],
+        "properties": {
+          "employee_display_name": {
+            "type": "string"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "leave_type_code": {
+            "type": "string"
+          },
+          "request_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "units_days": {
+            "type": "string"
+          },
+          "units_milli": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "AccessAuditResponse": {
         "type": "object",
         "required": [
@@ -10552,6 +11288,40 @@
           },
           "path": {
             "type": "string"
+          }
+        }
+      },
+      "AccrueLeaveRequest": {
+        "type": "object",
+        "required": [
+          "employee_id",
+          "leave_type_id"
+        ],
+        "properties": {
+          "effective_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "leave_type_id": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "units_milli": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -10605,6 +11375,180 @@
             "items": {
               "$ref": "#/components/schemas/AssetDto"
             }
+          }
+        }
+      },
+      "AttendanceDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "entry_kind",
+          "recorded_at",
+          "local_date",
+          "timezone",
+          "source",
+          "created_at"
+        ],
+        "properties": {
+          "accuracy_meters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "entry_kind": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "local_date": {
+            "type": "string"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recorded_at": {
+            "type": "string"
+          },
+          "reverses_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        }
+      },
+      "AttendanceImportRequest": {
+        "type": "object",
+        "required": [
+          "csv"
+        ],
+        "properties": {
+          "batch_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "csv": {
+            "type": "string",
+            "description": "CSV body: employee_id,entry_kind,recorded_at[,timezone,latitude,longitude,accuracy_meters,note]"
+          }
+        }
+      },
+      "AttendanceImportResponse": {
+        "type": "object",
+        "required": [
+          "imported",
+          "skipped",
+          "items"
+        ],
+        "properties": {
+          "imported": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceDto"
+            }
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AttendanceListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CarryForwardRequest": {
+        "type": "object",
+        "required": [
+          "year"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CarryForwardResponse": {
+        "type": "object",
+        "required": [
+          "workflow_id",
+          "year",
+          "status",
+          "entries_posted",
+          "idempotent_replay"
+        ],
+        "properties": {
+          "entries_posted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idempotent_replay": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "workflow_id": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -10970,6 +11914,202 @@
           }
         }
       },
+      "CreateHolidayRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "holiday_date"
+        ],
+        "properties": {
+          "half_day_period": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "holiday_date": {
+            "type": "string"
+          },
+          "is_half_day": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateLeaveRequestRequest": {
+        "type": "object",
+        "required": [
+          "leave_type_id",
+          "start_date",
+          "end_date"
+        ],
+        "properties": {
+          "employee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "end_period": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leave_type_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "start_period": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submit": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "When true, immediately submit into the approval engine."
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateLeaveTypeRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "properties": {
+          "accrual_cadence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accrual_units_milli": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "allows_half_day": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "carry_forward_cap_milli": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "expiry_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requires_approval": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateWorkScheduleRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "is_default": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "weekly_hours": {}
+        }
+      },
+      "DecideLeaveRequest": {
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "DocumentDto": {
         "type": "object",
         "required": [
@@ -11179,6 +12319,64 @@
           }
         }
       },
+      "HolidayDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "holiday_date",
+          "is_half_day",
+          "created_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "half_day_period": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "holiday_date": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_half_day": {
+            "type": "boolean"
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HolidayListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HolidayDto"
+            }
+          }
+        }
+      },
       "HrTaskDto": {
         "type": "object",
         "required": [
@@ -11240,6 +12438,365 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HrTaskDto"
+            }
+          }
+        }
+      },
+      "LeaveBalanceDto": {
+        "type": "object",
+        "required": [
+          "employee_id",
+          "leave_type_id",
+          "leave_type_code",
+          "leave_type_name",
+          "balance_units_milli",
+          "balance_days",
+          "as_of"
+        ],
+        "properties": {
+          "as_of": {
+            "type": "string"
+          },
+          "balance_days": {
+            "type": "string"
+          },
+          "balance_units_milli": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "leave_type_code": {
+            "type": "string"
+          },
+          "leave_type_id": {
+            "type": "string"
+          },
+          "leave_type_name": {
+            "type": "string"
+          }
+        }
+      },
+      "LeaveBalanceListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaveBalanceDto"
+            }
+          }
+        }
+      },
+      "LeaveCalendarEntryDto": {
+        "type": "object",
+        "required": [
+          "leave_request_id",
+          "employee_id",
+          "employee_display_name",
+          "leave_type_code",
+          "status",
+          "start_date",
+          "end_date",
+          "start_period",
+          "end_period",
+          "units_milli"
+        ],
+        "properties": {
+          "employee_display_name": {
+            "type": "string"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "end_period": {
+            "type": "string"
+          },
+          "leave_request_id": {
+            "type": "string"
+          },
+          "leave_type_code": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "start_period": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "units_milli": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LeaveCalendarResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaveCalendarEntryDto"
+            }
+          }
+        }
+      },
+      "LeaveLedgerEntryDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "leave_type_id",
+          "entry_kind",
+          "units_milli",
+          "effective_date",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "effective_date": {
+            "type": "string"
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "entry_kind": {
+            "type": "string"
+          },
+          "expires_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "leave_request_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leave_type_id": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "units_milli": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LeaveRequestDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "leave_type_id",
+          "status",
+          "start_date",
+          "end_date",
+          "start_period",
+          "end_period",
+          "units_milli",
+          "units_days",
+          "timezone",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "decided_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "end_period": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "leave_type_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "start_period": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "units_days": {
+            "type": "string"
+          },
+          "units_milli": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LeaveRequestListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaveRequestDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "LeaveTypeDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "category",
+          "accrual_cadence",
+          "accrual_units_milli",
+          "allows_half_day",
+          "requires_approval",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "accrual_cadence": {
+            "type": "string"
+          },
+          "accrual_units_milli": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "allows_half_day": {
+            "type": "boolean"
+          },
+          "carry_forward_cap_milli": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "category": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "expiry_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requires_approval": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LeaveTypeListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaveTypeDto"
             }
           }
         }
@@ -11411,6 +12968,75 @@
           },
           "workflow_id": {
             "type": "string"
+          }
+        }
+      },
+      "RecordAttendanceRequest": {
+        "type": "object",
+        "required": [
+          "entry_kind"
+        ],
+        "properties": {
+          "accuracy_meters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "employee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entry_kind": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recorded_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reverses_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Public id of the fact row to reverse (creates append-only reversal)."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -11592,6 +13218,64 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "WorkScheduleDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "timezone",
+          "weekly_hours",
+          "is_default",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "weekly_hours": {}
+        }
+      },
+      "WorkScheduleListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkScheduleDto"
+            }
           }
         }
       },
@@ -12770,6 +14454,22 @@
     {
       "name": "people-offboarding",
       "description": "EmployeeOffboarding + access audit"
+    },
+    {
+      "name": "people-schedules",
+      "description": "Work schedules"
+    },
+    {
+      "name": "people-holidays",
+      "description": "Holiday calendars"
+    },
+    {
+      "name": "people-attendance",
+      "description": "Append-only attendance"
+    },
+    {
+      "name": "people-leave",
+      "description": "Leave types, requests, balances, carry-forward"
     },
     {
       "name": "notifications",

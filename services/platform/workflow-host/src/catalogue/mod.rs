@@ -6,6 +6,7 @@ pub mod employee_offboarding;
 pub mod employee_onboarding;
 pub mod expense_approval;
 pub mod invoice_dunning;
+pub mod leave_carry_forward;
 pub mod org_provisioning;
 pub mod quote_to_invoice;
 pub mod tenant_deletion;
@@ -26,6 +27,7 @@ pub enum WorkflowType {
     TenantDeletion,
     EmployeeOnboarding,
     EmployeeOffboarding,
+    LeaveCarryForward,
 }
 
 impl WorkflowType {
@@ -41,6 +43,7 @@ impl WorkflowType {
             Self::TenantDeletion => "TenantDeletion",
             Self::EmployeeOnboarding => "EmployeeOnboarding",
             Self::EmployeeOffboarding => "EmployeeOffboarding",
+            Self::LeaveCarryForward => "LeaveCarryForward",
         }
     }
 
@@ -56,6 +59,7 @@ impl WorkflowType {
             Self::TenantDeletion,
             Self::EmployeeOnboarding,
             Self::EmployeeOffboarding,
+            Self::LeaveCarryForward,
         ]
     }
 }

@@ -57,6 +57,12 @@ pub enum IdKind {
     EmployeeDocument,
     HrAsset,
     HrTask,
+    WorkSchedule,
+    Holiday,
+    AttendanceRecord,
+    LeaveType,
+    LeaveRequest,
+    LeaveLedgerEntry,
 }
 
 impl IdKind {
@@ -95,6 +101,12 @@ impl IdKind {
             Self::EmployeeDocument => "edc_",
             Self::HrAsset => "has_",
             Self::HrTask => "htk_",
+            Self::WorkSchedule => "sch_",
+            Self::Holiday => "hol_",
+            Self::AttendanceRecord => "att_",
+            Self::LeaveType => "lvt_",
+            Self::LeaveRequest => "lvr_",
+            Self::LeaveLedgerEntry => "lv_",
         }
     }
 
@@ -133,6 +145,12 @@ impl IdKind {
             "edc_" => Some(Self::EmployeeDocument),
             "has_" => Some(Self::HrAsset),
             "htk_" => Some(Self::HrTask),
+            "sch_" => Some(Self::WorkSchedule),
+            "hol_" => Some(Self::Holiday),
+            "att_" => Some(Self::AttendanceRecord),
+            "lvt_" => Some(Self::LeaveType),
+            "lvr_" => Some(Self::LeaveRequest),
+            "lv_" => Some(Self::LeaveLedgerEntry),
             _ => None,
         }
     }
@@ -220,6 +238,12 @@ impl FromStr for PublicId {
             ("edc_", IdKind::EmployeeDocument),
             ("has_", IdKind::HrAsset),
             ("htk_", IdKind::HrTask),
+            ("sch_", IdKind::WorkSchedule),
+            ("hol_", IdKind::Holiday),
+            ("att_", IdKind::AttendanceRecord),
+            ("lvt_", IdKind::LeaveType),
+            ("lvr_", IdKind::LeaveRequest),
+            ("lv_", IdKind::LeaveLedgerEntry),
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
             ("cn_", IdKind::CreditNote),
@@ -332,6 +356,12 @@ mod tests {
             IdKind::EmployeeDocument,
             IdKind::HrAsset,
             IdKind::HrTask,
+            IdKind::WorkSchedule,
+            IdKind::Holiday,
+            IdKind::AttendanceRecord,
+            IdKind::LeaveType,
+            IdKind::LeaveRequest,
+            IdKind::LeaveLedgerEntry,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

@@ -1182,3 +1182,253 @@ export type HrTaskDto = {
   title: string;
   workflow_id?: string;
 };
+
+export type WorkScheduleDto = {
+  created_at: string;
+  id: string;
+  is_default: boolean;
+  location?: string;
+  name: string;
+  timezone: string;
+  updated_at: string;
+  version: number;
+  weekly_hours: Record<string, unknown>;
+};
+
+export type WorkScheduleListResponse = {
+  items: WorkScheduleDto[];
+};
+
+export type CreateWorkScheduleRequest = {
+  is_default?: string;
+  location?: string;
+  name: string;
+  timezone?: string;
+  weekly_hours?: Record<string, unknown>;
+};
+
+export type HolidayDto = {
+  created_at: string;
+  half_day_period?: string;
+  holiday_date: string;
+  id: string;
+  is_half_day: boolean;
+  location?: string;
+  name: string;
+  version: number;
+};
+
+export type HolidayListResponse = {
+  items: HolidayDto[];
+};
+
+export type CreateHolidayRequest = {
+  half_day_period?: string;
+  holiday_date: string;
+  is_half_day?: string;
+  location?: string;
+  name: string;
+};
+
+export type AttendanceDto = {
+  accuracy_meters?: string;
+  created_at: string;
+  employee_id: string;
+  entry_kind: string;
+  id: string;
+  latitude?: string;
+  local_date: string;
+  longitude?: string;
+  note?: string;
+  recorded_at: string;
+  reverses_id?: string;
+  source: string;
+  timezone: string;
+};
+
+export type AttendanceListResponse = {
+  items: AttendanceDto[];
+  total: number;
+};
+
+export type RecordAttendanceRequest = {
+  accuracy_meters?: string;
+  employee_id?: string;
+  entry_kind: string;
+  latitude?: string;
+  longitude?: string;
+  note?: string;
+  recorded_at?: string;
+  /** Public id of the fact row to reverse (creates append-only reversal). */
+  reverses_id?: string;
+  source?: string;
+  timezone?: string;
+};
+
+export type AttendanceImportRequest = {
+  batch_key?: string;
+  /** CSV body: employee_id,entry_kind,recorded_at[,timezone,latitude,longitude,accuracy_meters,note] */
+  csv: string;
+};
+
+export type AttendanceImportResponse = {
+  imported: number;
+  items: AttendanceDto[];
+  skipped: number;
+};
+
+export type LeaveTypeDto = {
+  accrual_cadence: string;
+  accrual_units_milli: number;
+  allows_half_day: boolean;
+  carry_forward_cap_milli?: string;
+  category: string;
+  code: string;
+  created_at: string;
+  expiry_days?: string;
+  id: string;
+  is_active: boolean;
+  name: string;
+  requires_approval: boolean;
+  updated_at: string;
+  version: number;
+};
+
+export type LeaveTypeListResponse = {
+  items: LeaveTypeDto[];
+};
+
+export type CreateLeaveTypeRequest = {
+  accrual_cadence?: string;
+  accrual_units_milli?: string;
+  allows_half_day?: string;
+  carry_forward_cap_milli?: string;
+  category?: string;
+  code: string;
+  expiry_days?: string;
+  name: string;
+  requires_approval?: string;
+};
+
+export type LeaveRequestDto = {
+  approval_id?: string;
+  created_at: string;
+  decided_at?: string;
+  decision_note?: string;
+  employee_id: string;
+  end_date: string;
+  end_period: string;
+  id: string;
+  leave_type_id: string;
+  reason?: string;
+  start_date: string;
+  start_period: string;
+  status: string;
+  timezone: string;
+  units_days: string;
+  units_milli: number;
+  updated_at: string;
+  version: number;
+};
+
+export type LeaveRequestListResponse = {
+  items: LeaveRequestDto[];
+  total: number;
+};
+
+export type CreateLeaveRequestRequest = {
+  employee_id?: string;
+  end_date: string;
+  end_period?: string;
+  leave_type_id: string;
+  reason?: string;
+  start_date: string;
+  start_period?: string;
+  /** When true, immediately submit into the approval engine. */
+  submit?: string;
+  timezone?: string;
+};
+
+export type DecideLeaveRequest = {
+  approve: boolean;
+  note?: string;
+};
+
+export type LeaveBalanceDto = {
+  as_of: string;
+  balance_days: string;
+  balance_units_milli: number;
+  employee_id: string;
+  leave_type_code: string;
+  leave_type_id: string;
+  leave_type_name: string;
+};
+
+export type LeaveBalanceListResponse = {
+  items: LeaveBalanceDto[];
+};
+
+export type LeaveCalendarEntryDto = {
+  employee_display_name: string;
+  employee_id: string;
+  end_date: string;
+  end_period: string;
+  leave_request_id: string;
+  leave_type_code: string;
+  start_date: string;
+  start_period: string;
+  status: string;
+  units_milli: number;
+};
+
+export type LeaveCalendarResponse = {
+  items: LeaveCalendarEntryDto[];
+};
+
+export type AbsenceReportRowDto = {
+  employee_display_name: string;
+  employee_id: string;
+  leave_type_code: string;
+  request_count: number;
+  units_days: string;
+  units_milli: number;
+};
+
+export type AbsenceReportResponse = {
+  from: string;
+  items: AbsenceReportRowDto[];
+  to: string;
+};
+
+export type CarryForwardRequest = {
+  year: number;
+};
+
+export type CarryForwardResponse = {
+  entries_posted: number;
+  idempotent_replay: boolean;
+  status: string;
+  workflow_id: string;
+  year: number;
+};
+
+export type AccrueLeaveRequest = {
+  effective_date?: string;
+  employee_id: string;
+  leave_type_id: string;
+  note?: string;
+  units_milli?: string;
+};
+
+export type LeaveLedgerEntryDto = {
+  created_at: string;
+  effective_date: string;
+  employee_id: string;
+  entry_kind: string;
+  expires_on?: string;
+  id: string;
+  leave_request_id?: string;
+  leave_type_id: string;
+  note?: string;
+  units_milli: number;
+};
