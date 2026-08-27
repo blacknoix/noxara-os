@@ -8,6 +8,7 @@ pub mod documents;
 pub mod employees;
 pub mod leave;
 pub mod me;
+pub mod payroll;
 pub mod offboarding;
 pub mod onboarding;
 pub mod schedules;
@@ -35,6 +36,7 @@ pub fn router() -> Router<AppState> {
         .merge(schedules::router())
         .merge(attendance::router())
         .merge(leave::router())
+        .merge(payroll::router())
 }
 
 pub(crate) fn internal(request_id: &str) -> impl Fn(sqlx::Error) -> AppError + '_ {

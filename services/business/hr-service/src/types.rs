@@ -625,3 +625,122 @@ pub struct LeaveLedgerEntryDto {
     pub note: Option<String>,
     pub created_at: String,
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2.3 — Payroll
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayrollComponentDto {
+    pub id: String,
+    pub code: String,
+    pub label: String,
+    pub line_kind: String,
+    pub calc_method: String,
+    pub config_json: serde_json::Value,
+    pub currency: Option<String>,
+    pub is_active: bool,
+    pub sort_order: i32,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayrollComponentListResponse {
+    pub items: Vec<PayrollComponentDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreatePayrollComponentRequest {
+    pub code: String,
+    pub label: String,
+    pub line_kind: String,
+    pub calc_method: String,
+    pub config_json: Option<serde_json::Value>,
+    pub currency: Option<String>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayrollRunDto {
+    pub id: String,
+    pub status: String,
+    pub period_start: String,
+    pub period_end: String,
+    pub currency: String,
+    pub adjustment_of_run_id: Option<String>,
+    pub approval_id: Option<String>,
+    pub journal_public_id: Option<String>,
+    pub employee_count: i32,
+    pub gross_minor: i64,
+    pub deductions_minor: i64,
+    pub net_minor: i64,
+    pub calculated_at: Option<String>,
+    pub approved_at: Option<String>,
+    pub paid_at: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayrollRunListResponse {
+    pub items: Vec<PayrollRunDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct PayrollRunListQuery {
+    pub status: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreatePayrollRunRequest {
+    pub period_start: String,
+    pub period_end: String,
+    pub currency: String,
+    pub adjustment_of_run_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayslipLineDto {
+    pub id: String,
+    pub line_kind: String,
+    pub component_code: String,
+    pub label: String,
+    pub amount_minor: i64,
+    pub currency: String,
+    #[schema(value_type = Object)]
+    pub calculation_basis: serde_json::Value,
+    pub sort_order: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayslipDto {
+    pub id: String,
+    pub run_id: String,
+    pub employee_id: String,
+    pub currency: String,
+    pub gross_minor: i64,
+    pub deductions_minor: i64,
+    pub net_minor: i64,
+    pub status: String,
+    pub issued_at: Option<String>,
+    pub lines: Vec<PayslipLineDto>,
+    pub created_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayslipListResponse {
+    pub items: Vec<PayslipDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DecidePayrollRequest {
+    pub approve: bool,
+    pub note: Option<String>,
+}
