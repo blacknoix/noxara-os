@@ -245,7 +245,7 @@ async fn trial_balance_always_balances_after_manual_journal() {
     )
     .await;
     assert_eq!(st, StatusCode::OK);
-    assert!(tree["roots"].as_array().unwrap().len() >= 1);
+    assert!(!tree["roots"].as_array().unwrap().is_empty());
 
     let source_id = new_uuid_v7().to_string();
     let (st, je) = call_with_headers(
