@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# One-command local bootstrap for CompanyOS Phase 1.8.
+# One-command local bootstrap for CompanyOS (Phase 1.x through 1.9).
+# Hello / auth / CRM / finance path starts without OpenSearch or ClickHouse
+# (those use compose profile `full`).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -8,27 +10,28 @@ cd "$ROOT"
 COMPOSE_FILE="$ROOT/infrastructure/docker/docker-compose.yml"
 
 echo "==> CompanyOS dev-up"
-echo "    Bring-up: Postgres, Redis, NATS JetStream, Temporal (+ Postgres), MinIO"
-echo "    Optional (profile full): OpenSearch, ClickHouse — hello path works without them"
+echo "    Core path: Postgres, Redis, NATS JetStream, Temporal (+ Postgres), MinIO"
+echo "    Optional (profile full): OpenSearch, ClickHouse"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: docker is required for compose. Install Docker Desktop / Engine and retry."
   exit 1
 fi
 
-docker compose -f "$COMPOSE_FILE" up -d postgres redis nats temporal-postgres temporal temporal-ui minio
-
-echo "==> Waiting for Postgres..."
-for i in $(seq 1 60); do
-  if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U companyos -d companyos >/dev/null 2>&1; then
-    break
-  fi
-  sleep 1
-done
+# Prefer .env values; LOCAL-ONLY auth stays OFF unless explicitly enabled.
+cp -n .env.example .env 2>/dev/null || true
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
+fi
 
 export DATABASE_URL="${DATABASE_URL:-postgres://companyos:companyos@127.0.0.1:5432/companyos}"
 export TEST_DATABASE_URL="${TEST_DATABASE_URL:-postgres://companyos:companyos@127.0.0.1:5432/companyos_test}"
-export COMPANYOS_LOCAL_AUTH=1
+export COMPANYOS_LOCAL_AUTH="${COMPANYOS_LOCAL_AUTH:-0}"
+export AUTH_JWT_SECRET="${AUTH_JWT_SECRET:-local-dev-only-change-me}"
+export AUTH_COOKIE_SECURE="${AUTH_COOKIE_SECURE:-0}"
 export RUST_LOG="${RUST_LOG:-info,companyos=debug}"
 export CORE_SERVICE_URL="${CORE_SERVICE_URL:-http://127.0.0.1:8081}"
 export CRM_SERVICE_URL="${CRM_SERVICE_URL:-http://127.0.0.1:8082}"
@@ -41,17 +44,46 @@ export FILE_SERVICE_URL="${FILE_SERVICE_URL:-http://127.0.0.1:8089}"
 export AI_SERVICE_URL="${AI_SERVICE_URL:-http://127.0.0.1:8092}"
 export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
 export NATS_URL="${NATS_URL:-nats://127.0.0.1:4222}"
+export TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}"
+export GATEWAY_URL="${GATEWAY_URL:-http://127.0.0.1:8080}"
+export PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://127.0.0.1:3000}"
+export PUBLIC_API_URL="${PUBLIC_API_URL:-http://127.0.0.1:8080}"
 
-cp -n .env.example .env 2>/dev/null || true
+docker compose -f "$COMPOSE_FILE" up -d postgres redis nats temporal-postgres temporal temporal-ui minio
+
+echo "==> Waiting for Postgres..."
+for i in $(seq 1 90); do
+  if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U postgres -d postgres >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+# App role + pg_trgm (init script runs only on first volume create).
+docker compose -f "$COMPOSE_FILE" exec -T postgres \
+  psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL' >/dev/null 2>&1 || true
+DO $$ BEGIN
+  CREATE ROLE companyos LOGIN PASSWORD 'companyos' NOSUPERUSER NOBYPASSRLS CREATEDB;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+SELECT 'CREATE DATABASE companyos OWNER companyos'
+  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'companyos')\gexec
+SELECT 'CREATE DATABASE companyos_test OWNER companyos'
+  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'companyos_test')\gexec
+\connect companyos
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+\connect companyos_test
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+SQL
 
 if command -v nats >/dev/null 2>&1; then
   echo "==> Bootstrapping NATS streams..."
   bash "$ROOT/scripts/nats-bootstrap.sh" || true
 else
-  echo "==> Skipping nats-bootstrap (nats CLI not installed)"
+  echo "==> Skipping nats-bootstrap (nats CLI not installed; optional for hello path)"
 fi
 
-echo "==> Seeding one org + two users..."
+echo "==> Seeding one org + two users + OrgProvisioning..."
 bash "$ROOT/scripts/seed-dev.sh"
 
 echo "==> Building platform + business + gateway + AI..."
@@ -75,41 +107,53 @@ pkill -f "target/debug/companyos-file" 2>/dev/null || true
 pkill -f "target/debug/companyos-workflow-host" 2>/dev/null || true
 pkill -f "target/debug/companyos-ai" 2>/dev/null || true
 
-nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
+# Shared auth env for every process (cookie/CORS-friendly local defaults).
+COMMON_ENV=(
+  "DATABASE_URL=$DATABASE_URL"
+  "AUTH_JWT_SECRET=$AUTH_JWT_SECRET"
+  "AUTH_COOKIE_SECURE=$AUTH_COOKIE_SECURE"
+  "COMPANYOS_LOCAL_AUTH=$COMPANYOS_LOCAL_AUTH"
+  "RUST_LOG=$RUST_LOG"
+  "PUBLIC_APP_URL=$PUBLIC_APP_URL"
+  "PUBLIC_API_URL=$PUBLIC_API_URL"
+  "REDIS_URL=$REDIS_URL"
+  "NATS_URL=$NATS_URL"
+)
+
+nohup env "${COMMON_ENV[@]}" CRM_SERVICE_URL="$CRM_SERVICE_URL" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
   PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-core" >"$ROOT/.tmp/core.log" 2>&1 &
-nohup env CRM_SERVICE_URL="$CRM_SERVICE_URL" "$ROOT/target/debug/companyos-crm" >"$ROOT/.tmp/crm.log" 2>&1 &
-nohup env FINANCE_BIND="${FINANCE_BIND:-0.0.0.0:8083}" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
+nohup env "${COMMON_ENV[@]}" CRM_SERVICE_URL="$CRM_SERVICE_URL" "$ROOT/target/debug/companyos-crm" >"$ROOT/.tmp/crm.log" 2>&1 &
+nohup env "${COMMON_ENV[@]}" FINANCE_BIND="${FINANCE_BIND:-0.0.0.0:8083}" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-finance" >"$ROOT/.tmp/finance.log" 2>&1 &
-nohup env PROJECT_BIND="${PROJECT_BIND:-0.0.0.0:8084}" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
-  CRM_SERVICE_URL="$CRM_SERVICE_URL" TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" \
+nohup env "${COMMON_ENV[@]}" PROJECT_BIND="${PROJECT_BIND:-0.0.0.0:8084}" FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" \
+  CRM_SERVICE_URL="$CRM_SERVICE_URL" TEMPORAL_ADDRESS="$TEMPORAL_ADDRESS" \
   "$ROOT/target/debug/companyos-project" >"$ROOT/.tmp/project.log" 2>&1 &
-nohup env TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
+nohup env "${COMMON_ENV[@]}" TEMPORAL_ADDRESS="$TEMPORAL_ADDRESS" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   "$ROOT/target/debug/companyos-project-worker" >"$ROOT/.tmp/project-worker.log" 2>&1 &
 
-nohup env NATS_URL="$NATS_URL" DATABASE_URL="$DATABASE_URL" \
+nohup env "${COMMON_ENV[@]}" \
   "$ROOT/target/debug/companyos-outbox-relay" >"$ROOT/.tmp/outbox-relay.log" 2>&1 &
-nohup env NOTIFICATION_BIND="${NOTIFICATION_BIND:-0.0.0.0:8085}" REDIS_URL="$REDIS_URL" \
+nohup env "${COMMON_ENV[@]}" NOTIFICATION_BIND="${NOTIFICATION_BIND:-0.0.0.0:8085}" \
   "$ROOT/target/debug/companyos-notification" >"$ROOT/.tmp/notification.log" 2>&1 &
-nohup env SEARCH_BIND="${SEARCH_BIND:-0.0.0.0:8086}" \
+nohup env "${COMMON_ENV[@]}" SEARCH_BIND="${SEARCH_BIND:-0.0.0.0:8086}" \
   "$ROOT/target/debug/companyos-search" >"$ROOT/.tmp/search.log" 2>&1 &
-nohup env ANALYTICS_BIND="${ANALYTICS_BIND:-0.0.0.0:8087}" \
+nohup env "${COMMON_ENV[@]}" ANALYTICS_BIND="${ANALYTICS_BIND:-0.0.0.0:8087}" \
   "$ROOT/target/debug/companyos-analytics" >"$ROOT/.tmp/analytics.log" 2>&1 &
-nohup env FILE_BIND="${FILE_BIND:-0.0.0.0:8089}" \
+nohup env "${COMMON_ENV[@]}" FILE_BIND="${FILE_BIND:-0.0.0.0:8089}" \
   "$ROOT/target/debug/companyos-file" >"$ROOT/.tmp/file.log" 2>&1 &
-nohup env WORKFLOW_HOST_BIND="${WORKFLOW_HOST_BIND:-0.0.0.0:8091}" \
-  TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-127.0.0.1:7233}" \
+nohup env "${COMMON_ENV[@]}" WORKFLOW_HOST_BIND="${WORKFLOW_HOST_BIND:-0.0.0.0:8091}" \
+  TEMPORAL_ADDRESS="$TEMPORAL_ADDRESS" \
   "$ROOT/target/debug/companyos-workflow-host" >"$ROOT/.tmp/workflow-host.log" 2>&1 &
-nohup env AI_BIND="${AI_BIND:-0.0.0.0:8092}" GATEWAY_URL="${GATEWAY_URL:-http://127.0.0.1:8080}" \
+nohup env "${COMMON_ENV[@]}" AI_BIND="${AI_BIND:-0.0.0.0:8092}" GATEWAY_URL="$GATEWAY_URL" \
   SEARCH_SERVICE_URL="$SEARCH_SERVICE_URL" \
   "$ROOT/target/debug/companyos-ai" >"$ROOT/.tmp/ai.log" 2>&1 &
 
-nohup env CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
+nohup env "${COMMON_ENV[@]}" CORE_SERVICE_URL="$CORE_SERVICE_URL" CRM_SERVICE_URL="$CRM_SERVICE_URL" \
   FINANCE_SERVICE_URL="$FINANCE_SERVICE_URL" PROJECT_SERVICE_URL="$PROJECT_SERVICE_URL" \
   NOTIFICATION_SERVICE_URL="$NOTIFICATION_SERVICE_URL" SEARCH_SERVICE_URL="$SEARCH_SERVICE_URL" \
   ANALYTICS_SERVICE_URL="$ANALYTICS_SERVICE_URL" FILE_SERVICE_URL="$FILE_SERVICE_URL" \
   AI_SERVICE_URL="$AI_SERVICE_URL" \
-  REDIS_URL="$REDIS_URL" \
   "$ROOT/target/debug/companyos-gateway" >"$ROOT/.tmp/gateway.log" 2>&1 &
 
 sleep 3
@@ -127,6 +171,7 @@ curl -sf "http://127.0.0.1:8080/healthz" && echo " gateway ok"
 
 echo ""
 echo "Dev stack is up (Phase 1.9)."
+echo "  COMPANYOS_LOCAL_AUTH=$COMPANYOS_LOCAL_AUTH (default 0 — JWT auth)"
 echo "  Gateway:       http://127.0.0.1:8080"
 echo "  Core:          http://127.0.0.1:8081"
 echo "  CRM:           http://127.0.0.1:8082"
@@ -138,4 +183,9 @@ echo "  Analytics:     http://127.0.0.1:8087"
 echo "  File:          http://127.0.0.1:8089"
 echo "  Outbox relay:  http://127.0.0.1:8090"
 echo "  Workflow host: http://127.0.0.1:8091"
-echo "  AI copilot:    http://127.0.0.1:8092"
+echo "  AI copilot:    http://127.0.0.1:8092 (mock provider unless AI_API_KEY set)"
+echo ""
+echo "Next:"
+echo "  pnpm install && pnpm --filter @companyos/web dev"
+echo "  Member login: member@acme.demo / correct-horse-battery"
+echo "  Deal-to-cash walkthrough: docs/runbooks/deal-to-cash.md"

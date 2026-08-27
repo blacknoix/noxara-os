@@ -33,10 +33,13 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 }
 
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    for stmt in split_sql(include_str!("../migrations/001_files.sql")) {
-        sqlx::query(&stmt).execute(pool).await?;
-    }
-    Ok(())
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for stmt in split_sql(include_str!("../migrations/001_files.sql")) {
+            sqlx::query(&stmt).execute(pool).await?;
+        }
+        Ok(())
+    })
+    .await
 }
 
 pub fn build_router(state: AppState) -> Router {

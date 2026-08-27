@@ -46,17 +46,13 @@ docs/                     Specs, ADRs, threat models, runbooks, event schemas
 
 ```bash
 cp .env.example .env
-make dev-up          # postgres + deps; seeds Acme Demo
+make dev-up          # compose + seed + core/crm/finance/project/ai/gateway/…
 pnpm install
-# terminal A
-AUTH_JWT_SECRET=local-dev-only-change-me AUTH_COOKIE_SECURE=0 \
-  cargo run -p companyos-core
-# terminal B
-AUTH_JWT_SECRET=local-dev-only-change-me COMPANYOS_LOCAL_AUTH=0 \
-  cargo run -p companyos-gateway
-# terminal C
 pnpm --filter @companyos/web dev
 ```
+
+`make dev-up` starts the hello/auth/CRM/finance path without waiting on OpenSearch/ClickHouse.
+Exact per-service commands and the deal-to-cash walkthrough: [CONTRIBUTING.md](CONTRIBUTING.md), [docs/runbooks/deal-to-cash.md](docs/runbooks/deal-to-cash.md).
 
 ### Auth locally
 

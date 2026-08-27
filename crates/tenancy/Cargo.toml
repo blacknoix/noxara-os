@@ -13,6 +13,7 @@ thiserror = { workspace = true }
 uuid = { workspace = true }
 sqlx = { workspace = true }
 async-trait = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

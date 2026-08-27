@@ -4,19 +4,50 @@
 
 - Rust stable (1.85+)
 - pnpm 9+
-- Docker (for `scripts/dev-up`) or local Postgres 16
-- PostgreSQL client optional (`psql`) for seed scripts
+- Docker (for `scripts/dev-up`) or local Postgres 16 + Redis + NATS
+- PostgreSQL client (`psql`) for seed scripts
 
-## Quick start
+## Quick start (< 30 minutes)
 
 ```bash
+git clone https://github.com/blacknoix/noxara-os.git && cd noxara-os
 cp .env.example .env
 make dev-up
+# brings up Postgres/Redis/NATS/Temporal/MinIO, migrates, seeds Acme Demo,
+# starts core + crm + finance + project + platform + ai + gateway
+
 pnpm install
-pnpm --filter @companyos/web dev
+pnpm --filter @companyos/web dev   # http://127.0.0.1:3000 → API via gateway :8080
 ```
 
-Run core + gateway with the same `AUTH_JWT_SECRET`. See root [README.md](README.md) for auth details.
+OpenSearch and ClickHouse are **optional** (`docker compose … --profile full`). Auth/CRM/finance work without them.
+
+### Exact service commands (if not using the auto-started binaries)
+
+Share the same `AUTH_JWT_SECRET` and keep `COMPANYOS_LOCAL_AUTH=0` (default):
+
+```bash
+export $(grep -v '^#' .env | xargs)
+cargo run -p companyos-core              # :8081
+cargo run -p companyos-crm               # :8082
+cargo run -p companyos-finance           # :8083
+cargo run -p companyos-project           # :8084
+cargo run -p companyos-notification      # :8085
+cargo run -p companyos-search            # :8086
+cargo run -p companyos-analytics         # :8087
+cargo run -p companyos-file              # :8089
+cargo run -p companyos-outbox-relay      # :8090
+cargo run -p companyos-workflow-host     # :8091
+cargo run -p companyos-ai                # :8092 (mock unless AI_API_KEY)
+cargo run -p companyos-project-worker
+cargo run -p companyos-gateway           # :8080
+```
+
+Seed: `bash scripts/seed-dev.sh` (org + two users + **OrgProvisioning**).  
+Member: `member@acme.demo` / `correct-horse-battery`. Owner needs MFA.
+
+Deal-to-cash walkthrough: [docs/runbooks/deal-to-cash.md](docs/runbooks/deal-to-cash.md).  
+Automated: `cargo test -p companyos-finance --test deal_to_cash`.
 
 ## Authentication (Phase 1.1)
 
@@ -78,6 +109,8 @@ pnpm check:openapi-drift
 pnpm test:a11y
 pnpm test:unit
 ```
+
+CI: `.github/workflows/ci.yml` (also `workflow_dispatch`). Postgres non-superuser + `pg_trgm` + Redis. No live `AI_API_KEY` required.
 
 ## Invariants
 

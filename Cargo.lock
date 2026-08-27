@@ -692,6 +692,7 @@ dependencies = [
  "companyos-auth-token",
  "companyos-authz",
  "companyos-core",
+ "companyos-crm",
  "companyos-errors",
  "companyos-events",
  "companyos-ids",
@@ -713,6 +714,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "urlencoding",
  "utoipa",
  "uuid",
 ]

@@ -156,6 +156,75 @@ pub async fn clear_session_org_id(conn: &mut sqlx::PgConnection) -> Result<(), T
     Ok(())
 }
 
+/// Shared Postgres advisory-lock key for schema migrations.
+///
+/// `cargo test --workspace` runs many integration-test binaries in parallel
+/// against one DB; without serialization, concurrent DDL races produce flaky
+/// 500s on register/migrate. Production multi-process startup is also safe.
+pub const SCHEMA_MIGRATION_LOCK_KEY: i64 = 0x0043_4F53_4D49_4701; // "COSMIG\x01"
+
+/// Run `f` while holding the shared schema-migration advisory lock.
+///
+/// Uses `pg_try_advisory_lock` and releases the pool connection while waiting,
+/// so the lock holder can still check out other connections for DDL (avoids
+/// pool-exhaustion deadlock when many tests contend).
+pub async fn with_schema_migration_lock<F, Fut, T, E>(pool: &sqlx::PgPool, f: F) -> Result<T, E>
+where
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = Result<T, E>>,
+    E: From<sqlx::Error>,
+{
+    // Serialize waiters inside this process before touching Postgres.
+    static LOCAL: std::sync::OnceLock<tokio::sync::Mutex<()>> = std::sync::OnceLock::new();
+    let local = LOCAL.get_or_init(|| tokio::sync::Mutex::new(()));
+    let _local_guard = local.lock().await;
+
+    let mut lock_conn = loop {
+        let mut conn = pool.acquire().await?;
+        let locked: (bool,) = sqlx::query_as("SELECT pg_try_advisory_lock($1)")
+            .bind(SCHEMA_MIGRATION_LOCK_KEY)
+            .fetch_one(&mut *conn)
+            .await?;
+        if locked.0 {
+            break conn;
+        }
+        drop(conn);
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    };
+
+    let result = f().await;
+    let _ = sqlx::query("SELECT pg_advisory_unlock($1)")
+        .bind(SCHEMA_MIGRATION_LOCK_KEY)
+        .execute(&mut *lock_conn)
+        .await;
+    result
+}
+
+/// Acquire the shared schema-migration advisory lock (session-level).
+///
+/// Prefer [`with_schema_migration_lock`] — this pair is only safe when lock and
+/// unlock use the same checked-out connection.
+pub async fn acquire_schema_migration_lock(
+    conn: &mut sqlx::PgConnection,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_lock($1)")
+        .bind(SCHEMA_MIGRATION_LOCK_KEY)
+        .execute(&mut *conn)
+        .await?;
+    Ok(())
+}
+
+/// Release the shared schema-migration advisory lock on the same connection.
+pub async fn release_schema_migration_lock(
+    conn: &mut sqlx::PgConnection,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_unlock($1)")
+        .bind(SCHEMA_MIGRATION_LOCK_KEY)
+        .execute(&mut *conn)
+        .await?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

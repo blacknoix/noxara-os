@@ -113,23 +113,26 @@ pub fn assert_tenant_bound(envelope: &EventEnvelope) -> OrgId {
 
 /// Apply outbox migrations (001 + 002 relay/DLQ). Safe to call repeatedly.
 pub async fn migrate(pool: &sqlx::PgPool) -> Result<(), OutboxError> {
-    for sql in [
-        include_str!("../migrations/001_outbox_event.sql"),
-        include_str!("../migrations/002_outbox_relay.sql"),
-    ] {
-        for stmt in split_sql(sql) {
-            // Concurrent `CREATE TABLE IF NOT EXISTS` can race on pg_type;
-            // treat duplicate_object / unique_violation as success.
-            match sqlx::query(&stmt).execute(pool).await {
-                Ok(_) => {}
-                Err(sqlx::Error::Database(e))
-                    if e.code().as_deref() == Some("23505")
-                        || e.code().as_deref() == Some("42710") => {}
-                Err(e) => return Err(OutboxError::Db(e)),
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for sql in [
+            include_str!("../migrations/001_outbox_event.sql"),
+            include_str!("../migrations/002_outbox_relay.sql"),
+        ] {
+            for stmt in split_sql(sql) {
+                // Concurrent `CREATE TABLE IF NOT EXISTS` can race on pg_type;
+                // treat duplicate_object / unique_violation as success.
+                match sqlx::query(&stmt).execute(pool).await {
+                    Ok(_) => {}
+                    Err(sqlx::Error::Database(e))
+                        if e.code().as_deref() == Some("23505")
+                            || e.code().as_deref() == Some("42710") => {}
+                    Err(e) => return Err(OutboxError::Db(e)),
+                }
             }
         }
-    }
-    Ok(())
+        Ok(())
+    })
+    .await
 }
 
 fn split_sql(sql: &str) -> Vec<String> {

@@ -412,14 +412,33 @@ async fn prompt_injection_tool_args() {
 
     let mut tx = seeded.pool.begin().await.unwrap();
     set_session_org_id(&mut tx, seeded.org).await.unwrap();
+    // Prompt-injection must not create rows under the injected foreign org_id.
+    // (Do not assert the whole table is empty of other orgs — shared test DB.)
+    let foreign_uuid = other_org.parse::<PublicId>().unwrap().uuid();
     let foreign_count: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM ai_proposal WHERE org_id != $1")
-            .bind(seeded.org.as_uuid())
+        sqlx::query_as("SELECT COUNT(*) FROM ai_proposal WHERE org_id = $1")
+            .bind(foreign_uuid)
             .fetch_one(&mut *tx)
             .await
             .unwrap();
+    for proposal in body["proposals"].as_array().unwrap() {
+        let pid = proposal["id"].as_str().unwrap();
+        let row: Option<(Uuid,)> = sqlx::query_as("SELECT org_id FROM ai_proposal WHERE id = $1")
+            .bind(Uuid::parse_str(pid).unwrap())
+            .fetch_optional(&mut *tx)
+            .await
+            .unwrap();
+        assert_eq!(
+            row.map(|r| r.0),
+            Some(seeded.org.as_uuid()),
+            "proposal {pid} must be bound to authenticated org"
+        );
+    }
     tx.commit().await.unwrap();
-    assert_eq!(foreign_count.0, 0, "no cross-tenant proposals");
+    assert_eq!(
+        foreign_count.0, 0,
+        "no cross-tenant proposals for injected org"
+    );
 }
 
 #[tokio::test]
