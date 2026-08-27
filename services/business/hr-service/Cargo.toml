@@ -47,6 +47,7 @@ rand = { workspace = true }
 [dev-dependencies]
 companyos-testkit = { workspace = true }
 companyos-core = { path = "../../core" }
+companyos-finance = { path = "../finance-service" }
 tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 axum = { workspace = true }

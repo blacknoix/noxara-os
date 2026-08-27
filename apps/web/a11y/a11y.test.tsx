@@ -212,6 +212,65 @@ describe('a11y', () => {
     await expectNoSeriousAxeViolations(container);
   });
 
+  it('people payroll runs table has no serious/critical violations', async () => {
+    const rows = [
+      {
+        id: 'prun_1',
+        period_start: '2026-03-01',
+        period_end: '2026-03-31',
+        status: 'calculated',
+        employee_count: 12,
+        net_minor: 5400000,
+        currency: 'USD',
+        adjustment_of_run_id: null,
+      },
+      {
+        id: 'prun_2',
+        period_start: '2026-02-01',
+        period_end: '2026-02-28',
+        status: 'paid',
+        employee_count: 11,
+        net_minor: 5100000,
+        currency: 'USD',
+        adjustment_of_run_id: 'prun_1',
+      },
+    ];
+    const { container } = render(
+      <main>
+        <h1>Payroll</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            {
+              key: 'period',
+              header: 'Period',
+              cell: (r) => `${r.period_start} → ${r.period_end}`,
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} />,
+            },
+            { key: 'employees', header: 'Employees', cell: (r) => String(r.employee_count) },
+            {
+              key: 'net',
+              header: 'Net',
+              align: 'right',
+              cell: (r) => <MoneyCell amount={r.net_minor} currency={r.currency} />,
+            },
+            {
+              key: 'adj',
+              header: 'Adjustment',
+              cell: (r) => (r.adjustment_of_run_id ? 'Yes' : '—'),
+            },
+          ]}
+          rows={rows}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
   it('sales pipeline board (kanban columns) has no serious/critical violations', async () => {
     const { container } = render(
       <main>
