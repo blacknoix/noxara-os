@@ -7,7 +7,9 @@ ALTER TABLE finance_journal_entry ADD CONSTRAINT finance_journal_entry_source_ty
         'invoice_issue', 'payment', 'credit_note', 'expense', 'manual', 'payroll'
     ));
 
--- Unique source for idempotent payroll journal posts (one journal per payroll run).
-CREATE UNIQUE INDEX IF NOT EXISTS finance_journal_entry_org_source_uidx
+-- One journal per payroll run (idempotent pay). Must NOT cover source_type=payment:
+-- record-then-allocate posts a second payment journal for the same payment_id.
+DROP INDEX IF EXISTS finance_journal_entry_org_source_uidx;
+CREATE UNIQUE INDEX IF NOT EXISTS finance_journal_entry_org_source_payroll_uidx
     ON finance_journal_entry (org_id, source_type, source_id)
-    WHERE source_id IS NOT NULL;
+    WHERE source_type = 'payroll' AND source_id IS NOT NULL;
