@@ -466,9 +466,7 @@ async fn system_role_deny_matrix_unit() {
                 continue;
             }
             // Phase 2.2: Member may write own attendance/leave (approve stays manager+).
-            if *role == Role::Member
-                && matches!(*perm, "hr.attendance.write" | "hr.leave.write")
-            {
+            if *role == Role::Member && matches!(*perm, "hr.attendance.write" | "hr.leave.write") {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
