@@ -175,6 +175,9 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
+                perms::hr_employee_read_sensitive(),
+                perms::hr_document_read(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -230,6 +233,7 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
             ]),
             Self::Manager => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -280,6 +284,13 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
+                perms::hr_employee_read_sensitive(),
+                perms::hr_employee_write(),
+                perms::hr_employee_onboard(),
+                perms::hr_employee_offboard(),
+                perms::hr_document_read(),
+                perms::hr_document_write(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -314,6 +325,8 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::hr_employee_read(),
+                perms::hr_document_read(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -344,6 +357,8 @@ impl Role {
                 perms::ai_copilot_use(),
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
+                perms::hr_employee_read(),
+                perms::hr_document_read(),
             ]),
         }
     }
