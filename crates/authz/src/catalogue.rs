@@ -528,6 +528,70 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Read journal entries and ledger accounts",
         sensitive: false,
     },
+    PermissionDef {
+        id: "finance.account.manage",
+        context: "finance",
+        resource: "account",
+        action: "manage",
+        description: "Create and update chart of accounts",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.period.read",
+        context: "finance",
+        resource: "period",
+        action: "read",
+        description: "Read fiscal periods and close checklists",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.period.close",
+        context: "finance",
+        resource: "period",
+        action: "close",
+        description: "Close fiscal periods (month-end)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.period.reopen",
+        context: "finance",
+        resource: "period",
+        action: "reopen",
+        description: "Reopen a closed or locked fiscal period (audited)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.bank.read",
+        context: "finance",
+        resource: "bank",
+        action: "read",
+        description: "Read bank accounts, statements, and reconciliations",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.bank.reconcile",
+        context: "finance",
+        resource: "bank",
+        action: "reconcile",
+        description: "Import statements and match bank transactions",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.expense_policy.manage",
+        context: "finance",
+        resource: "expense_policy",
+        action: "manage",
+        description: "Manage expense policies, mileage, per-diem, and category limits",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.reimbursement.manage",
+        context: "finance",
+        resource: "reimbursement",
+        action: "manage",
+        description: "Create and decide reimbursement batches",
+        sensitive: true,
+    },
     // --- Operations / Projects & Tasks (Phase 1.6) ---
     PermissionDef {
         id: "operations.project.read",
@@ -918,6 +982,12 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "hr.payroll.approve",
     "hr.payroll.run",
     "finance.journal.post",
+    "finance.account.manage",
+    "finance.period.close",
+    "finance.period.reopen",
+    "finance.bank.reconcile",
+    "finance.expense_policy.manage",
+    "finance.reimbursement.manage",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1252,6 +1322,30 @@ pub mod perms {
     pub fn finance_journal_post() -> PermissionId {
         PermissionId::from("finance.journal.post")
     }
+    pub fn finance_account_manage() -> PermissionId {
+        PermissionId::from("finance.account.manage")
+    }
+    pub fn finance_period_read() -> PermissionId {
+        PermissionId::from("finance.period.read")
+    }
+    pub fn finance_period_close() -> PermissionId {
+        PermissionId::from("finance.period.close")
+    }
+    pub fn finance_period_reopen() -> PermissionId {
+        PermissionId::from("finance.period.reopen")
+    }
+    pub fn finance_bank_read() -> PermissionId {
+        PermissionId::from("finance.bank.read")
+    }
+    pub fn finance_bank_reconcile() -> PermissionId {
+        PermissionId::from("finance.bank.reconcile")
+    }
+    pub fn finance_expense_policy_manage() -> PermissionId {
+        PermissionId::from("finance.expense_policy.manage")
+    }
+    pub fn finance_reimbursement_manage() -> PermissionId {
+        PermissionId::from("finance.reimbursement.manage")
+    }
 }
 
 /// Default scope for a permission when not overridden on a role grant.
@@ -1279,6 +1373,8 @@ pub fn default_scope_for(permission_id: &str) -> Scope {
         | "finance.report.read"
         | "finance.customer.read"
         | "finance.ledger.read"
+        | "finance.period.read"
+        | "finance.bank.read"
         | "hr.payroll.read"
         | "operations.project.read"
         | "operations.task.read"

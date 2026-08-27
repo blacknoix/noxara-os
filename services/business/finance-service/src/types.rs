@@ -373,10 +373,16 @@ pub struct PostJournalRequest {
     /// `payroll` or `manual`.
     pub source_type: String,
     /// Internal UUID of the source document (payroll run id).
+    /// Empty / omitted for manual → generated UUID.
+    #[serde(default)]
     pub source_id: String,
     pub currency: String,
     pub memo: Option<String>,
     pub lines: Vec<JournalLineInput>,
+    /// Document date `YYYY-MM-DD`; defaults to today.
+    pub entry_date: Option<String>,
+    /// Public id of the journal being reversed (`jrn_…`).
+    pub reverses_of: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -387,4 +393,400 @@ pub struct JournalEntryDto {
     pub source_id: String,
     pub currency: String,
     pub lines: Vec<JournalLineInput>,
+    pub entry_date: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub period_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct JournalListResponse {
+    pub items: Vec<JournalEntryDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct JournalListQuery {
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+    pub source_type: Option<String>,
+    pub period_id: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Chart of accounts
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LedgerAccountDto {
+    pub id: String,
+    pub code: String,
+    pub name: String,
+    pub account_type: String,
+    pub normal_balance: String,
+    pub parent_id: Option<String>,
+    pub is_active: bool,
+    pub description: Option<String>,
+    pub sort_order: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LedgerAccountNode {
+    pub account: LedgerAccountDto,
+    #[schema(no_recursion)]
+    pub children: Vec<LedgerAccountNode>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LedgerAccountTreeResponse {
+    pub roots: Vec<LedgerAccountNode>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateLedgerAccountRequest {
+    pub code: String,
+    pub name: String,
+    /// `asset` | `liability` | `equity` | `revenue` | `income` | `expense`
+    pub account_type: String,
+    pub parent_id: Option<String>,
+    pub description: Option<String>,
+    pub normal_balance: Option<String>,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateLedgerAccountRequest {
+    pub name: Option<String>,
+    pub parent_id: Option<String>,
+    pub is_active: Option<bool>,
+    pub description: Option<String>,
+    pub sort_order: Option<i32>,
+}
+
+// ---------------------------------------------------------------------------
+// Fiscal periods
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct FiscalPeriodDto {
+    pub id: String,
+    pub code: String,
+    pub name: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub status: String,
+    #[schema(value_type = Object)]
+    pub checklist: serde_json::Value,
+    pub closed_at: Option<String>,
+    pub reopened_at: Option<String>,
+    pub reopen_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct FiscalPeriodListResponse {
+    pub items: Vec<FiscalPeriodDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateFiscalPeriodRequest {
+    pub code: String,
+    pub name: String,
+    pub start_date: String,
+    pub end_date: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ClosePeriodRequest {
+    /// Optional checklist override applied before close.
+    #[serde(default)]
+    #[schema(value_type = Option<Object>)]
+    pub checklist: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReopenPeriodRequest {
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateChecklistRequest {
+    #[schema(value_type = Object)]
+    pub checklist: serde_json::Value,
+}
+
+// ---------------------------------------------------------------------------
+// Reports
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TrialBalanceRow {
+    pub account_code: String,
+    pub account_name: String,
+    pub account_type: String,
+    pub debit_minor: i64,
+    pub credit_minor: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TrialBalanceResponse {
+    pub currency: String,
+    pub period_id: Option<String>,
+    pub rows: Vec<TrialBalanceRow>,
+    pub total_debit_minor: i64,
+    pub total_credit_minor: i64,
+    pub balanced: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReportLine {
+    pub account_code: String,
+    pub account_name: String,
+    pub amount_minor: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ProfitAndLossResponse {
+    pub currency: String,
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub period_id: Option<String>,
+    pub revenue: Vec<ReportLine>,
+    pub expenses: Vec<ReportLine>,
+    pub revenue_total_minor: i64,
+    pub expense_total_minor: i64,
+    pub net_income_minor: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BalanceSheetResponse {
+    pub currency: String,
+    pub as_of: String,
+    pub period_id: Option<String>,
+    pub assets: Vec<ReportLine>,
+    pub liabilities: Vec<ReportLine>,
+    pub equity: Vec<ReportLine>,
+    pub assets_total_minor: i64,
+    pub liabilities_total_minor: i64,
+    pub equity_total_minor: i64,
+}
+
+// ---------------------------------------------------------------------------
+// Bank
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BankAccountDto {
+    pub id: String,
+    pub name: String,
+    pub currency: String,
+    pub ledger_account_id: String,
+    pub account_number_mask: Option<String>,
+    pub institution: Option<String>,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateBankAccountRequest {
+    pub name: String,
+    pub currency: String,
+    /// Ledger account public id (`acc_…`) or code (e.g. `1000`).
+    pub ledger_account_id: String,
+    pub account_number_mask: Option<String>,
+    pub institution: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BankStatementDto {
+    pub id: String,
+    pub bank_account_id: String,
+    pub statement_date: String,
+    pub currency: String,
+    pub opening_minor: i64,
+    pub closing_minor: i64,
+    pub source: String,
+    pub line_count: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ImportStatementRequest {
+    pub csv: String,
+    pub statement_date: Option<String>,
+    pub opening_minor: Option<i64>,
+    pub closing_minor: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ImportStatementResponse {
+    pub statement: BankStatementDto,
+    pub lines_imported: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct StatementLineDto {
+    pub id: String,
+    pub statement_id: String,
+    pub line_no: i32,
+    pub txn_date: String,
+    pub amount_minor: i64,
+    pub currency: String,
+    pub reference: Option<String>,
+    pub description: Option<String>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReconcileRequest {
+    /// Optional: restrict auto-match to these statement line UUIDs / public keys.
+    pub line_ids: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReconcileResponse {
+    pub matched: i32,
+    pub unmatched: i32,
+    pub match_rate: f64,
+    pub reconciliations: Vec<ReconciliationDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReconciliationDto {
+    pub id: String,
+    pub bank_account_id: String,
+    pub statement_line_id: String,
+    pub match_kind: String,
+    pub matched_payment_id: Option<String>,
+    pub amount_minor: i64,
+    pub auto_matched: bool,
+}
+
+// ---------------------------------------------------------------------------
+// Expense policy / cards / reimbursements
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CategoryLimitDto {
+    pub category_code: String,
+    pub max_amount_minor: i64,
+    pub currency: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CategoryLimitInput {
+    pub category_code: String,
+    pub max_amount_minor: i64,
+    #[serde(default = "default_base_currency")]
+    pub currency: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ExpensePolicyDto {
+    pub id: String,
+    pub name: String,
+    pub is_active: bool,
+    pub require_receipt_over_minor: i64,
+    pub auto_approve_under_minor: i64,
+    pub over_limit_action: String,
+    pub mileage_unit: String,
+    pub mileage_rate_minor: i64,
+    pub per_diem_minor: i64,
+    pub category_limits: Vec<CategoryLimitDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpsertExpensePolicyRequest {
+    pub name: Option<String>,
+    pub require_receipt_over_minor: Option<i64>,
+    pub auto_approve_under_minor: Option<i64>,
+    pub over_limit_action: Option<String>,
+    pub mileage_unit: Option<String>,
+    pub mileage_rate_minor: Option<i64>,
+    pub per_diem_minor: Option<i64>,
+    pub category_limits: Option<Vec<CategoryLimitInput>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct MileageCalculateRequest {
+    pub miles_or_km: f64,
+    pub currency: Option<String>,
+    pub description: Option<String>,
+    pub incurred_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct MileageCalculateResponse {
+    pub amount_minor: i64,
+    pub currency: String,
+    pub rate_minor: i64,
+    pub miles_or_km: f64,
+    pub expense: ExpenseDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PerDiemRequest {
+    pub days: i32,
+    pub currency: Option<String>,
+    pub description: Option<String>,
+    pub incurred_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PerDiemResponse {
+    pub amount_minor: i64,
+    pub currency: String,
+    pub per_diem_minor: i64,
+    pub days: i32,
+    pub expense: ExpenseDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CardTransactionDto {
+    pub id: String,
+    pub txn_date: String,
+    pub amount_minor: i64,
+    pub currency: String,
+    pub merchant: Option<String>,
+    pub reference: Option<String>,
+    pub description: Option<String>,
+    pub status: String,
+    pub matched_expense_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ImportCardCsvRequest {
+    pub csv: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ImportCardResponse {
+    pub imported: i32,
+    pub items: Vec<CardTransactionDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct MatchCardsResponse {
+    pub matched: i32,
+    pub unmatched: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReimbursementBatchDto {
+    pub id: String,
+    pub status: String,
+    pub currency: String,
+    pub total_minor: i64,
+    pub expense_ids: Vec<String>,
+    pub approval_id: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateReimbursementBatchRequest {
+    pub expense_ids: Vec<String>,
+    pub currency: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DecideReimbursementRequest {
+    pub approve: bool,
+    pub note: Option<String>,
 }

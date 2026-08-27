@@ -68,6 +68,22 @@ pub enum IdKind {
     PayrollEarningLine,
     PayrollDeductionLine,
     PayrollComponent,
+    /// Ledger account (`acc_`).
+    LedgerAccount,
+    /// Fiscal period (`period_`).
+    FiscalPeriod,
+    /// Bank account (`bank_`).
+    BankAccount,
+    /// Bank statement (`stmt_`).
+    BankStatement,
+    /// Bank reconciliation match (`rec_`).
+    BankReconciliation,
+    /// Expense policy (`pol_`).
+    ExpensePolicy,
+    /// Corporate card transaction (`card_`).
+    CardTransaction,
+    /// Reimbursement batch (`reimb_`).
+    ReimbursementBatch,
 }
 
 impl IdKind {
@@ -117,6 +133,14 @@ impl IdKind {
             Self::PayrollEarningLine => "earning_",
             Self::PayrollDeductionLine => "deduction_",
             Self::PayrollComponent => "pcomp_",
+            Self::LedgerAccount => "acc_",
+            Self::FiscalPeriod => "period_",
+            Self::BankAccount => "bank_",
+            Self::BankStatement => "stmt_",
+            Self::BankReconciliation => "rec_",
+            Self::ExpensePolicy => "pol_",
+            Self::CardTransaction => "card_",
+            Self::ReimbursementBatch => "reimb_",
         }
     }
 
@@ -166,6 +190,14 @@ impl IdKind {
             "earning_" => Some(Self::PayrollEarningLine),
             "deduction_" => Some(Self::PayrollDeductionLine),
             "pcomp_" => Some(Self::PayrollComponent),
+            "acc_" => Some(Self::LedgerAccount),
+            "period_" => Some(Self::FiscalPeriod),
+            "bank_" => Some(Self::BankAccount),
+            "stmt_" => Some(Self::BankStatement),
+            "rec_" => Some(Self::BankReconciliation),
+            "pol_" => Some(Self::ExpensePolicy),
+            "card_" => Some(Self::CardTransaction),
+            "reimb_" => Some(Self::ReimbursementBatch),
             _ => None,
         }
     }
@@ -264,6 +296,14 @@ impl FromStr for PublicId {
             ("earning_", IdKind::PayrollEarningLine),
             ("deduction_", IdKind::PayrollDeductionLine),
             ("pcomp_", IdKind::PayrollComponent),
+            ("period_", IdKind::FiscalPeriod),
+            ("acc_", IdKind::LedgerAccount),
+            ("bank_", IdKind::BankAccount),
+            ("stmt_", IdKind::BankStatement),
+            ("rec_", IdKind::BankReconciliation),
+            ("pol_", IdKind::ExpensePolicy),
+            ("card_", IdKind::CardTransaction),
+            ("reimb_", IdKind::ReimbursementBatch),
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
             ("cn_", IdKind::CreditNote),
@@ -387,6 +427,14 @@ mod tests {
             IdKind::PayrollEarningLine,
             IdKind::PayrollDeductionLine,
             IdKind::PayrollComponent,
+            IdKind::LedgerAccount,
+            IdKind::FiscalPeriod,
+            IdKind::BankAccount,
+            IdKind::BankStatement,
+            IdKind::BankReconciliation,
+            IdKind::ExpensePolicy,
+            IdKind::CardTransaction,
+            IdKind::ReimbursementBatch,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

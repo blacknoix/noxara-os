@@ -31,10 +31,30 @@ pub mod codes {
 
 #[derive(Debug, Clone)]
 pub struct LedgerLine {
-    pub account_code: &'static str,
+    pub account_code: String,
     pub debit_minor: i64,
     pub credit_minor: i64,
     pub memo: Option<String>,
+}
+
+impl LedgerLine {
+    pub fn debit(account_code: impl Into<String>, amount: i64, memo: Option<String>) -> Self {
+        Self {
+            account_code: account_code.into(),
+            debit_minor: amount,
+            credit_minor: 0,
+            memo,
+        }
+    }
+
+    pub fn credit(account_code: impl Into<String>, amount: i64, memo: Option<String>) -> Self {
+        Self {
+            account_code: account_code.into(),
+            debit_minor: 0,
+            credit_minor: amount,
+            memo,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -44,6 +64,11 @@ pub struct JournalDraft {
     pub source_id: Uuid,
     pub currency: Currency,
     pub lines: Vec<LedgerLine>,
+    /// Document date; defaults to today when unset by callers.
+    pub entry_date: Option<chrono::NaiveDate>,
+    /// Optional reversing link (immutable correction pattern).
+    pub reverses_entry_id: Option<Uuid>,
+    pub posted_by: Option<Uuid>,
 }
 
 impl JournalDraft {
@@ -84,25 +109,13 @@ pub fn invoice_issue_entry(
         source_type: "invoice_issue",
         source_id: invoice_id,
         currency,
+        entry_date: None,
+        reverses_entry_id: None,
+        posted_by: None,
         lines: vec![
-            LedgerLine {
-                account_code: codes::AR,
-                debit_minor: total_minor,
-                credit_minor: 0,
-                memo: Some("Accounts receivable".into()),
-            },
-            LedgerLine {
-                account_code: codes::REVENUE,
-                debit_minor: 0,
-                credit_minor: net_minor,
-                memo: Some("Revenue".into()),
-            },
-            LedgerLine {
-                account_code: codes::TAX_PAYABLE,
-                debit_minor: 0,
-                credit_minor: tax_minor,
-                memo: Some("Tax payable".into()),
-            },
+            LedgerLine::debit(codes::AR, total_minor, Some("Accounts receivable".into())),
+            LedgerLine::credit(codes::REVENUE, net_minor, Some("Revenue".into())),
+            LedgerLine::credit(codes::TAX_PAYABLE, tax_minor, Some("Tax payable".into())),
         ]
         .into_iter()
         .filter(|l| l.debit_minor > 0 || l.credit_minor > 0)
@@ -121,33 +134,33 @@ pub fn payment_entry(
     let cash = allocated_minor
         .checked_add(unapplied_minor)
         .ok_or(MoneyError::Overflow)?;
-    let mut lines = vec![LedgerLine {
-        account_code: codes::CASH,
-        debit_minor: cash,
-        credit_minor: 0,
-        memo: Some("Cash received".into()),
-    }];
+    let mut lines = vec![LedgerLine::debit(
+        codes::CASH,
+        cash,
+        Some("Cash received".into()),
+    )];
     if allocated_minor > 0 {
-        lines.push(LedgerLine {
-            account_code: codes::AR,
-            debit_minor: 0,
-            credit_minor: allocated_minor,
-            memo: Some("AR settlement".into()),
-        });
+        lines.push(LedgerLine::credit(
+            codes::AR,
+            allocated_minor,
+            Some("AR settlement".into()),
+        ));
     }
     if unapplied_minor > 0 {
-        lines.push(LedgerLine {
-            account_code: codes::CUSTOMER_CREDITS,
-            debit_minor: 0,
-            credit_minor: unapplied_minor,
-            memo: Some("Customer credit / overpayment".into()),
-        });
+        lines.push(LedgerLine::credit(
+            codes::CUSTOMER_CREDITS,
+            unapplied_minor,
+            Some("Customer credit / overpayment".into()),
+        ));
     }
     let draft = JournalDraft {
         memo: format!("Payment {payment_id}"),
         source_type: "payment",
         source_id: payment_id,
         currency,
+        entry_date: None,
+        reverses_entry_id: None,
+        posted_by: None,
         lines,
     };
     draft.assert_balanced()?;
@@ -163,32 +176,32 @@ pub fn credit_note_entry(
 ) -> Result<JournalDraft, MoneyError> {
     let mut lines = Vec::new();
     if net_minor > 0 {
-        lines.push(LedgerLine {
-            account_code: codes::REVENUE,
-            debit_minor: net_minor,
-            credit_minor: 0,
-            memo: Some("Revenue reversal".into()),
-        });
+        lines.push(LedgerLine::debit(
+            codes::REVENUE,
+            net_minor,
+            Some("Revenue reversal".into()),
+        ));
     }
     if tax_minor > 0 {
-        lines.push(LedgerLine {
-            account_code: codes::TAX_PAYABLE,
-            debit_minor: tax_minor,
-            credit_minor: 0,
-            memo: Some("Tax reversal".into()),
-        });
+        lines.push(LedgerLine::debit(
+            codes::TAX_PAYABLE,
+            tax_minor,
+            Some("Tax reversal".into()),
+        ));
     }
-    lines.push(LedgerLine {
-        account_code: codes::AR,
-        debit_minor: 0,
-        credit_minor: total_minor,
-        memo: Some("AR credit".into()),
-    });
+    lines.push(LedgerLine::credit(
+        codes::AR,
+        total_minor,
+        Some("AR credit".into()),
+    ));
     let draft = JournalDraft {
         memo: format!("Credit note {credit_id}"),
         source_type: "credit_note",
         source_id: credit_id,
         currency,
+        entry_date: None,
+        reverses_entry_id: None,
+        posted_by: None,
         lines,
     };
     draft.assert_balanced()?;
@@ -205,19 +218,12 @@ pub fn expense_entry(
         source_type: "expense",
         source_id: expense_id,
         currency,
+        entry_date: None,
+        reverses_entry_id: None,
+        posted_by: None,
         lines: vec![
-            LedgerLine {
-                account_code: codes::EXPENSE,
-                debit_minor: amount_minor,
-                credit_minor: 0,
-                memo: Some("Expense".into()),
-            },
-            LedgerLine {
-                account_code: codes::CASH,
-                debit_minor: 0,
-                credit_minor: amount_minor,
-                memo: Some("Cash".into()),
-            },
+            LedgerLine::debit(codes::EXPENSE, amount_minor, Some("Expense".into())),
+            LedgerLine::credit(codes::CASH, amount_minor, Some("Cash".into())),
         ],
     };
     draft.assert_balanced()?;
@@ -239,33 +245,33 @@ pub fn payroll_entry(
     {
         return Err(MoneyError::Overflow);
     }
-    let mut lines = vec![LedgerLine {
-        account_code: codes::WAGES_EXPENSE,
-        debit_minor: gross_minor,
-        credit_minor: 0,
-        memo: Some("Wages expense".into()),
-    }];
+    let mut lines = vec![LedgerLine::debit(
+        codes::WAGES_EXPENSE,
+        gross_minor,
+        Some("Wages expense".into()),
+    )];
     if deductions_minor > 0 {
-        lines.push(LedgerLine {
-            account_code: codes::PAYROLL_DEDUCTIONS,
-            debit_minor: 0,
-            credit_minor: deductions_minor,
-            memo: Some("Payroll deductions payable".into()),
-        });
+        lines.push(LedgerLine::credit(
+            codes::PAYROLL_DEDUCTIONS,
+            deductions_minor,
+            Some("Payroll deductions payable".into()),
+        ));
     }
     if net_minor > 0 {
-        lines.push(LedgerLine {
-            account_code: codes::NET_PAY_CLEARING,
-            debit_minor: 0,
-            credit_minor: net_minor,
-            memo: Some("Net pay clearing".into()),
-        });
+        lines.push(LedgerLine::credit(
+            codes::NET_PAY_CLEARING,
+            net_minor,
+            Some("Net pay clearing".into()),
+        ));
     }
     let draft = JournalDraft {
         memo: format!("Payroll run {run_id}"),
         source_type: "payroll",
         source_id: run_id,
         currency,
+        entry_date: None,
+        reverses_entry_id: None,
+        posted_by: None,
         lines,
     };
     draft.assert_balanced()?;
@@ -277,37 +283,95 @@ pub async fn ensure_ledger_accounts(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     org_id: Uuid,
 ) -> Result<(), sqlx::Error> {
-    let accounts: &[(&str, &str, &str, &str)] = &[
-        (codes::CASH, "Cash", "asset", "debit"),
-        (codes::AR, "Accounts Receivable", "asset", "debit"),
-        (codes::TAX_PAYABLE, "Tax Payable", "liability", "credit"),
+    use companyos_ids::{IdKind, PublicId};
+
+    // (code, name, type, normal, sort)
+    let accounts: &[(&str, &str, &str, &str, i32)] = &[
+        (codes::CASH, "Cash", "asset", "debit", 100),
+        (codes::AR, "Accounts Receivable", "asset", "debit", 110),
+        (
+            codes::TAX_PAYABLE,
+            "Tax Payable",
+            "liability",
+            "credit",
+            210,
+        ),
         (
             codes::CUSTOMER_CREDITS,
             "Customer Credits",
             "liability",
             "credit",
+            220,
         ),
-        (codes::REVENUE, "Revenue", "revenue", "credit"),
-        (codes::EXPENSE, "Operating Expenses", "expense", "debit"),
-        (codes::WAGES_EXPENSE, "Wages Expense", "expense", "debit"),
         (
             codes::PAYROLL_DEDUCTIONS,
             "Payroll Deductions Payable",
             "liability",
             "credit",
+            230,
         ),
         (
             codes::NET_PAY_CLEARING,
             "Net Pay Clearing",
             "liability",
             "credit",
+            240,
+        ),
+        ("3000", "Retained Earnings", "equity", "credit", 300),
+        (codes::REVENUE, "Revenue", "revenue", "credit", 400),
+        (
+            codes::EXPENSE,
+            "Operating Expenses",
+            "expense",
+            "debit",
+            500,
+        ),
+        (
+            codes::WAGES_EXPENSE,
+            "Wages Expense",
+            "expense",
+            "debit",
+            510,
         ),
     ];
-    for (code, name, ty, normal) in accounts {
+    for (code, name, ty, normal, sort) in accounts {
+        let id = new_uuid_v7();
+        let public_id = PublicId::new(IdKind::LedgerAccount, id).as_str();
         sqlx::query(
             r#"
-            INSERT INTO finance_ledger_account (id, org_id, code, name, account_type, normal_balance)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO finance_ledger_account (
+                id, org_id, public_id, code, name, account_type, normal_balance, sort_order, is_active
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+            ON CONFLICT (org_id, code) DO UPDATE
+                SET public_id = COALESCE(finance_ledger_account.public_id, EXCLUDED.public_id),
+                    name = EXCLUDED.name,
+                    sort_order = EXCLUDED.sort_order
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .bind(&public_id)
+        .bind(code)
+        .bind(name)
+        .bind(ty)
+        .bind(normal)
+        .bind(sort)
+        .execute(&mut **tx)
+        .await?;
+    }
+    // Expense categories used by policy / mileage / per-diem.
+    for (code, name) in [
+        ("general", "General"),
+        ("travel", "Travel"),
+        ("meals", "Meals"),
+        ("mileage", "Mileage"),
+        ("per_diem", "Per Diem"),
+    ] {
+        sqlx::query(
+            r#"
+            INSERT INTO finance_expense_category (id, org_id, code, name)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (org_id, code) DO NOTHING
             "#,
         )
@@ -315,23 +379,9 @@ pub async fn ensure_ledger_accounts(
         .bind(org_id)
         .bind(code)
         .bind(name)
-        .bind(ty)
-        .bind(normal)
         .execute(&mut **tx)
         .await?;
     }
-    // Default expense category
-    sqlx::query(
-        r#"
-        INSERT INTO finance_expense_category (id, org_id, code, name)
-        VALUES ($1, $2, 'general', 'General')
-        ON CONFLICT (org_id, code) DO NOTHING
-        "#,
-    )
-    .bind(new_uuid_v7())
-    .bind(org_id)
-    .execute(&mut **tx)
-    .await?;
     Ok(())
 }
 
@@ -350,35 +400,84 @@ pub async fn account_id_by_code(
 }
 
 /// Persist a balanced journal draft inside the caller's transaction.
+///
+/// Enforces: balance, open fiscal period, active account codes.
 pub async fn post_journal(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     org_id: Uuid,
     draft: &JournalDraft,
-) -> Result<Uuid, sqlx::Error> {
-    draft
-        .assert_balanced()
-        .map_err(|e| sqlx::Error::Protocol(format!("unbalanced journal: {e}")))?;
+    request_id: &str,
+) -> Result<Uuid, companyos_errors::AppError> {
+    use crate::periods::{assert_period_accepts_posting, ensure_period_for_date};
+    use companyos_errors::{AppError, ErrorCode};
+
+    draft.assert_balanced().map_err(|_| {
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            request_id,
+            "journal lines must balance",
+        )
+    })?;
+
+    let entry_date = draft
+        .entry_date
+        .unwrap_or_else(|| chrono::Utc::now().date_naive());
+    let period = ensure_period_for_date(tx, org_id, entry_date)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id, format!("db error: {e}")))?;
+    assert_period_accepts_posting(&period, request_id)?;
+
     let entry_id = new_uuid_v7();
     let public_id = format!("jrn_{entry_id}");
     sqlx::query(
         r#"
         INSERT INTO finance_journal_entry (
-            id, org_id, public_id, memo, source_type, source_id, currency
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+            id, org_id, public_id, entry_date, memo, source_type, source_id, currency,
+            period_id, reverses_entry_id, posted_by
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
         "#,
     )
     .bind(entry_id)
     .bind(org_id)
     .bind(&public_id)
+    .bind(entry_date)
     .bind(&draft.memo)
     .bind(draft.source_type)
     .bind(draft.source_id)
     .bind(draft.currency.as_str())
+    .bind(period.id)
+    .bind(draft.reverses_entry_id)
+    .bind(draft.posted_by)
     .execute(&mut **tx)
-    .await?;
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, request_id, format!("db error: {e}")))?;
 
     for line in &draft.lines {
-        let acct = account_id_by_code(tx, org_id, line.account_code).await?;
+        let acct = match account_id_by_code(tx, org_id, &line.account_code).await {
+            Ok(id) => id,
+            Err(_) => {
+                return Err(AppError::new(
+                    ErrorCode::ValidationFailed,
+                    request_id,
+                    format!("unknown account_code: {}", line.account_code),
+                ));
+            }
+        };
+        let active: bool = sqlx::query_scalar(
+            "SELECT is_active FROM finance_ledger_account WHERE org_id = $1 AND id = $2",
+        )
+        .bind(org_id)
+        .bind(acct)
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id, format!("db error: {e}")))?;
+        if !active {
+            return Err(AppError::new(
+                ErrorCode::ValidationFailed,
+                request_id,
+                format!("account {} is inactive", line.account_code),
+            ));
+        }
         sqlx::query(
             r#"
             INSERT INTO finance_journal_line (
@@ -394,7 +493,8 @@ pub async fn post_journal(
         .bind(line.credit_minor)
         .bind(line.memo.as_deref())
         .execute(&mut **tx)
-        .await?;
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id, format!("db error: {e}")))?;
     }
     Ok(entry_id)
 }

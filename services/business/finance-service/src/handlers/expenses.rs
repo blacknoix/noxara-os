@@ -105,9 +105,7 @@ async fn post_expense_journal(
 ) -> Result<(), AppError> {
     let journal = expense_entry(expense_id, currency, amount_minor)
         .map_err(|e| validation(request_id, format!("journal: {e}")))?;
-    post_journal(tx, org_id, &journal)
-        .await
-        .map_err(internal(request_id))?;
+    post_journal(tx, org_id, &journal, request_id).await?;
     sqlx::query(
         r#"
         UPDATE finance_expense SET status = 'posted', updated_at = now()
@@ -297,6 +295,41 @@ pub async fn submit_expense(
         }
     }
 
+    // Phase 2.4: active expense policy category limits.
+    let mut policy_force_approval = false;
+    let cat_code_for_policy = body.category_code.as_deref().unwrap_or("general");
+    let policy_limit: Option<(String, i64)> = sqlx::query_as(
+        r#"
+        SELECT p.over_limit_action, l.max_amount_minor
+        FROM finance_expense_policy p
+        JOIN finance_expense_category_limit l ON l.policy_id = p.id
+        JOIN finance_expense_category c ON c.id = l.category_id
+        WHERE p.org_id = $1 AND p.is_active = true AND c.code = $2
+        LIMIT 1
+        "#,
+    )
+    .bind(org_id)
+    .bind(cat_code_for_policy)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
+
+    if let Some((action, max_minor)) = policy_limit {
+        if body.amount_minor > max_minor {
+            if action == "reject" {
+                return Err(validation(
+                    &request_id,
+                    format!(
+                        "amount_minor {} exceeds category limit {} for {cat_code_for_policy}",
+                        body.amount_minor, max_minor
+                    ),
+                ));
+            }
+            // require_approval (default) → force pending_approval path.
+            policy_force_approval = true;
+        }
+    }
+
     let limit_row: Option<(Option<i64>, Option<String>)> = sqlx::query_as(
         r#"
         SELECT r.approval_limit_amount_minor, r.approval_limit_currency
@@ -311,11 +344,12 @@ pub async fn submit_expense(
     .await
     .map_err(internal(&request_id))?;
 
-    let needs_approval = match limit_row {
+    let role_needs_approval = match limit_row {
         Some((Some(limit), _)) if body.amount_minor > limit => true,
         Some((None, _)) | None => false, // NULL limit → unlimited (auto-approve)
         Some((Some(_), _)) => false,
     };
+    let needs_approval = role_needs_approval || policy_force_approval;
 
     let initial_status = if needs_approval {
         "pending_approval"

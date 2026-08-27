@@ -1,4 +1,4 @@
-//! CompanyOS Finance service (library) — Phase 1.5.
+//! CompanyOS Finance service (library) — Phase 1.5–2.4.
 //!
 //! Bounded context: **Finance** (`finance_*` tables, `Context::Finance` events).
 //! All routes are mounted under `/api/v1/finance/...`. This service is a
@@ -7,6 +7,7 @@
 //! `role_permission` / `org_role` for authz, and **never** reads or writes
 //! CRM/`sales_*` tables. Customer data arrives via event projection or
 //! quote snapshots. `companyos_authz` remains the sole policy decision point.
+//! HR/payroll posts journals only through Finance HTTP APIs.
 
 pub mod audit;
 pub mod auth;
@@ -16,6 +17,7 @@ pub mod invoice_math;
 pub mod journal;
 pub mod numbering;
 pub mod openapi;
+pub mod periods;
 pub mod principal;
 pub mod projection;
 pub mod scope;
@@ -80,6 +82,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/001_finance.sql"),
             include_str!("../migrations/002_approval_link.sql"),
             include_str!("../migrations/003_payroll_journal.sql"),
+            include_str!("../migrations/004_accounting.sql"),
         ] {
             for stmt in split_sql(migration) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;

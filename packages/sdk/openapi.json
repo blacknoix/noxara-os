@@ -1711,6 +1711,288 @@
         }
       }
     },
+    "/api/v1/finance/accounts": {
+      "get": {
+        "tags": [
+          "finance-accounts"
+        ],
+        "summary": "GET /api/v1/finance/accounts",
+        "operationId": "list_accounts_tree",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerAccountTreeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-accounts"
+        ],
+        "summary": "POST /api/v1/finance/accounts",
+        "operationId": "create_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLedgerAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/accounts/{id}": {
+      "patch": {
+        "tags": [
+          "finance-accounts"
+        ],
+        "summary": "PATCH /api/v1/finance/accounts/{id}",
+        "operationId": "update_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLedgerAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/bank/accounts": {
+      "get": {
+        "tags": [
+          "finance-bank"
+        ],
+        "summary": "GET /api/v1/finance/bank/accounts",
+        "operationId": "list_bank_accounts",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankAccountDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-bank"
+        ],
+        "summary": "POST /api/v1/finance/bank/accounts",
+        "operationId": "create_bank_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/bank/accounts/{id}/statements/import": {
+      "post": {
+        "tags": [
+          "finance-bank"
+        ],
+        "summary": "POST /api/v1/finance/bank/accounts/{id}/statements/import",
+        "operationId": "import_statement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportStatementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportStatementResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportStatementResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/bank/statements/{id}/auto-match": {
+      "post": {
+        "tags": [
+          "finance-bank"
+        ],
+        "summary": "POST /api/v1/finance/bank/statements/{id}/auto-match",
+        "operationId": "auto_match_statement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconcileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/bank/statements/{id}/unmatched": {
+      "get": {
+        "tags": [
+          "finance-bank"
+        ],
+        "summary": "GET /api/v1/finance/bank/statements/{id}/unmatched",
+        "operationId": "list_unmatched_lines",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatementLineDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/card-transactions/auto-match": {
+      "post": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "POST /api/v1/finance/card-transactions/auto-match",
+        "operationId": "auto_match_cards",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchCardsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/card-transactions/import": {
+      "post": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "POST /api/v1/finance/card-transactions/import",
+        "operationId": "import_card_csv",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCardCsvRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportCardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/finance/credit-notes": {
       "post": {
         "tags": [
@@ -1847,6 +2129,66 @@
         }
       }
     },
+    "/api/v1/finance/expense-policies": {
+      "get": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "GET /api/v1/finance/expense-policies",
+        "operationId": "get_expense_policy",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpensePolicyDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "PUT /api/v1/finance/expense-policies",
+        "operationId": "upsert_expense_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertExpensePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpensePolicyDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpensePolicyDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/finance/expenses": {
       "get": {
         "tags": [
@@ -1918,6 +2260,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ExpenseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/expenses/mileage": {
+      "post": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "POST /api/v1/finance/expenses/mileage",
+        "operationId": "create_mileage_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MileageCalculateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MileageCalculateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/expenses/per-diem": {
+      "post": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "POST /api/v1/finance/expenses/per-diem",
+        "operationId": "create_per_diem_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerDiemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerDiemResponse"
                 }
               }
             }
@@ -2208,6 +2612,61 @@
       }
     },
     "/api/v1/finance/journals": {
+      "get": {
+        "tags": [
+          "finance-journals"
+        ],
+        "summary": "GET /api/v1/finance/journals",
+        "operationId": "list_journals",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "source_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "finance-journals"
@@ -2250,6 +2709,27 @@
           },
           "422": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/finance/journals/{id}": {
+      "get": {
+        "tags": [
+          "finance-journals"
+        ],
+        "summary": "GET /api/v1/finance/journals/{id}",
+        "operationId": "get_journal",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryDto"
+                }
+              }
+            }
           }
         }
       }
@@ -2363,6 +2843,159 @@
         }
       }
     },
+    "/api/v1/finance/periods": {
+      "get": {
+        "tags": [
+          "finance-periods"
+        ],
+        "summary": "GET /api/v1/finance/periods",
+        "operationId": "list_periods",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-periods"
+        ],
+        "summary": "POST /api/v1/finance/periods",
+        "operationId": "create_period",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFiscalPeriodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/periods/{id}/checklist": {
+      "patch": {
+        "tags": [
+          "finance-periods"
+        ],
+        "summary": "PATCH /api/v1/finance/periods/{id}/checklist",
+        "operationId": "update_checklist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChecklistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/periods/{id}/close": {
+      "post": {
+        "tags": [
+          "finance-periods"
+        ],
+        "summary": "POST /api/v1/finance/periods/{id}/close",
+        "operationId": "close_period",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosePeriodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/periods/{id}/reopen": {
+      "post": {
+        "tags": [
+          "finance-periods"
+        ],
+        "summary": "POST /api/v1/finance/periods/{id}/reopen",
+        "operationId": "reopen_period",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenPeriodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/finance/recurring": {
       "post": {
         "tags": [
@@ -2415,6 +3048,180 @@
         }
       }
     },
+    "/api/v1/finance/reimbursements": {
+      "post": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "POST /api/v1/finance/reimbursements",
+        "operationId": "create_reimbursement_batch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReimbursementBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReimbursementBatchDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReimbursementBatchDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reimbursements/{id}/decide": {
+      "post": {
+        "tags": [
+          "finance-policy"
+        ],
+        "summary": "POST /api/v1/finance/reimbursements/{id}/decide",
+        "operationId": "decide_reimbursement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideReimbursementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReimbursementBatchDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reports/balance-sheet": {
+      "get": {
+        "tags": [
+          "finance-reports"
+        ],
+        "summary": "GET /api/v1/finance/reports/balance-sheet",
+        "operationId": "balance_sheet",
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceSheetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reports/profit-and-loss": {
+      "get": {
+        "tags": [
+          "finance-reports"
+        ],
+        "summary": "GET /api/v1/finance/reports/profit-and-loss",
+        "operationId": "profit_and_loss",
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfitAndLossResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/finance/reports/summary": {
       "get": {
         "tags": [
@@ -2429,6 +3236,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReportSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reports/trial-balance": {
+      "get": {
+        "tags": [
+          "finance-reports"
+        ],
+        "summary": "GET /api/v1/finance/reports/trial-balance",
+        "operationId": "trial_balance",
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialBalanceResponse"
                 }
               }
             }
@@ -9174,6 +10020,196 @@
           }
         }
       },
+      "BalanceSheetResponse": {
+        "type": "object",
+        "required": [
+          "currency",
+          "as_of",
+          "assets",
+          "liabilities",
+          "equity",
+          "assets_total_minor",
+          "liabilities_total_minor",
+          "equity_total_minor"
+        ],
+        "properties": {
+          "as_of": {
+            "type": "string"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLine"
+            }
+          },
+          "assets_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "equity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLine"
+            }
+          },
+          "equity_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "liabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLine"
+            }
+          },
+          "liabilities_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "period_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "BankAccountDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "ledger_account_id",
+          "is_active"
+        ],
+        "properties": {
+          "account_number_mask": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "ledger_account_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "BankStatementDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "bank_account_id",
+          "statement_date",
+          "currency",
+          "opening_minor",
+          "closing_minor",
+          "source",
+          "line_count"
+        ],
+        "properties": {
+          "bank_account_id": {
+            "type": "string"
+          },
+          "closing_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "line_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "opening_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "statement_date": {
+            "type": "string"
+          }
+        }
+      },
+      "CardTransactionDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "txn_date",
+          "amount_minor",
+          "currency",
+          "status"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "matched_expense_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "merchant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "txn_date": {
+            "type": "string"
+          }
+        }
+      },
       "CashFlowPoint": {
         "type": "object",
         "required": [
@@ -9211,6 +10247,89 @@
           }
         }
       },
+      "CategoryLimitDto": {
+        "type": "object",
+        "required": [
+          "category_code",
+          "max_amount_minor",
+          "currency"
+        ],
+        "properties": {
+          "category_code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "max_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CategoryLimitInput": {
+        "type": "object",
+        "required": [
+          "category_code",
+          "max_amount_minor"
+        ],
+        "properties": {
+          "category_code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "max_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ClosePeriodRequest": {
+        "type": "object",
+        "properties": {
+          "checklist": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional checklist override applied before close."
+          }
+        }
+      },
+      "CreateBankAccountRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "currency",
+          "ledger_account_id"
+        ],
+        "properties": {
+          "account_number_mask": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "institution": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ledger_account_id": {
+            "type": "string",
+            "description": "Ledger account public id (`acc_\u2026`) or code (e.g. `1000`)."
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "CreateCreditNoteRequest": {
         "type": "object",
         "required": [
@@ -9232,6 +10351,29 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "CreateFiscalPeriodRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "start_date",
+          "end_date"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
           }
         }
       },
@@ -9328,6 +10470,51 @@
           }
         }
       },
+      "CreateLedgerAccountRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "account_type"
+        ],
+        "properties": {
+          "account_type": {
+            "type": "string",
+            "description": "`asset` | `liability` | `equity` | `revenue` | `income` | `expense`"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "normal_balance": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "CreateRecurringRequest": {
         "type": "object",
         "required": [
@@ -9348,6 +10535,26 @@
           },
           "template": {
             "$ref": "#/components/schemas/CreateInvoiceRequest"
+          }
+        }
+      },
+      "CreateReimbursementBatchRequest": {
+        "type": "object",
+        "required": [
+          "expense_ids"
+        ],
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expense_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -9439,6 +10646,23 @@
           }
         }
       },
+      "DecideReimbursementRequest": {
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "ExpenseDto": {
         "type": "object",
         "required": [
@@ -9512,6 +10736,60 @@
           }
         }
       },
+      "ExpensePolicyDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_active",
+          "require_receipt_over_minor",
+          "auto_approve_under_minor",
+          "over_limit_action",
+          "mileage_unit",
+          "mileage_rate_minor",
+          "per_diem_minor",
+          "category_limits"
+        ],
+        "properties": {
+          "auto_approve_under_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category_limits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryLimitDto"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "mileage_rate_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mileage_unit": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "over_limit_action": {
+            "type": "string"
+          },
+          "per_diem_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "require_receipt_over_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "FinanceCustomerDto": {
         "type": "object",
         "required": [
@@ -9562,6 +10840,155 @@
           "total": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "FiscalPeriodDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "start_date",
+          "end_date",
+          "status",
+          "checklist"
+        ],
+        "properties": {
+          "checklist": {
+            "type": "object"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "reopen_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reopened_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "FiscalPeriodListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FiscalPeriodDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ImportCardCsvRequest": {
+        "type": "object",
+        "required": [
+          "csv"
+        ],
+        "properties": {
+          "csv": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportCardResponse": {
+        "type": "object",
+        "required": [
+          "imported",
+          "items"
+        ],
+        "properties": {
+          "imported": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardTransactionDto"
+            }
+          }
+        }
+      },
+      "ImportStatementRequest": {
+        "type": "object",
+        "required": [
+          "csv"
+        ],
+        "properties": {
+          "closing_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "csv": {
+            "type": "string"
+          },
+          "opening_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "statement_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ImportStatementResponse": {
+        "type": "object",
+        "required": [
+          "statement",
+          "lines_imported"
+        ],
+        "properties": {
+          "lines_imported": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statement": {
+            "$ref": "#/components/schemas/BankStatementDto"
           }
         }
       },
@@ -9847,10 +11274,14 @@
           "source_type",
           "source_id",
           "currency",
-          "lines"
+          "lines",
+          "entry_date"
         ],
         "properties": {
           "currency": {
+            "type": "string"
+          },
+          "entry_date": {
             "type": "string"
           },
           "id": {
@@ -9864,6 +11295,12 @@
           },
           "memo": {
             "type": "string"
+          },
+          "period_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "source_id": {
             "type": "string"
@@ -9897,6 +11334,136 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "JournalListQuery": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "period_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "JournalListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "LedgerAccountDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "account_type",
+          "normal_balance",
+          "is_active",
+          "sort_order"
+        ],
+        "properties": {
+          "account_type": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "normal_balance": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LedgerAccountNode": {
+        "type": "object",
+        "required": [
+          "account",
+          "children"
+        ],
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/LedgerAccountDto"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LedgerAccountNode"
+            }
+          }
+        }
+      },
+      "LedgerAccountTreeResponse": {
+        "type": "object",
+        "required": [
+          "roots"
+        ],
+        "properties": {
+          "roots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LedgerAccountNode"
+            }
           }
         }
       },
@@ -9934,6 +11501,83 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "MatchCardsResponse": {
+        "type": "object",
+        "required": [
+          "matched",
+          "unmatched"
+        ],
+        "properties": {
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unmatched": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MileageCalculateRequest": {
+        "type": "object",
+        "required": [
+          "miles_or_km"
+        ],
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "incurred_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "miles_or_km": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "MileageCalculateResponse": {
+        "type": "object",
+        "required": [
+          "amount_minor",
+          "currency",
+          "rate_minor",
+          "miles_or_km",
+          "expense"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "expense": {
+            "$ref": "#/components/schemas/ExpenseDto"
+          },
+          "miles_or_km": {
+            "type": "number",
+            "format": "double"
+          },
+          "rate_minor": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -10010,17 +11654,83 @@
           }
         }
       },
+      "PerDiemRequest": {
+        "type": "object",
+        "required": [
+          "days"
+        ],
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "incurred_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PerDiemResponse": {
+        "type": "object",
+        "required": [
+          "amount_minor",
+          "currency",
+          "per_diem_minor",
+          "days",
+          "expense"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expense": {
+            "$ref": "#/components/schemas/ExpenseDto"
+          },
+          "per_diem_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PostJournalRequest": {
         "type": "object",
         "required": [
           "source_type",
-          "source_id",
           "currency",
           "lines"
         ],
         "properties": {
           "currency": {
             "type": "string"
+          },
+          "entry_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Document date `YYYY-MM-DD`; defaults to today."
           },
           "lines": {
             "type": "array",
@@ -10034,13 +11744,78 @@
               "null"
             ]
           },
+          "reverses_of": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Public id of the journal being reversed (`jrn_\u2026`)."
+          },
           "source_id": {
             "type": "string",
-            "description": "Internal UUID of the source document (payroll run id)."
+            "description": "Internal UUID of the source document (payroll run id).\nEmpty / omitted for manual \u2192 generated UUID."
           },
           "source_type": {
             "type": "string",
             "description": "`payroll` or `manual`."
+          }
+        }
+      },
+      "ProfitAndLossResponse": {
+        "type": "object",
+        "required": [
+          "currency",
+          "revenue",
+          "expenses",
+          "revenue_total_minor",
+          "expense_total_minor",
+          "net_income_minor"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "expense_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLine"
+            }
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "net_income_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "period_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revenue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLine"
+            }
+          },
+          "revenue_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -10070,6 +11845,88 @@
           "unit_price_minor": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "ReconcileRequest": {
+        "type": "object",
+        "properties": {
+          "line_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional: restrict auto-match to these statement line UUIDs / public keys."
+          }
+        }
+      },
+      "ReconcileResponse": {
+        "type": "object",
+        "required": [
+          "matched",
+          "unmatched",
+          "match_rate",
+          "reconciliations"
+        ],
+        "properties": {
+          "match_rate": {
+            "type": "number",
+            "format": "double"
+          },
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reconciliations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationDto"
+            }
+          },
+          "unmatched": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReconciliationDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "bank_account_id",
+          "statement_line_id",
+          "match_kind",
+          "amount_minor",
+          "auto_matched"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "auto_matched": {
+            "type": "boolean"
+          },
+          "bank_account_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "match_kind": {
+            "type": "string"
+          },
+          "matched_payment_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statement_line_id": {
+            "type": "string"
           }
         }
       },
@@ -10157,6 +12014,78 @@
           }
         }
       },
+      "ReimbursementBatchDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "currency",
+          "total_minor",
+          "expense_ids",
+          "created_at"
+        ],
+        "properties": {
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "expense_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ReopenPeriodRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportLine": {
+        "type": "object",
+        "required": [
+          "account_code",
+          "account_name",
+          "amount_minor"
+        ],
+        "properties": {
+          "account_code": {
+            "type": "string"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "ReportSummaryDto": {
         "type": "object",
         "required": [
@@ -10229,6 +12158,55 @@
           "processed": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "StatementLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "statement_id",
+          "line_no",
+          "txn_date",
+          "amount_minor",
+          "currency",
+          "status"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "line_no": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statement_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "txn_date": {
+            "type": "string"
           }
         }
       },
@@ -10339,6 +12317,84 @@
           }
         }
       },
+      "TrialBalanceResponse": {
+        "type": "object",
+        "required": [
+          "currency",
+          "rows",
+          "total_debit_minor",
+          "total_credit_minor",
+          "balanced"
+        ],
+        "properties": {
+          "balanced": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "period_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrialBalanceRow"
+            }
+          },
+          "total_credit_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_debit_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "TrialBalanceRow": {
+        "type": "object",
+        "required": [
+          "account_code",
+          "account_name",
+          "account_type",
+          "debit_minor",
+          "credit_minor"
+        ],
+        "properties": {
+          "account_code": {
+            "type": "string"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "account_type": {
+            "type": "string"
+          },
+          "credit_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "debit_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UpdateChecklistRequest": {
+        "type": "object",
+        "required": [
+          "checklist"
+        ],
+        "properties": {
+          "checklist": {
+            "type": "object"
+          }
+        }
+      },
       "UpdateInvoiceRequest": {
         "type": "object",
         "properties": {
@@ -10368,6 +12424,102 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "UpdateLedgerAccountRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "UpsertExpensePolicyRequest": {
+        "type": "object",
+        "properties": {
+          "auto_approve_under_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "category_limits": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CategoryLimitInput"
+            }
+          },
+          "mileage_rate_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "mileage_unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "over_limit_action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "per_diem_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "require_receipt_over_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -15417,7 +17569,7 @@
     },
     {
       "name": "finance-reports",
-      "description": "Finance summary reports"
+      "description": "Finance summary and accounting reports"
     },
     {
       "name": "finance-webhooks",
@@ -15433,7 +17585,23 @@
     },
     {
       "name": "finance-journals",
-      "description": "Balanced journal posting (payroll)"
+      "description": "Balanced journal posting and list"
+    },
+    {
+      "name": "finance-accounts",
+      "description": "Chart of accounts"
+    },
+    {
+      "name": "finance-periods",
+      "description": "Fiscal periods open/close/reopen"
+    },
+    {
+      "name": "finance-bank",
+      "description": "Bank accounts, statements, reconciliation"
+    },
+    {
+      "name": "finance-policy",
+      "description": "Expense policy, cards, reimbursements"
     },
     {
       "name": "operations-projects",

@@ -375,6 +375,92 @@ describe('a11y', () => {
     await expectNoSeriousAxeViolations(container);
   });
 
+  it('finance CoA, journals, and periods landmarks have no serious/critical violations', async () => {
+    const accounts = [
+      { id: 'acc_1', code: '1000', name: 'Cash', account_type: 'asset', is_active: true },
+      { id: 'acc_2', code: '4000', name: 'Revenue', account_type: 'revenue', is_active: true },
+    ];
+    const journals = [
+      {
+        id: 'jrn_1',
+        entry_date: '2026-03-01',
+        memo: 'Manual entry',
+        source_type: 'manual',
+        debit_minor: 1000,
+        currency: 'USD',
+      },
+    ];
+    const periods = [
+      {
+        id: 'fp_1',
+        code: '2026-03',
+        name: 'March 2026',
+        status: 'open',
+        start_date: '2026-03-01',
+        end_date: '2026-03-31',
+      },
+    ];
+    const { container } = render(
+      <main>
+        <h1>Chart of accounts</h1>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'code', header: 'Code', cell: (r) => r.code },
+            { key: 'name', header: 'Name', cell: (r) => r.name },
+            { key: 'type', header: 'Type', cell: (r) => r.account_type },
+            {
+              key: 'active',
+              header: 'Active',
+              cell: (r) => <StatusCell status={r.is_active ? 'active' : 'inactive'} />,
+            },
+          ]}
+          rows={accounts}
+        />
+        <h2>Journals</h2>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'entry_date', header: 'Date', cell: (r) => r.entry_date },
+            { key: 'memo', header: 'Memo', cell: (r) => r.memo },
+            {
+              key: 'source',
+              header: 'Source',
+              cell: (r) => <StatusCell status={r.source_type} />,
+            },
+            {
+              key: 'amount',
+              header: 'Debits',
+              align: 'right',
+              cell: (r) => <MoneyCell amount={r.debit_minor / 100} currency={r.currency} />,
+            },
+          ]}
+          rows={journals}
+        />
+        <h2>Periods</h2>
+        <Table
+          getRowKey={(r) => r.id}
+          columns={[
+            { key: 'code', header: 'Code', cell: (r) => r.code },
+            { key: 'name', header: 'Name', cell: (r) => r.name },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} />,
+            },
+            {
+              key: 'range',
+              header: 'Range',
+              cell: (r) => `${r.start_date} → ${r.end_date}`,
+            },
+          ]}
+          rows={periods}
+        />
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
   it('projects/tasks ops landmark has no serious/critical violations', async () => {
     const rows = [
       { id: 'prj_1', name: 'Acme rollout', status: 'active' },

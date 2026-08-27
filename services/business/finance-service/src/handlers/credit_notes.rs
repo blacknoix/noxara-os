@@ -195,9 +195,7 @@ pub async fn create_credit_note(
     let net = doc.total_minor - doc.tax_minor;
     let journal = credit_note_entry(id, currency, net, doc.tax_minor, doc.total_minor)
         .map_err(|e| validation(&request_id, format!("journal: {e}")))?;
-    post_journal(&mut tx, org_id, &journal)
-        .await
-        .map_err(internal(&request_id))?;
+    post_journal(&mut tx, org_id, &journal, &request_id).await?;
 
     let new_credited = credited + doc.total_minor;
     let (new_balance, new_status) = balance_and_status(total, paid, new_credited, &status);

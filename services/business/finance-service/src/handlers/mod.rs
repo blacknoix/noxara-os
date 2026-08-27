@@ -2,6 +2,8 @@
 //!
 //! Split by aggregate for readability; [`router`] merges every sub-router.
 
+pub mod accounts;
+pub mod bank;
 pub mod credit_notes;
 pub mod customers;
 pub mod events;
@@ -9,6 +11,8 @@ pub mod expenses;
 pub mod invoices;
 pub mod journals;
 pub mod payments;
+pub mod periods;
+pub mod policy;
 pub mod recurring;
 pub mod reports;
 pub mod webhooks;
@@ -33,6 +37,10 @@ pub fn router() -> Router<AppState> {
         .merge(recurring::router())
         .merge(events::router())
         .merge(journals::router())
+        .merge(accounts::router())
+        .merge(periods::router())
+        .merge(bank::router())
+        .merge(policy::router())
 }
 
 /// Map a `sqlx::Error` to an internal `AppError`, capturing `request_id`.

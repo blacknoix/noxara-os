@@ -13,6 +13,12 @@ pub fn required_permission_for_event(envelope: &EventEnvelope) -> Option<Permiss
         (Context::Sales, "quote") => "sales.quote.read",
         (Context::Finance, "invoice") => "finance.invoice.read",
         (Context::Finance, "expense") => "finance.expense.read",
+        (Context::Finance, "journal") => "finance.ledger.read",
+        (Context::Finance, "period") => "finance.period.read",
+        (Context::Finance, "statement") | (Context::Finance, "reconciliation") => {
+            "finance.bank.read"
+        }
+        (Context::Finance, "reimbursement") => "finance.expense.read",
         (Context::Operations, "task") => "operations.task.read",
         (Context::Operations, "project") => "operations.project.read",
         (Context::Operations, "approval") => "operations.approval.read",

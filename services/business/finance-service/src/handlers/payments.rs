@@ -499,9 +499,7 @@ pub async fn record_payment(
     // Journal: full cash in; AR for allocated; customer credits for unapplied.
     let journal = payment_entry(id, currency, allocate_amount, unapplied)
         .map_err(|e| validation(&request_id, format!("journal: {e}")))?;
-    post_journal(&mut tx, org_id, &journal)
-        .await
-        .map_err(internal(&request_id))?;
+    post_journal(&mut tx, org_id, &journal, &request_id).await?;
 
     if let Some(inv_id) = invoice_uuid {
         if allocate_amount > 0 {
@@ -717,15 +715,18 @@ pub async fn allocate_payment(
         source_type: "payment",
         source_id: payment_id,
         currency,
+        entry_date: None,
+        reverses_entry_id: None,
+        posted_by: None,
         lines: vec![
             crate::journal::LedgerLine {
-                account_code: crate::journal::codes::CUSTOMER_CREDITS,
+                account_code: crate::journal::codes::CUSTOMER_CREDITS.into(),
                 debit_minor: body.amount_minor,
                 credit_minor: 0,
                 memo: Some("Apply customer credit".into()),
             },
             crate::journal::LedgerLine {
-                account_code: crate::journal::codes::AR,
+                account_code: crate::journal::codes::AR.into(),
                 debit_minor: 0,
                 credit_minor: body.amount_minor,
                 memo: Some("AR settlement from credit".into()),
@@ -735,9 +736,7 @@ pub async fn allocate_payment(
     journal
         .assert_balanced()
         .map_err(|e| validation(&request_id, format!("journal: {e}")))?;
-    post_journal(&mut tx, org_id, &journal)
-        .await
-        .map_err(internal(&request_id))?;
+    post_journal(&mut tx, org_id, &journal, &request_id).await?;
 
     let inv_public = PublicId::new(IdKind::Invoice, invoice_id).as_str();
     let pay_public = PublicId::new(IdKind::Payment, payment_id).as_str();

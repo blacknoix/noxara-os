@@ -73,6 +73,17 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
             serde_json::json!({ "id": "payrun_test" })
         }
         ("payslip", "issued") => serde_json::json!({ "id": "payslip_test" }),
+        ("journal", "posted") => serde_json::json!({ "id": "jrn_test" }),
+        ("period", "closed" | "reopened") => {
+            serde_json::json!({ "id": "period_test", "code": "2026-08" })
+        }
+        ("statement", "imported") => serde_json::json!({ "id": "stmt_test" }),
+        ("reconciliation", "matched") => serde_json::json!({
+            "statement_id": "stmt_test",
+            "matched": 9,
+            "unmatched": 1
+        }),
+        ("reimbursement", "batched") => serde_json::json!({ "id": "reimb_test" }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }
