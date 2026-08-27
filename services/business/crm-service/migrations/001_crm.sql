@@ -22,7 +22,7 @@ CREATE INDEX IF NOT EXISTS sales_pipeline_org_id_idx ON sales_pipeline (org_id);
 ALTER TABLE sales_pipeline ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_pipeline FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_pipeline_tenant_isolation ON sales_pipeline
+CREATE POLICY sales_pipeline_tenant_isolation ON sales_pipeline
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS sales_pipeline_stage_pipeline_id_idx ON sales_pipelin
 ALTER TABLE sales_pipeline_stage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_pipeline_stage FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_pipeline_stage_tenant_isolation ON sales_pipeline_stage
+CREATE POLICY sales_pipeline_stage_tenant_isolation ON sales_pipeline_stage
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -85,7 +85,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS sales_customer_org_email_unique_idx
 ALTER TABLE sales_customer ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_customer FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_customer_tenant_isolation ON sales_customer
+CREATE POLICY sales_customer_tenant_isolation ON sales_customer
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -117,7 +117,7 @@ CREATE INDEX IF NOT EXISTS sales_contact_name_trgm_idx
 ALTER TABLE sales_contact ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_contact FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_contact_tenant_isolation ON sales_contact
+CREATE POLICY sales_contact_tenant_isolation ON sales_contact
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -155,7 +155,7 @@ CREATE INDEX IF NOT EXISTS sales_lead_company_name_trgm_idx
 ALTER TABLE sales_lead ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_lead FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_lead_tenant_isolation ON sales_lead
+CREATE POLICY sales_lead_tenant_isolation ON sales_lead
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -195,7 +195,7 @@ CREATE INDEX IF NOT EXISTS sales_deal_org_owner_idx ON sales_deal (org_id, owner
 ALTER TABLE sales_deal ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_deal FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_deal_tenant_isolation ON sales_deal
+CREATE POLICY sales_deal_tenant_isolation ON sales_deal
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -228,7 +228,7 @@ CREATE INDEX IF NOT EXISTS sales_deal_stage_history_deal_id_idx ON sales_deal_st
 ALTER TABLE sales_deal_stage_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_deal_stage_history FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_deal_stage_history_tenant_isolation ON sales_deal_stage_history
+CREATE POLICY sales_deal_stage_history_tenant_isolation ON sales_deal_stage_history
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -255,7 +255,7 @@ CREATE INDEX IF NOT EXISTS sales_product_org_id_idx ON sales_product (org_id);
 ALTER TABLE sales_product ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_product FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_product_tenant_isolation ON sales_product
+CREATE POLICY sales_product_tenant_isolation ON sales_product
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -299,7 +299,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS sales_quote_org_number_version_unique_idx
 ALTER TABLE sales_quote ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_quote FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_quote_tenant_isolation ON sales_quote
+CREATE POLICY sales_quote_tenant_isolation ON sales_quote
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -330,7 +330,7 @@ CREATE INDEX IF NOT EXISTS sales_quote_line_quote_id_idx ON sales_quote_line (qu
 ALTER TABLE sales_quote_line ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_quote_line FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_quote_line_tenant_isolation ON sales_quote_line
+CREATE POLICY sales_quote_line_tenant_isolation ON sales_quote_line
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -362,7 +362,7 @@ CREATE INDEX IF NOT EXISTS sales_activity_lead_id_idx ON sales_activity (lead_id
 ALTER TABLE sales_activity ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_activity FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_activity_tenant_isolation ON sales_activity
+CREATE POLICY sales_activity_tenant_isolation ON sales_activity
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -385,7 +385,7 @@ CREATE INDEX IF NOT EXISTS sales_idempotency_org_id_idx ON sales_idempotency (or
 ALTER TABLE sales_idempotency ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_idempotency FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_idempotency_tenant_isolation ON sales_idempotency
+CREATE POLICY sales_idempotency_tenant_isolation ON sales_idempotency
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -413,6 +413,6 @@ CREATE INDEX IF NOT EXISTS sales_import_job_org_id_idx ON sales_import_job (org_
 ALTER TABLE sales_import_job ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_import_job FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS sales_import_job_tenant_isolation ON sales_import_job
+CREATE POLICY sales_import_job_tenant_isolation ON sales_import_job
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

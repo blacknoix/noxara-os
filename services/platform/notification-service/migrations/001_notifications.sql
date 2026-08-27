@@ -17,7 +17,7 @@ CREATE INDEX IF NOT EXISTS notification_preference_user_idx
 ALTER TABLE notification_preference ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_preference FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS notification_preference_tenant_isolation ON notification_preference
+CREATE POLICY notification_preference_tenant_isolation ON notification_preference
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -55,7 +55,7 @@ CREATE INDEX IF NOT EXISTS notification_item_feed_idx
 ALTER TABLE notification_item ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_item FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS notification_item_tenant_isolation ON notification_item
+CREATE POLICY notification_item_tenant_isolation ON notification_item
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -75,7 +75,7 @@ CREATE INDEX IF NOT EXISTS notification_delivery_item_idx
 ALTER TABLE notification_delivery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_delivery FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS notification_delivery_tenant_isolation ON notification_delivery
+CREATE POLICY notification_delivery_tenant_isolation ON notification_delivery
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -88,23 +88,23 @@ CREATE TABLE IF NOT EXISTS notification_processed (
 ALTER TABLE notification_processed ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_processed FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS notification_processed_tenant_isolation ON notification_processed
+CREATE POLICY notification_processed_tenant_isolation ON notification_processed
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
 -- Cross-tenant ingest/consumer path (service sets app.notification_ingest=1).
-CREATE POLICY IF NOT EXISTS notification_processed_ingest ON notification_processed
+CREATE POLICY notification_processed_ingest ON notification_processed
     USING (current_setting('app.notification_ingest', true) = '1')
     WITH CHECK (current_setting('app.notification_ingest', true) = '1');
 
-CREATE POLICY IF NOT EXISTS notification_item_ingest ON notification_item
+CREATE POLICY notification_item_ingest ON notification_item
     USING (current_setting('app.notification_ingest', true) = '1')
     WITH CHECK (current_setting('app.notification_ingest', true) = '1');
 
-CREATE POLICY IF NOT EXISTS notification_delivery_ingest ON notification_delivery
+CREATE POLICY notification_delivery_ingest ON notification_delivery
     USING (current_setting('app.notification_ingest', true) = '1')
     WITH CHECK (current_setting('app.notification_ingest', true) = '1');
 
-CREATE POLICY IF NOT EXISTS notification_preference_ingest ON notification_preference
+CREATE POLICY notification_preference_ingest ON notification_preference
     USING (current_setting('app.notification_ingest', true) = '1')
     WITH CHECK (current_setting('app.notification_ingest', true) = '1');

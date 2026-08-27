@@ -64,7 +64,7 @@ CREATE INDEX IF NOT EXISTS people_employee_org_name_trgm_idx
     WHERE deleted_at IS NULL;
 ALTER TABLE people_employee ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_employee FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_employee_tenant_isolation ON people_employee
+CREATE POLICY people_employee_tenant_isolation ON people_employee
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -91,7 +91,7 @@ CREATE INDEX IF NOT EXISTS people_contract_org_emp_idx
     ON people_employment_contract (org_id, employee_id) WHERE deleted_at IS NULL;
 ALTER TABLE people_employment_contract ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_employment_contract FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_contract_tenant_isolation ON people_employment_contract
+CREATE POLICY people_contract_tenant_isolation ON people_employment_contract
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -122,7 +122,7 @@ CREATE INDEX IF NOT EXISTS people_comp_org_emp_idx
     ON people_compensation_component (org_id, employee_id) WHERE deleted_at IS NULL;
 ALTER TABLE people_compensation_component ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_compensation_component FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_comp_tenant_isolation ON people_compensation_component
+CREATE POLICY people_comp_tenant_isolation ON people_compensation_component
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -152,7 +152,7 @@ CREATE INDEX IF NOT EXISTS people_document_org_expiry_idx
     WHERE deleted_at IS NULL AND expires_at IS NOT NULL;
 ALTER TABLE people_document ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_document FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_document_tenant_isolation ON people_document
+CREATE POLICY people_document_tenant_isolation ON people_document
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -180,7 +180,7 @@ CREATE INDEX IF NOT EXISTS people_asset_org_emp_idx
     ON people_asset (org_id, employee_id) WHERE deleted_at IS NULL;
 ALTER TABLE people_asset ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_asset FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_asset_tenant_isolation ON people_asset
+CREATE POLICY people_asset_tenant_isolation ON people_asset
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -212,7 +212,7 @@ CREATE INDEX IF NOT EXISTS people_task_org_wf_idx
     ON people_task (org_id, workflow_id) WHERE deleted_at IS NULL AND workflow_id IS NOT NULL;
 ALTER TABLE people_task ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_task FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_task_tenant_isolation ON people_task
+CREATE POLICY people_task_tenant_isolation ON people_task
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -233,7 +233,7 @@ CREATE INDEX IF NOT EXISTS people_timeline_org_emp_idx
     ON people_timeline_event (org_id, employee_id, occurred_at DESC);
 ALTER TABLE people_timeline_event ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_timeline_event FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_timeline_tenant_isolation ON people_timeline_event
+CREATE POLICY people_timeline_tenant_isolation ON people_timeline_event
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -257,7 +257,7 @@ CREATE INDEX IF NOT EXISTS people_workflow_org_emp_idx
     ON people_workflow_run (org_id, employee_id);
 ALTER TABLE people_workflow_run ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_workflow_run FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_workflow_tenant_isolation ON people_workflow_run
+CREATE POLICY people_workflow_tenant_isolation ON people_workflow_run
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -276,6 +276,6 @@ CREATE TABLE IF NOT EXISTS people_idempotency (
 );
 ALTER TABLE people_idempotency ENABLE ROW LEVEL SECURITY;
 ALTER TABLE people_idempotency FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS people_idempotency_tenant_isolation ON people_idempotency
+CREATE POLICY people_idempotency_tenant_isolation ON people_idempotency
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

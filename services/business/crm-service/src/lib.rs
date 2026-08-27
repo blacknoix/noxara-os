@@ -54,7 +54,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/002_quote_approval.sql"),
         ] {
             for stmt in split_sql(migration) {
-                sqlx::query(&stmt).execute(pool).await?;
+                companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
             }
         }
         Ok(())

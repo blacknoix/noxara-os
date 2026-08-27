@@ -18,6 +18,6 @@ CREATE INDEX IF NOT EXISTS file_object_org_idx ON file_object (org_id, created_a
 ALTER TABLE file_object ENABLE ROW LEVEL SECURITY;
 ALTER TABLE file_object FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS file_object_tenant_isolation ON file_object
+CREATE POLICY file_object_tenant_isolation ON file_object
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

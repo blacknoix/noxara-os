@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS operations_project_org_deal_idx
     ON operations_project (org_id, deal_id) WHERE deleted_at IS NULL AND deal_id IS NOT NULL;
 ALTER TABLE operations_project ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_project FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_project_tenant_isolation ON operations_project
+CREATE POLICY operations_project_tenant_isolation ON operations_project
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -90,7 +90,7 @@ CREATE INDEX IF NOT EXISTS operations_task_org_due_idx
     WHERE deleted_at IS NULL AND due_at IS NOT NULL;
 ALTER TABLE operations_task ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_task FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_task_tenant_isolation ON operations_task
+CREATE POLICY operations_task_tenant_isolation ON operations_task
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -111,7 +111,7 @@ CREATE INDEX IF NOT EXISTS operations_task_checklist_task_idx
     ON operations_task_checklist (org_id, task_id) WHERE deleted_at IS NULL;
 ALTER TABLE operations_task_checklist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_task_checklist FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_task_checklist_tenant_isolation ON operations_task_checklist
+CREATE POLICY operations_task_checklist_tenant_isolation ON operations_task_checklist
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -132,7 +132,7 @@ CREATE INDEX IF NOT EXISTS operations_task_comment_task_idx
     ON operations_task_comment (org_id, task_id) WHERE deleted_at IS NULL;
 ALTER TABLE operations_task_comment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_task_comment FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_task_comment_tenant_isolation ON operations_task_comment
+CREATE POLICY operations_task_comment_tenant_isolation ON operations_task_comment
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -155,7 +155,7 @@ CREATE INDEX IF NOT EXISTS operations_notification_intent_recipient_idx
     ON operations_notification_intent (org_id, recipient_user_id, created_at DESC);
 ALTER TABLE operations_notification_intent ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_notification_intent FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_notification_intent_tenant_isolation ON operations_notification_intent
+CREATE POLICY operations_notification_intent_tenant_isolation ON operations_notification_intent
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -178,7 +178,7 @@ CREATE INDEX IF NOT EXISTS operations_task_attachment_task_idx
     ON operations_task_attachment (org_id, task_id) WHERE deleted_at IS NULL;
 ALTER TABLE operations_task_attachment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_task_attachment FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_task_attachment_tenant_isolation ON operations_task_attachment
+CREATE POLICY operations_task_attachment_tenant_isolation ON operations_task_attachment
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -199,7 +199,7 @@ CREATE INDEX IF NOT EXISTS operations_task_dependency_task_idx
     ON operations_task_dependency (org_id, task_id) WHERE deleted_at IS NULL;
 ALTER TABLE operations_task_dependency ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_task_dependency FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_task_dependency_tenant_isolation ON operations_task_dependency
+CREATE POLICY operations_task_dependency_tenant_isolation ON operations_task_dependency
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
@@ -218,6 +218,6 @@ CREATE TABLE IF NOT EXISTS operations_idempotency (
 );
 ALTER TABLE operations_idempotency ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_idempotency FORCE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS operations_idempotency_tenant_isolation ON operations_idempotency
+CREATE POLICY operations_idempotency_tenant_isolation ON operations_idempotency
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

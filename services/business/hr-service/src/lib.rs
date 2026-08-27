@@ -71,7 +71,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     companyos_tenancy::with_schema_migration_lock(pool, || async {
         let migration = include_str!("../migrations/001_people.sql");
         for stmt in split_sql(migration) {
-            sqlx::query(&stmt).execute(pool).await?;
+            companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
         }
         Ok(())
     })

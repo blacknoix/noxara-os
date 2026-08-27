@@ -24,10 +24,10 @@ CREATE INDEX IF NOT EXISTS analytics_fact_invoice_issued_org_idx
 ALTER TABLE analytics_fact_invoice_issued ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics_fact_invoice_issued FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS analytics_fact_invoice_issued_tenant ON analytics_fact_invoice_issued
+CREATE POLICY analytics_fact_invoice_issued_tenant ON analytics_fact_invoice_issued
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
-CREATE POLICY IF NOT EXISTS analytics_fact_invoice_issued_ingest ON analytics_fact_invoice_issued
+CREATE POLICY analytics_fact_invoice_issued_ingest ON analytics_fact_invoice_issued
     USING (current_setting('app.analytics_ingest', true) = '1')
     WITH CHECK (current_setting('app.analytics_ingest', true) = '1');
