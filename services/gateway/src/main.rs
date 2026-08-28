@@ -138,6 +138,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/hello", any(proxy_hello))
         .route("/api/v1/dashboard", any(proxy_dashboard))
         .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
+        .route("/api/v1/governance/{*rest}", any(proxy_governance))
         .route("/api/v1/sales/{*rest}", any(proxy_sales))
         .route("/api/v1/finance/{*rest}", any(proxy_finance))
         .route("/api/v1/operations/{*rest}", any(proxy_operations))
@@ -384,6 +385,12 @@ async fn proxy_dashboard(State(state): State<GatewayState>, req: Request) -> Res
 }
 
 async fn proxy_workspace(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.core_url, true, "core").await
+}
+
+async fn proxy_governance(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     proxy_to(&state, req, &upstream, &state.core_url, true, "core").await

@@ -393,6 +393,10 @@ impl FromStr for PublicId {
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
             ("cn_", IdKind::CreditNote),
+            ("sso_", IdKind::SsoConfig),
+            ("apk_", IdKind::ApiKey),
+            ("arv_", IdKind::AccessReview),
+            ("sec_", IdKind::OrgSecret),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {

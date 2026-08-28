@@ -54,9 +54,9 @@ pub async fn load_principal(
 
     let mut statements = Vec::new();
     if let Some(rid) = role_id {
-        let rows: Vec<(String, String, String)> = sqlx::query_as(
+        let rows: Vec<(String, String, String, serde_json::Value)> = sqlx::query_as(
             r#"
-            SELECT permission_id, effect, scope
+            SELECT permission_id, effect, scope, conditions
             FROM role_permission
             WHERE role_id = $1 AND org_id = $2
             "#,
@@ -67,17 +67,19 @@ pub async fn load_principal(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
-        for (perm, effect, scope) in rows {
+        for (perm, effect, scope, conditions_json) in rows {
             let effect = match effect.as_str() {
                 "deny" => Effect::Deny,
                 _ => Effect::Allow,
             };
             let scope = Scope::parse(&scope).unwrap_or(Scope::Organization);
+            let conditions: Vec<companyos_authz::AbacCondition> =
+                serde_json::from_value(conditions_json).unwrap_or_default();
             statements.push(Statement {
                 effect,
                 permission: PermissionId::from(perm.as_str()),
                 scope,
-                conditions: vec![],
+                conditions,
             });
         }
     }

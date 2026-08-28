@@ -114,9 +114,7 @@ pub async fn upsert_config(
         return Err("protocol must be saml or oidc".into());
     }
     let id = new_uuid_v7();
-    let public_id = PublicId::new(IdKind::Org, id); // reuse org prefix? better custom — use hel-like
-                                                    // Use a stable public id string without new IdKind for SSO: `sso_{uuid}`
-    let public = format!("sso_{id}");
+    let public = PublicId::new(IdKind::SsoConfig, id).as_str();
     let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
     set_session_org_id(&mut tx, org)
         .await
@@ -138,7 +136,6 @@ pub async fn upsert_config(
     .await
     .map_err(|e| e.to_string())?;
     tx.commit().await.map_err(|e| e.to_string())?;
-    let _ = public_id;
     Ok(SsoConfigView {
         id: public,
         org_id: org.to_public().as_str(),

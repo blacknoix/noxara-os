@@ -137,6 +137,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/002_auth.sql"),
             include_str!("../migrations/003_workspace.sql"),
             include_str!("../migrations/004_governance.sql"),
+            include_str!("../migrations/005_sso_login.sql"),
         ] {
             for stmt in split_sql(migration) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;

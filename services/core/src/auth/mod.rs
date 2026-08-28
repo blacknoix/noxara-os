@@ -16,6 +16,7 @@ pub mod password;
 pub mod rate_limit;
 pub mod sessions;
 pub mod sso;
+pub mod sso_login;
 pub mod tokens;
 
 pub use handlers::router;

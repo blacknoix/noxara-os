@@ -28,6 +28,7 @@ use crate::auth::oauth::{self, OAuthProvider};
 use crate::auth::password;
 use crate::auth::sessions::{self, RefreshOutcome};
 use crate::auth::sso::{self, UpsertSsoRequest};
+use crate::auth::sso_login;
 use crate::state::AppState;
 
 fn refresh_from_cookie(headers: &HeaderMap) -> Option<String> {
@@ -1660,6 +1661,65 @@ pub async fn create_sso(
         .await
         .map_err(|e| AppError::new(ErrorCode::ValidationFailed, user.ctx.request_id.clone(), e))?;
     Ok((StatusCode::CREATED, Json(view)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SsoStartQuery {
+    pub redirect_uri: Option<String>,
+}
+
+pub async fn sso_start(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Query(q): Query<SsoStartQuery>,
+    headers: HeaderMap,
+) -> Result<Redirect, AppError> {
+    let request_id = req_id(&headers);
+    let redirect_uri = q
+        .redirect_uri
+        .unwrap_or_else(|| format!("{}/api/v1/auth/sso/callback", mail::public_api_base()));
+    let url = sso_login::start_oidc_login(&state.pool, &id, &redirect_uri, &request_id).await?;
+    Ok(Redirect::temporary(&url))
+}
+
+pub async fn sso_callback(
+    State(state): State<AppState>,
+    Query(q): Query<OAuthCallbackQuery>,
+    headers: HeaderMap,
+) -> Result<Response, AppError> {
+    let request_id = req_id(&headers);
+    let (ip, ua) = client_meta(&headers);
+    if let Some(err) = q.error {
+        return Err(AppError::new(
+            ErrorCode::Unauthorized,
+            request_id,
+            format!("sso error: {err}"),
+        ));
+    }
+    let code = q.code.ok_or_else(|| {
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            request_id.clone(),
+            "missing code",
+        )
+    })?;
+    let st = q.state.ok_or_else(|| {
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            request_id.clone(),
+            "missing state",
+        )
+    })?;
+    let issued = sso_login::complete_oidc_login(
+        &state,
+        &st,
+        &code,
+        &request_id,
+        ip.as_deref(),
+        ua.as_deref(),
+    )
+    .await?;
+    Ok(token_response(issued))
 }
 
 pub async fn jwks(State(state): State<AppState>) -> Json<serde_json::Value> {

@@ -273,6 +273,31 @@ async fn seed_workspace(
             .bind(owner_user_id)
             .execute(&mut **tx)
             .await?;
+
+            // Seed entitlement history so access-review who-could queries work.
+            let mem: Option<(Uuid,)> =
+                sqlx::query_as("SELECT id FROM membership WHERE org_id = $1 AND user_id = $2")
+                    .bind(org_id.as_uuid())
+                    .bind(owner_user_id)
+                    .fetch_optional(&mut **tx)
+                    .await?;
+            if let Some((membership_id,)) = mem {
+                let perms: Vec<(String, String)> = allows
+                    .iter()
+                    .map(|p| (p.as_str().to_string(), "allow".to_string()))
+                    .collect();
+                crate::governance::entitlement::record_entitlements_for_membership(
+                    &mut *tx,
+                    org_id,
+                    owner_user_id,
+                    membership_id,
+                    "owner",
+                    &perms,
+                    chrono::Utc::now(),
+                )
+                .await
+                .map_err(|e| anyhow::anyhow!(e))?;
+            }
         }
     }
 

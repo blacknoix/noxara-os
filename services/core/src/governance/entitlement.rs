@@ -2,8 +2,7 @@
 //!
 //! `record_entitlements_for_membership` is the write-side hook: call it
 //! whenever a membership's role/permission set changes (create, role
-//! change, revoke) so the history stays gap-free. Not yet wired into
-//! `workspace::provisioning` — tracked separately.
+//! change, revoke) so the history stays gap-free.
 
 use chrono::{DateTime, Utc};
 use companyos_errors::AppError;

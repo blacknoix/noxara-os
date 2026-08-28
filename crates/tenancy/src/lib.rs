@@ -134,6 +134,19 @@ pub async fn set_auth_lookup_user(
     Ok(())
 }
 
+/// Allow SSO login start/callback to look up `sso_configuration` /
+/// `sso_login_state` rows by public id / state hash before `app.org_id` is
+/// known (unauthenticated login flow; RLS bypass key, **read-only** policies).
+///
+/// **Must be called inside an open transaction.**
+pub async fn set_sso_lookup(conn: &mut sqlx::PgConnection) -> Result<(), TenancyError> {
+    sqlx::query("SELECT set_config('app.sso_lookup', '1', true)")
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| TenancyError::SessionBind(e.to_string()))?;
+    Ok(())
+}
+
 /// Allow invitation accept to look up a row by token hash (RLS bypass key).
 pub async fn set_invite_token_hash(
     conn: &mut sqlx::PgConnection,

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://companyos.dev/events/admin.access_review.completed.v1.json",
+  "title": "admin.access_review.completed.v1",
+  "type": "object",
+  "required": [
+    "event_id",
+    "subject",
+    "org_id",
+    "context",
+    "aggregate",
+    "event_type",
+    "version",
+    "occurred_at",
+    "actor",
+    "payload",
+    "idempotency_key"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "subject": {
+      "type": "string",
+      "pattern": "^companyos\\.org[^.]+\\.admin\\.access_review\\.completed\\.v1$"
+    },
+    "org_id": { "type": "string" },
+    "context": { "const": "admin" },
+    "aggregate": { "const": "access_review" },
+    "event_type": { "const": "completed" },
+    "version": { "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "actor": { "type": "object" },
+    "payload": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true
+    },
+    "idempotency_key": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}
