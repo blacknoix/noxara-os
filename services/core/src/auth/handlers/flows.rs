@@ -1632,6 +1632,8 @@ pub async fn oauth_callback(
     .await
 }
 
+#[utoipa::path(get, path = "/api/v1/auth/sso/configs", tag = "auth",
+    responses((status = 200, body = SsoListResponse)))]
 pub async fn list_sso(
     State(state): State<AppState>,
     user: AuthUser,
@@ -1650,13 +1652,39 @@ pub async fn list_sso(
     Ok(Json(SsoListResponse { items }))
 }
 
+#[utoipa::path(post, path = "/api/v1/auth/sso/configs", tag = "auth",
+    request_body = UpsertSsoRequest, responses((status = 201, body = crate::auth::sso::SsoConfigView)))]
 pub async fn create_sso(
     State(state): State<AppState>,
     user: AuthUser,
+    headers: HeaderMap,
     Json(body): Json<UpsertSsoRequest>,
 ) -> Result<(StatusCode, Json<crate::auth::sso::SsoConfigView>), AppError> {
     sso::ensure_sso_admin(&user.roles, &user.ctx.request_id)?;
     sso::require_sso_feature(&state.pool, user.ctx.org_id.as_uuid(), &user.ctx.request_id).await?;
+
+    if let Some(key) = idempotency_key(&headers) {
+        if let Ok(Some((_, cached))) = idempotent_get(&state.pool, "sso.upsert", &key).await {
+            if let Ok(view) = serde_json::from_value::<crate::auth::sso::SsoConfigView>(cached) {
+                return Ok((StatusCode::CREATED, Json(view)));
+            }
+        }
+        let view = sso::upsert_config(&state.pool, user.ctx.org_id, body)
+            .await
+            .map_err(|e| {
+                AppError::new(ErrorCode::ValidationFailed, user.ctx.request_id.clone(), e)
+            })?;
+        let _ = idempotent_put(
+            &state.pool,
+            "sso.upsert",
+            &key,
+            201,
+            serde_json::to_value(&view).unwrap_or(serde_json::json!({})),
+        )
+        .await;
+        return Ok((StatusCode::CREATED, Json(view)));
+    }
+
     let view = sso::upsert_config(&state.pool, user.ctx.org_id, body)
         .await
         .map_err(|e| AppError::new(ErrorCode::ValidationFailed, user.ctx.request_id.clone(), e))?;
@@ -1668,6 +1696,9 @@ pub struct SsoStartQuery {
     pub redirect_uri: Option<String>,
 }
 
+#[utoipa::path(get, path = "/api/v1/auth/sso/{id}/start", tag = "auth",
+    params(("id" = String, Path), ("redirect_uri" = Option<String>, Query)),
+    responses((status = 307, description = "Redirect to the IdP authorization endpoint")))]
 pub async fn sso_start(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -1682,6 +1713,9 @@ pub async fn sso_start(
     Ok(Redirect::temporary(&url))
 }
 
+#[utoipa::path(get, path = "/api/v1/auth/sso/callback", tag = "auth",
+    params(("code" = Option<String>, Query), ("state" = Option<String>, Query)),
+    responses((status = 200, body = TokenResponse)))]
 pub async fn sso_callback(
     State(state): State<AppState>,
     Query(q): Query<OAuthCallbackQuery>,

@@ -1,6 +1,6 @@
 //! Auth HTTP handlers — `/api/v1/auth/...`.
 
-mod flows;
+pub mod flows;
 pub mod types;
 
 use std::time::Duration;

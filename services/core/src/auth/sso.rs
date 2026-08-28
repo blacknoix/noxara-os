@@ -36,12 +36,19 @@ pub async fn sso_enabled_for_org(pool: &PgPool, org_id: Uuid) -> Result<bool, sq
     if !sso_globally_enabled() {
         return Ok(false);
     }
-    let row: Option<(bool,)> =
+    let flag_row: Option<(bool,)> =
         sqlx::query_as("SELECT enabled FROM org_feature_flag WHERE org_id = $1 AND flag = 'sso'")
             .bind(org_id)
             .fetch_optional(pool)
             .await?;
-    Ok(row.map(|(e,)| e).unwrap_or(false))
+    if flag_row.map(|(e,)| e).unwrap_or(false) {
+        return Ok(true);
+    }
+    let plan_row: Option<(String,)> = sqlx::query_as("SELECT plan FROM organization WHERE id = $1")
+        .bind(org_id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(plan_row.map(|(p,)| p == "enterprise").unwrap_or(false))
 }
 
 pub fn ensure_sso_admin(roles: &[String], request_id: &str) -> Result<(), AppError> {

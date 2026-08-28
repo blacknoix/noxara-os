@@ -101,6 +101,40 @@ struct Seeded {
     token: String,
 }
 
+async fn insert_sso_config(
+    pool: &sqlx::PgPool,
+    org: OrgId,
+    idp_key: &str,
+    display: &str,
+    enabled: bool,
+) -> (Uuid, String) {
+    let config_id = new_uuid_v7();
+    let public = PublicId::new(IdKind::SsoConfig, config_id).as_str();
+    let mut tx = pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, org).await.unwrap();
+    sqlx::query(
+        r#"
+        INSERT INTO sso_configuration (id, org_id, public_id, protocol, display_name, config, enabled)
+        VALUES ($1,$2,$3,'oidc',$4,$5,$6)
+        "#,
+    )
+    .bind(config_id)
+    .bind(org.as_uuid())
+    .bind(&public)
+    .bind(display)
+    .bind(serde_json::json!({
+        "idp_key": idp_key,
+        "client_id": "test-client",
+        "client_secret": "test-secret"
+    }))
+    .bind(enabled)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+    (config_id, public)
+}
+
 async fn seed_org() -> Option<Seeded> {
     let pool = pool().await?;
     let ring = KeyRing::from_secret("test-sso-phase26");
@@ -345,4 +379,284 @@ async fn two_mocked_idps_can_complete_oidc_token_exchange_and_login() {
         .unwrap();
         assert_eq!(info.email.as_deref(), Some(seeded.email.as_str()));
     }
+}
+
+#[tokio::test]
+async fn sso_login_start_rejects_unknown_config() {
+    std::env::set_var("COMPANYOS_SSO_ENABLED", "1");
+    let Some(pool) = pool().await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+    let ring = KeyRing::from_secret("test-sso-phase26-unknown");
+    companyos_core::auth::ensure_bootstrap_key(&pool, &ring)
+        .await
+        .unwrap();
+    let state = AppState::new(pool, ring);
+    let app = build_router(state);
+
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/v1/auth/sso/sso_00000000000000000000000000/start?redirect_uri=http://localhost/cb")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn sso_login_start_rejects_disabled_config() {
+    std::env::set_var("COMPANYOS_SSO_ENABLED", "1");
+    let Some(seeded) = seed_org().await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+    let (_id, public) = insert_sso_config(
+        &seeded.pool,
+        seeded.org,
+        "okta-mock",
+        "Disabled Okta",
+        false,
+    )
+    .await;
+
+    let ring = KeyRing::from_secret("test-sso-phase26-disabled");
+    companyos_core::auth::ensure_bootstrap_key(&seeded.pool, &ring)
+        .await
+        .unwrap();
+    let state = AppState::new(seeded.pool.clone(), ring);
+    let app = build_router(state);
+
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/api/v1/auth/sso/{public}/start?redirect_uri=http://localhost/cb"
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn sso_login_start_requires_enterprise_plan_or_feature_flag() {
+    std::env::set_var("COMPANYOS_SSO_ENABLED", "1");
+    let Some(seeded) = seed_org().await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+    // Downgrade: no feature flag, no enterprise plan.
+    sqlx::query("UPDATE organization SET plan = 'starter' WHERE id = $1")
+        .bind(seeded.org.as_uuid())
+        .execute(&seeded.pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE org_feature_flag SET enabled = false WHERE org_id = $1 AND flag = 'sso'")
+        .bind(seeded.org.as_uuid())
+        .execute(&seeded.pool)
+        .await
+        .unwrap();
+
+    let (_id, public) =
+        insert_sso_config(&seeded.pool, seeded.org, "okta-mock", "Okta", true).await;
+
+    let ring = KeyRing::from_secret("test-sso-phase26-gate");
+    companyos_core::auth::ensure_bootstrap_key(&seeded.pool, &ring)
+        .await
+        .unwrap();
+    let state = AppState::new(seeded.pool.clone(), ring);
+    let app = build_router(state);
+
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/api/v1/auth/sso/{public}/start?redirect_uri=http://localhost/cb"
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn sso_login_rejects_user_without_membership_no_god_bypass() {
+    std::env::set_var("COMPANYOS_SSO_ENABLED", "1");
+    let Some(seeded) = seed_org().await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+
+    // A local user that exists (e.g. from a different org) but has NO active
+    // membership in `seeded.org` — SSO must not auto-provision access.
+    let stranger_email = format!("stranger-{}@test.local", new_uuid_v7());
+    let ring = KeyRing::from_secret("test-sso-phase26-stranger");
+    companyos_core::auth::ensure_bootstrap_key(&seeded.pool, &ring)
+        .await
+        .unwrap();
+    let state = AppState::new(seeded.pool.clone(), ring.clone());
+    let app = build_router(state.clone());
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/auth/register")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "email": stranger_email,
+                        "password": "correct-horse-battery-staple",
+                        "display_name": "Stranger",
+                        "org_name": "Some Other Org"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::CREATED);
+    // Note: registering creates the stranger's own org/membership, but not
+    // in `seeded.org` — that's the point of this test.
+
+    let mock_base = start_mock_idps(vec![MockIdp {
+        idp_key: "okta-mock".into(),
+        email: stranger_email.clone(),
+        sub: "okta-sub-stranger".into(),
+    }])
+    .await;
+    std::env::set_var("SSO_MOCK_BASE", &mock_base);
+
+    let (_id, public) =
+        insert_sso_config(&seeded.pool, seeded.org, "okta-mock", "Okta", true).await;
+
+    let redirect = "http://localhost/api/v1/auth/sso/callback";
+    let start = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/api/v1/auth/sso/{public}/start?redirect_uri={}",
+                    urlencoding::encode(redirect)
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(start.status(), StatusCode::TEMPORARY_REDIRECT);
+    let location = start
+        .headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .unwrap()
+        .to_string();
+    let state_param = location
+        .split('&')
+        .find_map(|p| p.strip_prefix("state="))
+        .map(|s| urlencoding::decode(s).unwrap().into_owned())
+        .expect("state");
+
+    let cb = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/api/v1/auth/sso/callback?code=mock-code&state={}",
+                    urlencoding::encode(&state_param)
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(cb.status(), StatusCode::FORBIDDEN);
+
+    // No identity link should have been created for the stranger.
+    let mut tx = seeded.pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, seeded.org).await.unwrap();
+    let linked: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM sso_identity_link WHERE org_id = $1")
+        .bind(seeded.org.as_uuid())
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    assert_eq!(linked.0, 0);
+}
+
+#[tokio::test]
+async fn sso_upsert_config_uses_sso_prefixed_public_id_and_idempotency_key() {
+    std::env::set_var("COMPANYOS_SSO_ENABLED", "1");
+    let Some(seeded) = seed_org().await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+
+    let ring = KeyRing::from_secret("test-sso-phase26");
+    companyos_core::auth::ensure_bootstrap_key(&seeded.pool, &ring)
+        .await
+        .unwrap();
+    let state = AppState::new(seeded.pool.clone(), ring);
+    let app = build_router(state);
+
+    let idem_key = format!("idem-{}", new_uuid_v7());
+    let body = serde_json::json!({
+        "protocol": "oidc",
+        "display_name": "Idempotent Okta",
+        "config": {"idp_key": "okta-mock", "client_id": "c", "client_secret": "s"},
+        "enabled": true
+    });
+
+    let make_req = || {
+        Request::builder()
+            .method("POST")
+            .uri("/api/v1/auth/sso/configs")
+            .header("content-type", "application/json")
+            .header("authorization", format!("Bearer {}", seeded.token))
+            .header("idempotency-key", &idem_key)
+            .body(Body::from(body.to_string()))
+            .unwrap()
+    };
+
+    let res1 = app.clone().oneshot(make_req()).await.unwrap();
+    assert_eq!(res1.status(), StatusCode::CREATED);
+    let body1: Value =
+        serde_json::from_slice(&res1.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let id1 = body1["id"].as_str().unwrap().to_string();
+    assert!(id1.starts_with("sso_"), "expected sso_ prefix, got {id1}");
+
+    let res2 = app.clone().oneshot(make_req()).await.unwrap();
+    assert_eq!(res2.status(), StatusCode::CREATED);
+    let body2: Value =
+        serde_json::from_slice(&res2.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let id2 = body2["id"].as_str().unwrap().to_string();
+    assert_eq!(id1, id2, "idempotency key must return the same config id");
+
+    // Sanity: only one config row was actually created.
+    let mut tx = seeded.pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, seeded.org).await.unwrap();
+    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM sso_configuration WHERE org_id = $1")
+        .bind(seeded.org.as_uuid())
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    assert_eq!(count.0, 1);
 }
