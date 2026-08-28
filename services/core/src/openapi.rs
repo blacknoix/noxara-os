@@ -15,6 +15,12 @@ use crate::auth::handlers::types::{
 use crate::auth::sessions::SessionView;
 use crate::auth::sso::{SsoConfigView, UpsertSsoRequest};
 use crate::dashboard::{DashboardResponse, DashboardWidget};
+use crate::governance::types::{
+    AccessReviewKickoffRequest, AccessReviewQuery, AccessReviewRunView, ApiKeyListResponse,
+    ApiKeyView, AuditReadRow, AuditVerifyRequest, AuditVerifyResponse, CreateApiKeyRequest,
+    CreateApiKeyResponse, EntitlementRow, RetentionConfigView, RetentionDryRunResponse,
+    RotateApiKeyResponse, UpdateRetentionRequest, WhoCouldSeeResponse, WhoDidSeeResponse,
+};
 use crate::hello::{CreateHelloRequest, Hello, HelloListResponse};
 use crate::state::AppState;
 use crate::workspace::types::{
@@ -54,6 +60,19 @@ use crate::workspace::types::{
         crate::workspace::handlers::create_team,
         crate::workspace::handlers::list_departments,
         crate::workspace::handlers::create_department,
+        crate::governance::handlers::who_could_see,
+        crate::governance::handlers::who_did,
+        crate::governance::handlers::kickoff_run,
+        crate::governance::handlers::get_run,
+        crate::governance::handlers::export_run,
+        crate::governance::handlers::verify_audit,
+        crate::governance::handlers::get_retention,
+        crate::governance::handlers::update_retention,
+        crate::governance::handlers::retention_dry_run,
+        crate::governance::handlers::list_api_keys,
+        crate::governance::handlers::create_api_key,
+        crate::governance::handlers::rotate_api_key,
+        crate::governance::handlers::revoke_api_key,
     ),
     components(schemas(
         Hello,
@@ -112,17 +131,35 @@ use crate::workspace::types::{
         CreateDepartmentRequest,
         MessageResponse,
         MyCapabilitiesResponse,
+        AccessReviewQuery,
+        EntitlementRow,
+        WhoCouldSeeResponse,
+        AuditReadRow,
+        WhoDidSeeResponse,
+        AccessReviewKickoffRequest,
+        AccessReviewRunView,
+        AuditVerifyRequest,
+        AuditVerifyResponse,
+        RetentionConfigView,
+        UpdateRetentionRequest,
+        RetentionDryRunResponse,
+        ApiKeyView,
+        ApiKeyListResponse,
+        CreateApiKeyRequest,
+        CreateApiKeyResponse,
+        RotateApiKeyResponse,
     )),
     tags(
         (name = "hello", description = "Phase 0 hello vertical slice"),
         (name = "auth", description = "Phase 1.1 identity & authentication"),
         (name = "workspace", description = "Phase 1.2 organizations, members, roles, teams"),
         (name = "dashboard", description = "Phase 1.3 dashboard BFF widget descriptors"),
+        (name = "governance", description = "Phase 2.6 access review, audit verification, retention, and API keys"),
     ),
     info(
         title = "CompanyOS Core API",
-        version = "0.4.0",
-        description = "Phase 1.3 — dashboard BFF + workspace + auth + hello."
+        version = "0.5.0",
+        description = "Phase 2.6 — governance (access review, audit verify, retention, API keys) + dashboard BFF + workspace + auth + hello."
     )
 )]
 pub struct ApiDoc;
