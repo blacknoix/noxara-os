@@ -51,6 +51,11 @@ pub(crate) fn require_perm(
     Ok(principal)
 }
 
+/// Insert one audit row. RLS on `audit_entry` requires `app.org_id` bound in
+/// the *same* transaction as the write, so this opens its own transaction
+/// rather than writing directly on `pool` (a bare pool connection has no
+/// session var set and the INSERT would be silently rejected by `FORCE ROW
+/// LEVEL SECURITY`).
 pub(crate) async fn audit_mutation(
     pool: &PgPool,
     org_id: uuid::Uuid,
@@ -60,6 +65,15 @@ pub(crate) async fn audit_mutation(
     resource_id: &str,
     metadata: serde_json::Value,
 ) {
+    let Ok(mut tx) = pool.begin().await else {
+        return;
+    };
+    if companyos_tenancy::set_session_org_id(&mut tx, companyos_tenancy::OrgId::new(org_id))
+        .await
+        .is_err()
+    {
+        return;
+    }
     let _ = sqlx::query(
         r#"
         INSERT INTO audit_entry (
@@ -75,6 +89,7 @@ pub(crate) async fn audit_mutation(
     .bind(resource_type)
     .bind(resource_id)
     .bind(metadata)
-    .execute(pool)
+    .execute(&mut *tx)
     .await;
+    let _ = tx.commit().await;
 }
