@@ -112,6 +112,14 @@ pub enum IdKind {
     MaintenanceSchedule,
     /// Vendor bill (`vb_`) — finance-owned procure-to-pay record.
     VendorBill,
+    /// SSO configuration (`sso_`).
+    SsoConfig,
+    /// Organization API key (`apk_`).
+    ApiKey,
+    /// Access review run (`arv_`).
+    AccessReview,
+    /// Organization secret (`sec_`).
+    OrgSecret,
 }
 
 impl IdKind {
@@ -183,6 +191,10 @@ impl IdKind {
             Self::AssetAssignment => "asa_",
             Self::MaintenanceSchedule => "mnt_",
             Self::VendorBill => "vb_",
+            Self::SsoConfig => "sso_",
+            Self::ApiKey => "apk_",
+            Self::AccessReview => "arv_",
+            Self::OrgSecret => "sec_",
         }
     }
 
@@ -254,6 +266,10 @@ impl IdKind {
             "asa_" => Some(Self::AssetAssignment),
             "mnt_" => Some(Self::MaintenanceSchedule),
             "vb_" => Some(Self::VendorBill),
+            "sso_" => Some(Self::SsoConfig),
+            "apk_" => Some(Self::ApiKey),
+            "arv_" => Some(Self::AccessReview),
+            "sec_" => Some(Self::OrgSecret),
             _ => None,
         }
     }
