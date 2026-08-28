@@ -420,6 +420,8 @@ pub async fn export_csv(
     request_id: &str,
 ) -> Result<String, AppError> {
     let rows = fetch_findings(pool, org_id, run_public_id, request_id).await?;
+    // Build with push_str (not format!) so JSON detail braces cannot interact
+    // with formatting machinery, and so an empty finding set is obvious.
     let mut csv = String::from("kind,user_id,role_key,permission_id,created_at,detail\n");
     for (kind, user_id, role_key, permission_id, detail, created_at) in rows {
         let user_id_str = user_id
@@ -427,10 +429,22 @@ pub async fn export_csv(
             .unwrap_or_default();
         let role_key_str = role_key.unwrap_or_default().replace('"', "\"\"");
         let detail_str = detail.to_string().replace('"', "\"\"");
-        csv.push_str(&format!(
-            "{kind},{user_id_str},\"{role_key_str}\",{permission_id},{},\"{detail_str}\"\n",
-            created_at.to_rfc3339(),
-        ));
+        csv.push_str(&kind);
+        csv.push(',');
+        csv.push_str(&user_id_str);
+        csv.push(',');
+        csv.push('"');
+        csv.push_str(&role_key_str);
+        csv.push('"');
+        csv.push(',');
+        csv.push_str(&permission_id);
+        csv.push(',');
+        csv.push_str(&created_at.to_rfc3339());
+        csv.push(',');
+        csv.push('"');
+        csv.push_str(&detail_str);
+        csv.push('"');
+        csv.push('\n');
     }
     Ok(csv)
 }

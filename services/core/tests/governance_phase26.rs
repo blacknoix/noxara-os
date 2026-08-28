@@ -346,6 +346,7 @@ async fn access_review_who_could_see_and_who_did_and_kickoff_export() {
     assert_eq!(items[0]["action"], "hr.payslip.read");
 
     // Kickoff a run — snapshots could_see + did_see findings.
+    let idem_key = format!("kickoff-{}", new_uuid_v7());
     let res = app
         .clone()
         .oneshot(
@@ -355,7 +356,7 @@ async fn access_review_who_could_see_and_who_did_and_kickoff_export() {
                 .header("authorization", format!("Bearer {}", seeded.owner_token))
                 .header("content-type", "application/json")
                 .header("x-request-id", "gov-kickoff")
-                .header("idempotency-key", "kickoff-1")
+                .header("idempotency-key", &idem_key)
                 .body(Body::from(
                     serde_json::json!({
                         "permission_id": "hr.payroll.read",
@@ -375,6 +376,36 @@ async fn access_review_who_could_see_and_who_did_and_kickoff_export() {
     assert!(run["summary"]["could_see_count"].as_u64().unwrap_or(0) >= 1);
     assert_eq!(run["summary"]["did_see_count"], 1);
 
+    // Persist-side check: findings must exist before HTTP export (catches
+    // commit/RLS races that a soft JSON shape assert can miss).
+    {
+        let mut tx = seeded.pool.begin().await.unwrap();
+        set_session_org_id(&mut tx, seeded.org).await.unwrap();
+        let kinds: Vec<(String,)> = sqlx::query_as(
+            r#"
+            SELECT f.kind
+            FROM access_review_finding f
+            JOIN access_review_run r ON r.id = f.run_id
+            WHERE r.org_id = $1 AND r.public_id = $2
+            ORDER BY f.kind
+            "#,
+        )
+        .bind(seeded.org.as_uuid())
+        .bind(&run_id)
+        .fetch_all(&mut *tx)
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+        let kind_set: std::collections::HashSet<&str> =
+            kinds.iter().map(|(k,)| k.as_str()).collect();
+        assert!(
+            kind_set.contains("could_see")
+                && kind_set.contains("did_see")
+                && kind_set.contains("role_summary"),
+            "expected finding kinds after kickoff, got {kind_set:?}"
+        );
+    }
+
     // Idempotency-Key replay must return the exact same run, not a second one.
     let res = app
         .clone()
@@ -385,7 +416,7 @@ async fn access_review_who_could_see_and_who_did_and_kickoff_export() {
                 .header("authorization", format!("Bearer {}", seeded.owner_token))
                 .header("content-type", "application/json")
                 .header("x-request-id", "gov-kickoff-2")
-                .header("idempotency-key", "kickoff-1")
+                .header("idempotency-key", &idem_key)
                 .body(Body::from(
                     serde_json::json!({
                         "permission_id": "hr.payroll.read",
@@ -454,12 +485,15 @@ async fn access_review_who_could_see_and_who_did_and_kickoff_export() {
     let exported: Value =
         serde_json::from_slice(&res.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let items = exported["items"].as_array().unwrap();
+    let kinds: Vec<&str> = items.iter().filter_map(|i| i["kind"].as_str()).collect();
     assert!(
-        items.len() >= 3,
-        "expect could_see + did_see + role_summary rows"
+        kinds.contains(&"could_see")
+            && kinds.contains(&"did_see")
+            && kinds.contains(&"role_summary"),
+        "expect could_see + did_see + role_summary rows, got kinds={kinds:?}"
     );
 
-    // Export CSV.
+    // Export CSV — must mirror the JSON finding kinds.
     let res = app
         .oneshot(
             Request::builder()
@@ -475,12 +509,35 @@ async fn access_review_who_could_see_and_who_did_and_kickoff_export() {
         .await
         .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(res.headers().get("content-type").unwrap(), "text/csv");
+    let ct = res
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    assert!(
+        ct.starts_with("text/csv"),
+        "expected text/csv content-type, got {ct:?}"
+    );
     let csv =
         String::from_utf8(res.into_body().collect().await.unwrap().to_bytes().to_vec()).unwrap();
-    assert!(csv.starts_with("kind,user_id,role_key,permission_id,created_at,detail"));
-    assert!(csv.contains("could_see"));
-    assert!(csv.contains("did_see"));
+    let csv_lines: Vec<&str> = csv.lines().collect();
+    assert!(
+        csv_lines.first() == Some(&"kind,user_id,role_key,permission_id,created_at,detail"),
+        "CSV header mismatch; body={csv:?}"
+    );
+    assert_eq!(
+        csv_lines.len(),
+        items.len() + 1,
+        "CSV row count must match JSON items; csv={csv:?} kinds={kinds:?}"
+    );
+    assert!(
+        csv_lines.iter().any(|l| l.starts_with("could_see,")),
+        "CSV missing could_see row; body={csv:?}"
+    );
+    assert!(
+        csv_lines.iter().any(|l| l.starts_with("did_see,")),
+        "CSV missing did_see row; body={csv:?}"
+    );
 }
 
 async fn seed_audit_rows(seeded: &Seeded, n: usize) {

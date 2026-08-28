@@ -1,7 +1,8 @@
 //! Governance HTTP handlers — `/api/v1/governance/...`.
 
+use axum::body::Body;
 use axum::extract::{Path, Query, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
@@ -279,18 +280,24 @@ pub async fn export_run(
 ) -> Result<Response, AppError> {
     let request_id = user.ctx.request_id.clone();
     authorize(&state, &user, &perms::admin_access_review_read()).await?;
-    match q.format.as_deref().unwrap_or("json") {
-        "csv" => {
-            let csv =
-                access_review::export_csv(&state.pool, user.ctx.org_id, &id, &request_id).await?;
-            Ok((StatusCode::OK, [("content-type", "text/csv")], csv).into_response())
-        }
-        "json" => {
+    match q.format.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        None | Some("json") => {
             let value =
                 access_review::export_json(&state.pool, user.ctx.org_id, &id, &request_id).await?;
             Ok(Json(value).into_response())
         }
-        other => Err(validation(
+        Some("csv") => {
+            let csv =
+                access_review::export_csv(&state.pool, user.ctx.org_id, &id, &request_id).await?;
+            // Explicit Response::builder so the body cannot be dropped by
+            // header-tuple IntoResponse ambiguity under axum upgrades.
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "text/csv; charset=utf-8")
+                .body(Body::from(csv))
+                .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response()))
+        }
+        Some(other) => Err(validation(
             &request_id,
             format!("unsupported format: {other}"),
         )),
