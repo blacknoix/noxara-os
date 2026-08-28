@@ -468,6 +468,7 @@ async fn system_role_deny_matrix_unit() {
                 continue;
             }
             // Phase 2.1 People: Manager may write/onboard/offboard and read sensitive.
+            // Phase 2.5 Inventory: Manager owns stock/procurement writes.
             if *role == Role::Manager
                 && matches!(
                     *perm,
@@ -484,13 +485,27 @@ async fn system_role_deny_matrix_unit() {
                         | "hr.payroll.approve"
                         | "hr.payroll.run"
                         | "finance.journal.post"
+                        | "inventory.item.write"
+                        | "inventory.warehouse.write"
+                        | "inventory.stock.move"
+                        | "inventory.supplier.write"
+                        | "inventory.purchase_request.write"
+                        | "inventory.purchase_order.write"
+                        | "inventory.goods_receipt.write"
+                        | "inventory.asset.write"
                 )
             {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
             // Phase 2.2: Member may write own attendance/leave (approve stays manager+).
-            if *role == Role::Member && matches!(*perm, "hr.attendance.write" | "hr.leave.write") {
+            // Phase 2.5: Member may submit purchase requests.
+            if *role == Role::Member
+                && matches!(
+                    *perm,
+                    "hr.attendance.write" | "hr.leave.write" | "inventory.purchase_request.write"
+                )
+            {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
