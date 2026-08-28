@@ -15,10 +15,12 @@
 //! Scopes: `own | team | department | organization`.
 
 pub mod catalogue;
+pub mod conditions;
 
 pub use catalogue::{
     catalogue_ids, default_scope_for, perms, PermissionDef, PERMISSION_CATALOGUE, SENSITIVE_ACTIONS,
 };
+pub use conditions::{conditions_match, AbacCondition, EvaluationContext};
 
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
@@ -177,6 +179,9 @@ impl Role {
                 perms::ai_document_extract(),
                 perms::hr_employee_read(),
                 perms::hr_employee_read_sensitive(),
+                perms::hr_field_compensation_read(),
+                perms::hr_field_government_id_read(),
+                perms::hr_field_bank_read(),
                 perms::hr_document_read(),
                 perms::hr_attendance_read(),
                 perms::hr_leave_read(),
@@ -189,6 +194,8 @@ impl Role {
                 perms::finance_period_reopen(),
                 perms::finance_bank_read(),
                 perms::finance_bank_reconcile(),
+                perms::finance_field_bank_account_read(),
+                perms::finance_field_salary_journal_read(),
                 perms::finance_expense_policy_manage(),
                 perms::finance_reimbursement_manage(),
                 perms::inventory_item_read(),
@@ -309,6 +316,9 @@ impl Role {
                 perms::ai_document_extract(),
                 perms::hr_employee_read(),
                 perms::hr_employee_read_sensitive(),
+                perms::hr_field_compensation_read(),
+                perms::hr_field_government_id_read(),
+                perms::hr_field_bank_read(),
                 perms::hr_employee_write(),
                 perms::hr_employee_onboard(),
                 perms::hr_employee_offboard(),
@@ -489,6 +499,9 @@ pub struct Statement {
     pub permission: PermissionId,
     #[serde(default = "default_statement_scope")]
     pub scope: Scope,
+    /// Optional ABAC predicates (AND). Empty = no extra constraints.
+    #[serde(default)]
+    pub conditions: Vec<AbacCondition>,
 }
 
 fn default_statement_scope() -> Scope {
@@ -501,6 +514,7 @@ impl Statement {
             effect: Effect::Allow,
             permission,
             scope: Scope::Organization,
+            conditions: vec![],
         }
     }
 
@@ -509,7 +523,13 @@ impl Statement {
             effect: Effect::Deny,
             permission,
             scope: Scope::Organization,
+            conditions: vec![],
         }
+    }
+
+    pub fn with_conditions(mut self, conditions: Vec<AbacCondition>) -> Self {
+        self.conditions = conditions;
+        self
     }
 }
 
@@ -575,20 +595,41 @@ pub fn validate_permission_id(id: &str) -> Result<(), AuthzError> {
 ///
 /// Decision order:
 /// 1. Explicit deny in `principal.statements` → Deny  
-/// 2. Explicit allow in `principal.statements` → Allow  
+/// 2. Explicit allow in `principal.statements` (scope + ABAC) → Allow  
 /// 3. Allow from any role default → Allow  
 /// 4. Otherwise → Deny
 pub fn decide(principal: &Principal, permission: &PermissionId) -> DecisionDetail {
-    decide_with_scope(principal, permission, Scope::Organization)
+    decide_with_context(
+        principal,
+        permission,
+        Scope::Organization,
+        &EvaluationContext::default(),
+    )
 }
 
-/// PDP with a required resource scope.
+/// PDP with a required resource scope (empty ABAC context).
 pub fn decide_with_scope(
     principal: &Principal,
     permission: &PermissionId,
     required_scope: Scope,
 ) -> DecisionDetail {
-    // 1. Explicit deny wins (any scope).
+    decide_with_context(
+        principal,
+        permission,
+        required_scope,
+        &EvaluationContext::default(),
+    )
+}
+
+/// PDP with scope + ABAC evaluation context.
+pub fn decide_with_context(
+    principal: &Principal,
+    permission: &PermissionId,
+    required_scope: Scope,
+    ctx: &EvaluationContext,
+) -> DecisionDetail {
+    // 1. Explicit deny wins (any scope). Deny statements ignore ABAC so
+    // operators can always cut access.
     if principal
         .statements
         .iter()
@@ -601,9 +642,12 @@ pub fn decide_with_scope(
         };
     }
 
-    // 2. Explicit allow with sufficient scope.
+    // 2. Explicit allow with sufficient scope + satisfied conditions.
     if principal.statements.iter().any(|s| {
-        s.effect == Effect::Allow && s.permission == *permission && s.scope.covers(required_scope)
+        s.effect == Effect::Allow
+            && s.permission == *permission
+            && s.scope.covers(required_scope)
+            && conditions_match(&s.conditions, ctx)
     }) {
         return DecisionDetail {
             decision: Decision::Allow,
@@ -612,7 +656,23 @@ pub fn decide_with_scope(
         };
     }
 
-    // 3. Role defaults (organization scope).
+    // Explicit allow that failed only on ABAC → distinct reason for operators.
+    if principal.statements.iter().any(|s| {
+        s.effect == Effect::Allow
+            && s.permission == *permission
+            && s.scope.covers(required_scope)
+            && !s.conditions.is_empty()
+            && !conditions_match(&s.conditions, ctx)
+    }) {
+        return DecisionDetail {
+            decision: Decision::Deny,
+            permission: permission.clone(),
+            reason: "abac_deny",
+        };
+    }
+
+    // 3. Role defaults (organization scope). Role templates have no ABAC
+    // conditions; handlers that need ABAC must attach statements.
     if required_scope == Scope::Organization || Scope::Organization.covers(required_scope) {
         for role in &principal.roles {
             if role.default_allows().contains(permission) {
@@ -643,6 +703,15 @@ pub fn is_allowed_scoped(
     required_scope: Scope,
 ) -> bool {
     decide_with_scope(principal, permission, required_scope).decision == Decision::Allow
+}
+
+pub fn is_allowed_with_context(
+    principal: &Principal,
+    permission: &PermissionId,
+    required_scope: Scope,
+    ctx: &EvaluationContext,
+) -> bool {
+    decide_with_context(principal, permission, required_scope, ctx).decision == Decision::Allow
 }
 
 /// Short-lived cache of effective permission sets keyed by membership + policy_version.
@@ -1051,5 +1120,81 @@ mod tests {
         for perm in SENSITIVE_ACTIONS {
             assert!(!is_allowed(&p, &PermissionId::from(*perm)));
         }
+    }
+
+    #[test]
+    fn abac_time_window_denies_outside_hours() {
+        use chrono::{TimeZone, Utc};
+        let mut p = Principal::with_roles(vec![]);
+        p.statements.push(
+            Statement::allow(perms::hr_payroll_read()).with_conditions(vec![
+                AbacCondition::TimeWindow {
+                    start: "09:00:00".into(),
+                    end: "17:00:00".into(),
+                    weekdays: vec![1, 2, 3, 4, 5],
+                },
+            ]),
+        );
+        let inside = EvaluationContext::at(Utc.with_ymd_and_hms(2026, 3, 2, 10, 0, 0).unwrap());
+        let outside = EvaluationContext::at(Utc.with_ymd_and_hms(2026, 3, 2, 19, 0, 0).unwrap());
+        assert!(is_allowed_with_context(
+            &p,
+            &perms::hr_payroll_read(),
+            Scope::Organization,
+            &inside
+        ));
+        let d = decide_with_context(&p, &perms::hr_payroll_read(), Scope::Organization, &outside);
+        assert_eq!(d.decision, Decision::Deny);
+        assert_eq!(d.reason, "abac_deny");
+    }
+
+    #[test]
+    fn abac_record_state_denies_closed_or_locked() {
+        let mut p = Principal::with_roles(vec![]);
+        p.statements.push(
+            Statement::allow(perms::finance_period_close()).with_conditions(vec![
+                AbacCondition::RecordState {
+                    allow: vec!["open".into()],
+                    deny: vec!["closed".into(), "locked".into()],
+                },
+            ]),
+        );
+        assert!(is_allowed_with_context(
+            &p,
+            &perms::finance_period_close(),
+            Scope::Organization,
+            &EvaluationContext::default().with_record_state("open"),
+        ));
+        assert!(!is_allowed_with_context(
+            &p,
+            &perms::finance_period_close(),
+            Scope::Organization,
+            &EvaluationContext::default().with_record_state("closed"),
+        ));
+        assert!(!is_allowed_with_context(
+            &p,
+            &perms::finance_period_close(),
+            Scope::Organization,
+            &EvaluationContext::default().with_record_state("locked"),
+        ));
+    }
+
+    #[test]
+    fn field_level_member_finance_matrix() {
+        let finance = Principal::with_roles(vec![Role::Finance]);
+        let member = Principal::with_roles(vec![Role::Member]);
+        assert!(is_allowed(&finance, &perms::hr_field_compensation_read()));
+        assert!(is_allowed(&finance, &perms::hr_field_bank_read()));
+        assert!(is_allowed(
+            &finance,
+            &perms::finance_field_bank_account_read()
+        ));
+        assert!(!is_allowed(&member, &perms::hr_field_compensation_read()));
+        assert!(!is_allowed(&member, &perms::hr_field_bank_read()));
+        assert!(!is_allowed(
+            &member,
+            &perms::finance_field_bank_account_read()
+        ));
+        assert!(!is_allowed(&member, &perms::hr_employee_read_sensitive()));
     }
 }
