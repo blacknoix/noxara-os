@@ -71,6 +71,23 @@ fn payroll_run_default_definition() -> PolicyDefinition {
     }
 }
 
+/// Phase 2.5 — inventory-service purchase requests route to Manager, then
+/// escalate to Admin on SLA timeout. Thin budget check happens in
+/// inventory-service before requesting; this policy only routes the human step.
+fn purchase_request_default_definition() -> PolicyDefinition {
+    PolicyDefinition {
+        mode: ApprovalMode::Any,
+        match_criteria: PolicyMatch::default(),
+        steps: vec![PolicyStepDef {
+            order: 1,
+            approver_role: Some("manager".into()),
+            approver_user_ids: vec![],
+            sla_seconds: Some(86_400),
+            escalate_to_role: Some("admin".into()),
+        }],
+    }
+}
+
 /// Ensure default expense + quote_discount + leave_request + payroll_run policies exist for an org.
 pub async fn ensure_default_policies(pool: &PgPool, org_id: Uuid) -> anyhow::Result<()> {
     let mut tx = pool.begin().await?;
@@ -107,6 +124,14 @@ pub async fn ensure_default_policies(pool: &PgPool, org_id: Uuid) -> anyhow::Res
         "Default payroll run approval",
         "payroll_run",
         &payroll_run_default_definition(),
+    )
+    .await?;
+    seed_one(
+        &mut tx,
+        org_id,
+        "Default purchase request approval",
+        "purchase_request",
+        &purchase_request_default_definition(),
     )
     .await?;
 
