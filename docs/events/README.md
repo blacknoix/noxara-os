@@ -89,6 +89,18 @@ Salary / payslip amounts are not included in event payloads. Journals for paid r
 
 Restricted fields (compensation, government IDs, bank/tax) are never included in event payloads. Departments remain Workspace-owned (`dep_`); HR stores opaque department ids (ADR 020). Leave balances are derived from the append-only leave ledger; attendance facts are append-only (corrections are reversing entries).
 
+## Inventory & Procurement (Phase 2.5)
+
+- `companyos.{org_}.inventory.stock.movement_recorded.v1`
+- `companyos.{org_}.inventory.stock.low.v1`
+- `companyos.{org_}.inventory.stock.drift_detected.v1`
+- `companyos.{org_}.inventory.purchase_request.submitted.v1` / `.approved.v1` / `.rejected.v1`
+- `companyos.{org_}.inventory.purchase_order.issued.v1`
+- `companyos.{org_}.inventory.goods_receipt.posted.v1`
+- `companyos.{org_}.inventory.asset.assigned.v1` / `.depreciated.v1`
+
+Stock valuation uses weighted-average cost (ADR 023). Goods receipt posting and asset depreciation post journals through Finance HTTP APIs (`source_type` inventory receipts / depreciation). Schemas: [`schemas/`](./schemas/).
+
 ## Platform consumers (Phase 1.8)
 
 - Outbox → NATS via `companyos-outbox-relay` (`scripts/nats-bootstrap.sh` creates
