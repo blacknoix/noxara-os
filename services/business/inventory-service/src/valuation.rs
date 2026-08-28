@@ -51,8 +51,8 @@ pub fn weighted_average_receipt(
     let total_value = existing_value
         .checked_add(receipt_value)
         .ok_or(ValuationError::Overflow)?;
-    let new_avg = Money::round_half_up(total_value, new_qty as i128)
-        .map_err(|_| ValuationError::Overflow)?;
+    let new_avg =
+        Money::round_half_up(total_value, new_qty as i128).map_err(|_| ValuationError::Overflow)?;
     Ok((new_qty, new_avg))
 }
 

@@ -158,8 +158,9 @@ pub async fn list_vendor_bills(
         .await
         .map_err(internal(&request_id))?;
 
-    let mut qb: QueryBuilder<Postgres> =
-        QueryBuilder::new(format!("SELECT {BILL_COLS} FROM finance_vendor_bill WHERE org_id = "));
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(format!(
+        "SELECT {BILL_COLS} FROM finance_vendor_bill WHERE org_id = "
+    ));
     qb.push_bind(org_id);
     if let Some(status) = q.status.as_deref() {
         qb.push(" AND status = ");

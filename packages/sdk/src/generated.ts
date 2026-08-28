@@ -1804,3 +1804,445 @@ export type CardTransactionDto = {
   status: string;
   txn_date: string;
 };
+
+export type WarehouseDto = {
+  code: string;
+  created_at: string;
+  id: string;
+  is_active: boolean;
+  location?: string;
+  name: string;
+  updated_at: string;
+  version: number;
+};
+
+export type WarehouseListResponse = {
+  items: WarehouseDto[];
+  total: number;
+};
+
+export type CreateWarehouseRequest = {
+  code: string;
+  location?: string;
+  name: string;
+};
+
+export type UpdateWarehouseRequest = {
+  is_active?: string;
+  location?: string;
+  name?: string;
+};
+
+export type InventoryItemDto = {
+  allow_negative_stock: boolean;
+  created_at: string;
+  currency: string;
+  description?: string;
+  id: string;
+  is_active: boolean;
+  name: string;
+  reorder_point_qty: number;
+  sku: string;
+  uom: string;
+  updated_at: string;
+  version: number;
+};
+
+export type InventoryItemListResponse = {
+  items: InventoryItemDto[];
+  total: number;
+};
+
+export type CreateInventoryItemRequest = {
+  allow_negative_stock?: string;
+  currency: string;
+  description?: string;
+  name: string;
+  reorder_point_qty?: string;
+  sku: string;
+  uom?: string;
+};
+
+export type UpdateInventoryItemRequest = {
+  allow_negative_stock?: string;
+  description?: string;
+  is_active?: string;
+  name?: string;
+  reorder_point_qty?: string;
+};
+
+export type StockLevelDto = {
+  avg_unit_cost_minor: number;
+  item_id: string;
+  last_movement_at?: string;
+  qty_on_hand: number;
+  updated_at: string;
+  warehouse_id: string;
+};
+
+export type StockLevelListResponse = {
+  items: StockLevelDto[];
+};
+
+export type StockMovementDto = {
+  avg_unit_cost_minor_after?: number;
+  /** Present only when this movement was an issue/transfer-out and a COGS
+journal was posted to finance-service. */
+  cogs_journal_public_id?: string;
+  created_at: string;
+  currency: string;
+  id: string;
+  item_id: string;
+  low_stock?: boolean;
+  memo?: string;
+  movement_type: string;
+  qty_delta: number;
+  qty_on_hand_after?: number;
+  source_id?: string;
+  source_type?: string;
+  unit_cost_minor: number;
+  warehouse_id: string;
+};
+
+export type StockMovementListResponse = {
+  items: StockMovementDto[];
+  total: number;
+};
+
+export type CreateStockMovementRequest = {
+  item_id: string;
+  memo?: string;
+  movement_type: string;
+  /** Signed quantity delta. Positive for receipt/return/transfer_in,
+negative for issue/transfer_out. `adjustment` may be either sign. */
+  qty_delta: number;
+  source_id?: string;
+  source_type?: string;
+  unit_cost_minor?: string;
+  warehouse_id: string;
+};
+
+export type ReconcileStockRequest = {
+  item_id?: string;
+  warehouse_id?: string;
+};
+
+export type ReconcileStockResponse = {
+  alerts: DriftAlertDto[];
+  checked: number;
+  drift_count: number;
+};
+
+export type DriftAlertDto = {
+  cached_qty: number;
+  detected_at: string;
+  id: string;
+  item_id: string;
+  movement_sum_qty: number;
+  warehouse_id: string;
+};
+
+export type SupplierDto = {
+  created_at: string;
+  currency: string;
+  email?: string;
+  id: string;
+  name: string;
+  payment_terms?: string;
+  phone?: string;
+  updated_at: string;
+  version: number;
+};
+
+export type SupplierListResponse = {
+  items: SupplierDto[];
+  total: number;
+};
+
+export type CreateSupplierRequest = {
+  currency: string;
+  email?: string;
+  name: string;
+  payment_terms?: string;
+  phone?: string;
+};
+
+export type UpdateSupplierRequest = {
+  email?: string;
+  name?: string;
+  payment_terms?: string;
+  phone?: string;
+};
+
+export type PurchaseRequestLineDto = {
+  id: string;
+  item_id: string;
+  line_amount_minor: number;
+  qty: number;
+  unit_cost_estimate_minor: number;
+};
+
+export type PurchaseRequestDto = {
+  approval_id?: string;
+  budget_account_code?: string;
+  created_at: string;
+  currency: string;
+  id: string;
+  lines: PurchaseRequestLineDto[];
+  notes?: string;
+  requester_user_id: string;
+  status: string;
+  total_amount_minor: number;
+  updated_at: string;
+  version: number;
+};
+
+export type PurchaseRequestListResponse = {
+  items: PurchaseRequestDto[];
+  total: number;
+};
+
+export type CreatePurchaseRequestLineRequest = {
+  item_id: string;
+  qty: number;
+  unit_cost_estimate_minor: number;
+};
+
+export type CreatePurchaseRequestRequest = {
+  budget_account_code?: string;
+  currency: string;
+  lines: CreatePurchaseRequestLineRequest[];
+  notes?: string;
+};
+
+export type DecidePurchaseRequestRequest = {
+  approve: boolean;
+  note?: string;
+};
+
+export type PurchaseOrderLineDto = {
+  id: string;
+  item_id: string;
+  line_amount_minor: number;
+  qty_ordered: number;
+  qty_received: number;
+  unit_cost_minor: number;
+  warehouse_id: string;
+};
+
+export type PurchaseOrderDto = {
+  created_at: string;
+  currency: string;
+  id: string;
+  issued_at?: string;
+  lines: PurchaseOrderLineDto[];
+  purchase_request_id?: string;
+  status: string;
+  supplier_id: string;
+  total_amount_minor: number;
+  updated_at: string;
+  version: number;
+};
+
+export type PurchaseOrderListResponse = {
+  items: PurchaseOrderDto[];
+  total: number;
+};
+
+export type CreatePurchaseOrderLineRequest = {
+  item_id: string;
+  qty_ordered: number;
+  unit_cost_minor: number;
+  warehouse_id: string;
+};
+
+export type CreatePurchaseOrderRequest = {
+  currency: string;
+  lines: CreatePurchaseOrderLineRequest[];
+  purchase_request_id?: string;
+  supplier_id: string;
+};
+
+export type GoodsReceiptLineDto = {
+  id: string;
+  item_id: string;
+  po_line_id: string;
+  qty_received: number;
+  unit_cost_minor: number;
+  warehouse_id: string;
+};
+
+export type GoodsReceiptDto = {
+  created_at: string;
+  id: string;
+  journal_public_id?: string;
+  lines: GoodsReceiptLineDto[];
+  purchase_order_id: string;
+  received_at?: string;
+  status: string;
+  updated_at: string;
+  version: number;
+};
+
+export type GoodsReceiptListResponse = {
+  items: GoodsReceiptDto[];
+  total: number;
+};
+
+export type CreateGoodsReceiptLineRequest = {
+  po_line_id: string;
+  qty_received: number;
+  /** Defaults to the PO line's `unit_cost_minor` when omitted. */
+  unit_cost_minor?: string;
+};
+
+export type CreateGoodsReceiptRequest = {
+  lines: CreateGoodsReceiptLineRequest[];
+  purchase_order_id: string;
+};
+
+export type InventoryAssetDto = {
+  accumulated_depreciation_minor: number;
+  acquired_at?: string;
+  acquisition_cost_minor: number;
+  asset_tag?: string;
+  created_at: string;
+  currency: string;
+  id: string;
+  item_id?: string;
+  last_depreciated_at?: string;
+  name: string;
+  salvage_minor: number;
+  status: string;
+  updated_at: string;
+  useful_life_months: number;
+  version: number;
+};
+
+export type InventoryAssetListResponse = {
+  items: InventoryAssetDto[];
+  total: number;
+};
+
+export type CreateInventoryAssetRequest = {
+  acquired_at?: string;
+  acquisition_cost_minor: number;
+  asset_tag?: string;
+  currency: string;
+  item_id?: string;
+  name: string;
+  salvage_minor?: string;
+  useful_life_months?: string;
+};
+
+export type UpdateInventoryAssetRequest = {
+  asset_tag?: string;
+  name?: string;
+  salvage_minor?: string;
+  useful_life_months?: string;
+};
+
+export type AssetAssignmentDto = {
+  asset_id: string;
+  assigned_at: string;
+  assignee_employee_public_id: string;
+  id: string;
+  notes?: string;
+  returned_at?: string;
+};
+
+export type AssignAssetRequest = {
+  assignee_employee_public_id: string;
+  notes?: string;
+};
+
+export type ReturnAssetRequest = {
+  notes?: string;
+};
+
+export type DepreciateAssetRequest = {
+  /** ISO date to depreciate through (defaults to today). */
+  as_of_date?: string;
+};
+
+export type DepreciateAssetResponse = {
+  asset: InventoryAssetDto;
+  depreciation_expense_minor: number;
+  journal_public_id?: string;
+};
+
+export type MaintenanceScheduleDto = {
+  asset_id: string;
+  id: string;
+  interval_days: number;
+  last_completed_at?: string;
+  next_due_at: string;
+  notes?: string;
+  title: string;
+};
+
+export type MaintenanceScheduleListResponse = {
+  items: MaintenanceScheduleDto[];
+};
+
+export type CreateMaintenanceScheduleRequest = {
+  asset_id: string;
+  interval_days: number;
+  next_due_at: string;
+  notes?: string;
+  title: string;
+};
+
+export type CreateVendorBillFromReceiptRequest = {
+  goods_receipt_id: string;
+  memo?: string;
+  supplier_ref: string;
+};
+
+export type VendorBillProxyDto = {
+  amount_minor: number;
+  amount_paid_minor: number;
+  currency: string;
+  id: string;
+  payment_journal_public_id?: string;
+  source_id?: string;
+  source_type: string;
+  status: string;
+  supplier_ref: string;
+};
+
+export type VendorBillDto = {
+  amount_minor: number;
+  amount_paid_minor: number;
+  created_at: string;
+  currency: string;
+  id: string;
+  memo?: string;
+  payment_journal_public_id?: string;
+  source_id?: string;
+  source_type: string;
+  status: string;
+  supplier_ref: string;
+  updated_at: string;
+  version: number;
+};
+
+export type VendorBillListResponse = {
+  items: VendorBillDto[];
+  total: number;
+};
+
+export type CreateVendorBillRequest = {
+  amount_minor: number;
+  currency: string;
+  memo?: string;
+  source_id?: string;
+  source_type?: string;
+  supplier_ref: string;
+};
+
+export type PayVendorBillRequest = {
+  /** Defaults to the full outstanding balance when omitted. */
+  amount_minor?: string;
+  memo?: string;
+};

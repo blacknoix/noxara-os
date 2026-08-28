@@ -33,8 +33,8 @@ use crate::auth::AuthCtx;
 use crate::finance_client;
 use crate::idempotency;
 use crate::principal::{enforce_any_scope, load_membership_scope};
-use crate::stock::{self, PostMovementInput};
 use crate::state::AppState;
+use crate::stock::{self, PostMovementInput};
 use crate::types::{
     CreateGoodsReceiptRequest, GoodsReceiptDto, GoodsReceiptLineDto, GoodsReceiptListResponse,
     ListQuery,
@@ -521,13 +521,14 @@ pub async fn post_goods_receipt(
     }
 
     let po_id = row.purchase_order_id;
-    let po_currency: (String,) =
-        sqlx::query_as("SELECT currency FROM inventory_purchase_order WHERE org_id = $1 AND id = $2")
-            .bind(org_id)
-            .bind(po_id)
-            .fetch_one(&mut *tx)
-            .await
-            .map_err(internal(&request_id))?;
+    let po_currency: (String,) = sqlx::query_as(
+        "SELECT currency FROM inventory_purchase_order WHERE org_id = $1 AND id = $2",
+    )
+    .bind(org_id)
+    .bind(po_id)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
 
     let lines = fetch_grn_lines(&mut tx, org_id, grn_id, &request_id).await?;
     if lines.is_empty() {
@@ -688,9 +689,16 @@ pub async fn post_goods_receipt(
     let body_json = serde_json::to_value(&dto)
         .map_err(|e| internal(&request_id)(sqlx::Error::Protocol(e.to_string())))?;
     if let Some(key) = idem_key {
-        idempotency::put(&mut *tx, org_id, "goods_receipt.post", &key, 200, body_json.clone())
-            .await
-            .map_err(internal(&request_id))?;
+        idempotency::put(
+            &mut *tx,
+            org_id,
+            "goods_receipt.post",
+            &key,
+            200,
+            body_json.clone(),
+        )
+        .await
+        .map_err(internal(&request_id))?;
     }
 
     tx.commit().await.map_err(internal(&request_id))?;

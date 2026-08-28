@@ -388,7 +388,10 @@ pub async fn post_journal_handler(
     if !ALLOWED_SOURCE_TYPES.contains(&source_type) {
         return Err(validation(
             &request_id,
-            format!("source_type must be one of: {}", ALLOWED_SOURCE_TYPES.join(", ")),
+            format!(
+                "source_type must be one of: {}",
+                ALLOWED_SOURCE_TYPES.join(", ")
+            ),
         ));
     }
 

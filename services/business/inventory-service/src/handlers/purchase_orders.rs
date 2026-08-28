@@ -290,13 +290,14 @@ pub async fn create_purchase_order(
     let mut purchase_request_id: Option<Uuid> = None;
     if let Some(ref pr_raw) = body.purchase_request_id {
         let pr_id = parse_public_id(IdKind::PurchaseRequest, pr_raw, &request_id)?;
-        let pr_status: Option<(String,)> =
-            sqlx::query_as("SELECT status FROM inventory_purchase_request WHERE org_id = $1 AND id = $2")
-                .bind(org_id)
-                .bind(pr_id)
-                .fetch_optional(&mut *tx)
-                .await
-                .map_err(internal(&request_id))?;
+        let pr_status: Option<(String,)> = sqlx::query_as(
+            "SELECT status FROM inventory_purchase_request WHERE org_id = $1 AND id = $2",
+        )
+        .bind(org_id)
+        .bind(pr_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal(&request_id))?;
         match pr_status {
             None => return Err(not_found(&request_id, "purchase request")),
             Some((status,)) if status != "approved" => {
@@ -345,7 +346,13 @@ pub async fn create_purchase_order(
         }
         let line_amount = line.qty_ordered.saturating_mul(line.unit_cost_minor);
         total_amount_minor = total_amount_minor.saturating_add(line_amount);
-        resolved_lines.push((item_id, warehouse_id, line.qty_ordered, line.unit_cost_minor, line_amount));
+        resolved_lines.push((
+            item_id,
+            warehouse_id,
+            line.qty_ordered,
+            line.unit_cost_minor,
+            line_amount,
+        ));
     }
 
     let po_id = new_uuid_v7();
@@ -509,13 +516,15 @@ pub async fn issue_purchase_order(
         .map_err(|e| internal(&request_id)(sqlx::Error::Protocol(e.to_string())))?;
 
     if let Some(key) = idempotency::header_key(&headers) {
-        if let Some((status, cached)) = idempotency::get(&mut *tx, org_id, "purchase_order.issue", &key)
-            .await
-            .map_err(internal(&request_id))?
+        if let Some((status, cached)) =
+            idempotency::get(&mut *tx, org_id, "purchase_order.issue", &key)
+                .await
+                .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             return Ok((
-                axum::http::StatusCode::from_u16(status as u16).unwrap_or(axum::http::StatusCode::OK),
+                axum::http::StatusCode::from_u16(status as u16)
+                    .unwrap_or(axum::http::StatusCode::OK),
                 Json(cached),
             )
                 .into_response());
@@ -577,9 +586,16 @@ pub async fn issue_purchase_order(
     let body_json = serde_json::to_value(&dto)
         .map_err(|e| internal(&request_id)(sqlx::Error::Protocol(e.to_string())))?;
     if let Some(key) = idempotency::header_key(&headers) {
-        idempotency::put(&mut *tx, org_id, "purchase_order.issue", &key, 200, body_json.clone())
-            .await
-            .map_err(internal(&request_id))?;
+        idempotency::put(
+            &mut *tx,
+            org_id,
+            "purchase_order.issue",
+            &key,
+            200,
+            body_json.clone(),
+        )
+        .await
+        .map_err(internal(&request_id))?;
     }
 
     tx.commit().await.map_err(internal(&request_id))?;

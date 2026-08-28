@@ -114,8 +114,9 @@ pub async fn list_suppliers(
         .await
         .map_err(internal(&request_id))?;
 
-    let mut qb: QueryBuilder<Postgres> =
-        QueryBuilder::new(format!("SELECT {COLS} FROM inventory_supplier WHERE org_id = "));
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(format!(
+        "SELECT {COLS} FROM inventory_supplier WHERE org_id = "
+    ));
     qb.push_bind(org_id);
     qb.push(" AND deleted_at IS NULL");
     push_owner_predicate(

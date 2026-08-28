@@ -85,7 +85,10 @@ async fn post_journal_lines(
     idem_key: Option<&str>,
     request_id: &str,
 ) -> Result<String, AppError> {
-    let url = format!("{}/api/v1/finance/journals", finance_base_url().trim_end_matches('/'));
+    let url = format!(
+        "{}/api/v1/finance/journals",
+        finance_base_url().trim_end_matches('/')
+    );
     let lines = vec![
         serde_json::json!({
             "account_code": debit_account,

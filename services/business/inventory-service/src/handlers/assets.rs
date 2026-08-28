@@ -55,7 +55,10 @@ pub fn router() -> Router<AppState> {
             "/api/v1/inventory/assets/{id}/maintenance-schedules",
             post(create_maintenance_schedule),
         )
-        .route("/api/v1/inventory/maintenance/due", get(list_maintenance_due))
+        .route(
+            "/api/v1/inventory/maintenance/due",
+            get(list_maintenance_due),
+        )
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -253,7 +256,10 @@ pub async fn create_asset(
         .parse()
         .map_err(|_| validation(&request_id, "invalid currency"))?;
     if body.acquisition_cost_minor < 0 {
-        return Err(validation(&request_id, "acquisition_cost_minor must be >= 0"));
+        return Err(validation(
+            &request_id,
+            "acquisition_cost_minor must be >= 0",
+        ));
     }
     let salvage_minor = body.salvage_minor.unwrap_or(0);
     if salvage_minor < 0 {
@@ -672,7 +678,10 @@ pub async fn return_asset(
     .await
     .map_err(internal(&request_id))?;
     let Some(open) = open else {
-        return Err(conflict(&request_id, "no open assignment found for this asset"));
+        return Err(conflict(
+            &request_id,
+            "no open assignment found for this asset",
+        ));
     };
 
     let returned_at: (DateTime<Utc>,) = sqlx::query_as(

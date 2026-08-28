@@ -89,8 +89,10 @@ pub async fn list_movements(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
     let (limit, offset) = super::normalize_paging(q.limit, q.offset);
-    let warehouse_id = parse_optional_public_id(IdKind::Warehouse, q.warehouse_id.as_deref(), &request_id)?;
-    let item_id = parse_optional_public_id(IdKind::InventoryItem, q.item_id.as_deref(), &request_id)?;
+    let warehouse_id =
+        parse_optional_public_id(IdKind::Warehouse, q.warehouse_id.as_deref(), &request_id)?;
+    let item_id =
+        parse_optional_public_id(IdKind::InventoryItem, q.item_id.as_deref(), &request_id)?;
 
     let membership = load_membership_scope(
         &state.pool,
@@ -264,7 +266,10 @@ pub async fn create_movement(
     Ok((StatusCode::CREATED, Json(dto)).into_response())
 }
 
-fn parse_optional_public_id_any(raw: Option<&str>, request_id: &str) -> Result<Option<Uuid>, AppError> {
+fn parse_optional_public_id_any(
+    raw: Option<&str>,
+    request_id: &str,
+) -> Result<Option<Uuid>, AppError> {
     match raw {
         None => Ok(None),
         Some(s) if s.trim().is_empty() => Ok(None),
@@ -315,14 +320,21 @@ pub async fn reconcile_stock(
 
     let (checked, outcomes) = match (warehouse_id, item_id) {
         (Some(w), Some(i)) => {
-            let outcome =
-                stock::reconcile_stock(&mut tx, auth.ctx.org_id, &auth.ctx.actor, w, i, &request_id)
-                    .await?;
+            let outcome = stock::reconcile_stock(
+                &mut tx,
+                auth.ctx.org_id,
+                &auth.ctx.actor,
+                w,
+                i,
+                &request_id,
+            )
+            .await?;
             (1, outcome.into_iter().collect::<Vec<_>>())
         }
         _ => {
-            let outcomes = stock::reconcile_all(&mut tx, auth.ctx.org_id, &auth.ctx.actor, &request_id)
-                .await?;
+            let outcomes =
+                stock::reconcile_all(&mut tx, auth.ctx.org_id, &auth.ctx.actor, &request_id)
+                    .await?;
             (outcomes.len() as i64, outcomes)
         }
     };

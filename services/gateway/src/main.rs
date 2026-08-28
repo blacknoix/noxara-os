@@ -72,8 +72,8 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8089".into());
     let ai_url = std::env::var("AI_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8092".into());
     let hr_url = std::env::var("HR_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8088".into());
-    let inventory_url = std::env::var("INVENTORY_SERVICE_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:8093".into());
+    let inventory_url =
+        std::env::var("INVENTORY_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8093".into());
     let redis_url = std::env::var("REDIS_URL").ok().filter(|s| !s.is_empty());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);

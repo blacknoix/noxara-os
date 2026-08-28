@@ -134,7 +134,10 @@ pub async fn create_vendor_bill_from_receipt(
     .map_err(internal(&request_id))?;
     let amount_minor = total.0.unwrap_or(0);
     if amount_minor <= 0 {
-        return Err(conflict(&request_id, "goods receipt has no receipted value"));
+        return Err(conflict(
+            &request_id,
+            "goods receipt has no receipted value",
+        ));
     }
 
     let bill = finance_client::create_vendor_bill(

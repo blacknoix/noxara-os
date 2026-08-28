@@ -929,6 +929,28 @@ mod tests {
             ("finance.reimbursement.manage", Role::ReadOnly),
             ("finance.reimbursement.manage", Role::Sales),
             ("finance.reimbursement.manage", Role::Manager),
+            // Phase 2.5 inventory writes
+            ("inventory.item.write", Role::Member),
+            ("inventory.item.write", Role::ReadOnly),
+            ("inventory.item.write", Role::Sales),
+            ("inventory.warehouse.write", Role::Member),
+            ("inventory.warehouse.write", Role::ReadOnly),
+            ("inventory.warehouse.write", Role::Sales),
+            ("inventory.stock.move", Role::Member),
+            ("inventory.stock.move", Role::ReadOnly),
+            ("inventory.stock.move", Role::Sales),
+            ("inventory.supplier.write", Role::Member),
+            ("inventory.supplier.write", Role::ReadOnly),
+            ("inventory.supplier.write", Role::Sales),
+            ("inventory.purchase_order.write", Role::Member),
+            ("inventory.purchase_order.write", Role::ReadOnly),
+            ("inventory.purchase_order.write", Role::Sales),
+            ("inventory.goods_receipt.write", Role::Member),
+            ("inventory.goods_receipt.write", Role::ReadOnly),
+            ("inventory.goods_receipt.write", Role::Sales),
+            ("inventory.asset.write", Role::Member),
+            ("inventory.asset.write", Role::ReadOnly),
+            ("inventory.asset.write", Role::Sales),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);

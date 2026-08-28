@@ -92,7 +92,9 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
         }),
         ("purchase_order", "issued") => serde_json::json!({ "id": "po_test" }),
         ("goods_receipt", "posted") => serde_json::json!({ "id": "grn_test" }),
-        ("purchase_request", "submitted" | "approved" | "rejected") => serde_json::json!({ "id": "pr_test" }),
+        ("purchase_request", "submitted" | "approved" | "rejected") => {
+            serde_json::json!({ "id": "pr_test" })
+        }
         ("asset", "assigned" | "depreciated") => serde_json::json!({ "id": "ast_test" }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }

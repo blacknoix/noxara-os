@@ -240,7 +240,8 @@ pub async fn post_movement(
         ));
     }
 
-    let level = fetch_stock_level(tx, org_uuid, input.warehouse_id, input.item_id, request_id).await?;
+    let level =
+        fetch_stock_level(tx, org_uuid, input.warehouse_id, input.item_id, request_id).await?;
 
     let (new_qty, new_avg, cogs_minor) = if input.qty_delta > 0 {
         let (q, a) = valuation::weighted_average_receipt(
@@ -425,7 +426,8 @@ pub async fn reconcile_stock(
 ) -> Result<Option<DriftOutcome>, AppError> {
     let org_uuid = org_id.as_uuid();
     let level = fetch_stock_level(tx, org_uuid, warehouse_id, item_id, request_id).await?;
-    let movement_sum = qty_on_hand_from_movements(tx, org_uuid, warehouse_id, item_id, request_id).await?;
+    let movement_sum =
+        qty_on_hand_from_movements(tx, org_uuid, warehouse_id, item_id, request_id).await?;
 
     if level.qty_on_hand == movement_sum {
         return Ok(None);

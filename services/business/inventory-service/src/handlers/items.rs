@@ -26,10 +26,7 @@ use crate::types::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/api/v1/inventory/items",
-            get(list_items).post(create_item),
-        )
+        .route("/api/v1/inventory/items", get(list_items).post(create_item))
         .route(
             "/api/v1/inventory/items/{id}",
             get(get_item).patch(update_item),
