@@ -305,6 +305,24 @@ const emit = [
   'VendorBillListResponse',
   'CreateVendorBillRequest',
   'PayVendorBillRequest',
+  // Phase 2.6 — Governance (access review, audit verify, retention, API keys)
+  'AccessReviewQuery',
+  'EntitlementRow',
+  'WhoCouldSeeResponse',
+  'AuditReadRow',
+  'WhoDidSeeResponse',
+  'AccessReviewKickoffRequest',
+  'AccessReviewRunView',
+  'AuditVerifyRequest',
+  'AuditVerifyResponse',
+  'RetentionConfigView',
+  'UpdateRetentionRequest',
+  'RetentionDryRunResponse',
+  'ApiKeyView',
+  'ApiKeyListResponse',
+  'CreateApiKeyRequest',
+  'CreateApiKeyResponse',
+  'RotateApiKeyResponse',
 ];
 
 const seen = new Set();
