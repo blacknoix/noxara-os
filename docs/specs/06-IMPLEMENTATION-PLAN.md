@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–2.2 merged; Phase 2.3 is this slice.
+Status: **Active** outline. Phase 0–2.4 merged; Phase 2.5 is this slice.
 
 ## Completed
 
@@ -18,25 +18,45 @@ Status: **Active** outline. Phase 0–2.2 merged; Phase 2.3 is this slice.
 | 1.9 | AI Assistant MVP (copilot, proposals, retrieval) |
 | 2.1 | People / HR v1 (employees, onboarding/offboarding) |
 | 2.2 | Attendance & Leave (People / hr-service) |
+| 2.3 | Payroll basics (`companyos-hr`): draft → calculate → approve → paid, journals via Finance HTTP, Temporal `PayrollRun` (ADR 021) |
+| 2.4 | Finance CoA, periods, bank rec, expense policy depth (ADR 022) |
 
-## Phase 2.3 — Payroll basics (`companyos-hr`) (this slice)
+## Phase 2.5 — Inventory & Procurement (`companyos-inventory`) (this slice)
 
-- Authz: `hr.payroll.read|write|approve|run`, `finance.journal.post`
-- Own schema (`people_payroll_*`), API `/api/v1/people/payroll/...`, events under `Context::People`
-- Lifecycle: draft → calculate → review → approve → paid; approved immutable; adjustments are new runs
-- Attendance + unpaid leave feed calculate; every payslip line has `calculation_basis`
-- Journals via Finance HTTP (`POST /api/v1/finance/journals`, source_type `payroll`) — no finance table writes from HR
-- Approval: hybrid ApprovalProcess `payroll_run` + `hr.payroll.approve` (ADR 021)
-- Temporal: `PayrollRun` — workflow id `{org}:PayrollRun:{run_id}`
-- UI: payroll runs, payslip detail with basis, my payslips, CSV payment export
-- Cut: full statutory filing, multi-country tax engines, live bank payouts, benefits marketplace, parallel-run vs historical file
+- New standalone service `companyos-inventory` (port 8093), API `/api/v1/inventory/...`,
+  events under `Context::Inventory`. Shares core Postgres; never touches `people_*` or
+  `finance_*` tables directly (journals + vendor bills go through Finance HTTP).
+- Authz: `inventory.item.read|write`, `inventory.warehouse.read|write`,
+  `inventory.stock.read`, `inventory.stock.move`, `inventory.supplier.read|write`,
+  `inventory.purchase_request.read|write`, `inventory.purchase_order.read|write`,
+  `inventory.goods_receipt.read|write`, `inventory.asset.read|write`
+- Schema (`inventory_*`, all RLS): `warehouse`, `item`, `stock_level` (cache) +
+  `stock_movement` (append-only source of truth), `supplier`, `purchase_request(_line)`,
+  `purchase_order(_line)`, `goods_receipt(_line)`, `asset`, `asset_assignment`,
+  `maintenance_schedule`, `idempotency`, `drift_alert`
+- Valuation: **Weighted Average** — receipts blend into `avg_unit_cost_minor`, issues cost
+  at the current average without changing it; `reconcile_stock` alerts on cache/ledger
+  drift instead of silently rewriting it (ADR 023)
+- Procure-to-pay: purchase request (draft → submit → Approvals routing → decide callback)
+  → purchase order (draft → issue) → goods receipt (draft, partial OK → post: stock
+  movement + PO status + one Dr Inventory / Cr AP journal to Finance, all-or-nothing) →
+  optional vendor-bill proxy to Finance (`vendor_bills.rs`)
+- Fixed assets: CRUD, assign/return (opaque `emp_…` reference, no People FK), straight-line
+  depreciation (posts Dr Depreciation Expense / Cr Accumulated Depreciation to Finance),
+  maintenance schedules + due list
+- Approval routing: `purchase_request` subject type added to `companyos-project`'s
+  approvals engine, default policy routes to the `manager` role; decide callback posts to
+  `/api/v1/inventory/purchase-requests/{id}/decide`
+- Finance: `inventory_receipt` / `inventory_cogs` / `inventory_depreciation` /
+  `vendor_bill` / `vendor_payment` added to the journal `source_type` allowlist;
+  `finance_vendor_bill` table + `/api/v1/finance/vendor-bills` (create, pay) added
+- Cut: multi-warehouse transfer approvals, lot/serial tracking, landed cost allocation,
+  cycle-count workflows, barcode/RFID scanning UI — all deferred past this slice
 
 ## Later (not this PR)
 
 | Phase | Notes |
 |-------|--------|
-| 2.4 | CoA / month-end / bank rec / expense policy — **this PR** |
-| 2.5 | Inventory |
 | InvoiceDunning | Temporal dunning polish |
 | PDF / email | Nice-to-have |
 | Mobile | Flutter / Tauri |

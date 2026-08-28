@@ -6,7 +6,7 @@ use utoipa::OpenApi;
 
 use crate::handlers::{
     accounts, bank, credit_notes, customers, events, expenses, invoices, journals, payments,
-    periods, policy, recurring, reports, webhooks,
+    periods, policy, recurring, reports, vendor_bills, webhooks,
 };
 use crate::state::AppState;
 use crate::types::*;
@@ -63,6 +63,10 @@ use crate::types::*;
         policy::auto_match_cards,
         policy::create_reimbursement_batch,
         policy::decide_reimbursement,
+        vendor_bills::list_vendor_bills,
+        vendor_bills::get_vendor_bill,
+        vendor_bills::create_vendor_bill,
+        vendor_bills::pay_vendor_bill,
     ),
     components(schemas(
         FinanceCustomerDto,
@@ -147,6 +151,10 @@ use crate::types::*;
         ReimbursementBatchDto,
         CreateReimbursementBatchRequest,
         DecideReimbursementRequest,
+        VendorBillDto,
+        VendorBillListResponse,
+        CreateVendorBillRequest,
+        PayVendorBillRequest,
     )),
     tags(
         (name = "finance-customers", description = "Projected finance customers"),
@@ -163,6 +171,7 @@ use crate::types::*;
         (name = "finance-periods", description = "Fiscal periods open/close/reopen"),
         (name = "finance-bank", description = "Bank accounts, statements, reconciliation"),
         (name = "finance-policy", description = "Expense policy, cards, reimbursements"),
+        (name = "finance-vendor-bills", description = "Procure-to-pay vendor bills (inventory-service)"),
     ),
     info(
         title = "CompanyOS Finance API",

@@ -28,6 +28,13 @@ pub fn required_permission_for_event(envelope: &EventEnvelope) -> Option<Permiss
         (Context::People, "holiday") => "hr.attendance.read",
         (Context::People, "payroll_run") => "hr.payroll.read",
         (Context::People, "payslip") => "hr.payroll.read",
+        (Context::Inventory, "stock") => "inventory.stock.read",
+        (Context::Inventory, "purchase_order") => "inventory.purchase_order.read",
+        (Context::Inventory, "goods_receipt") => "inventory.goods_receipt.read",
+        (Context::Inventory, "purchase_request") => "inventory.purchase_request.read",
+        (Context::Inventory, "asset") => "inventory.asset.read",
+        (Context::Inventory, "item") => "inventory.item.read",
+        (Context::Inventory, "supplier") => "inventory.supplier.read",
         _ => {
             tracing::debug!(%key, "no permission mapping for event; skip notify");
             return None;

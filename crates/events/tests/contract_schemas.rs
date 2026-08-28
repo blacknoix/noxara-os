@@ -32,6 +32,7 @@ fn parse_schema_name(stem: &str) -> (Context, &str, &str, u32) {
         "finance" => Context::Finance,
         "operations" => Context::Operations,
         "people" => Context::People,
+        "inventory" => Context::Inventory,
         other => panic!("unknown context {other}"),
     };
     (context, parts[1], parts[2], version)
@@ -84,6 +85,15 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
             "unmatched": 1
         }),
         ("reimbursement", "batched") => serde_json::json!({ "id": "reimb_test" }),
+        ("stock", "movement_recorded" | "low" | "drift_detected") => serde_json::json!({
+            "id": "mv_test",
+            "item_id": "item_test",
+            "warehouse_id": "wh_test"
+        }),
+        ("purchase_order", "issued") => serde_json::json!({ "id": "po_test" }),
+        ("goods_receipt", "posted") => serde_json::json!({ "id": "grn_test" }),
+        ("purchase_request", "submitted" | "approved" | "rejected") => serde_json::json!({ "id": "pr_test" }),
+        ("asset", "assigned" | "depreciated") => serde_json::json!({ "id": "ast_test" }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

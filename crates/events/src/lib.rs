@@ -25,6 +25,8 @@ pub enum Context {
     Core,
     /// Identity & authentication events.
     Auth,
+    /// Inventory & procurement (Phase 2.5) events.
+    Inventory,
 }
 
 impl Context {
@@ -39,6 +41,7 @@ impl Context {
             Self::Admin => "admin",
             Self::Core => "core",
             Self::Auth => "auth",
+            Self::Inventory => "inventory",
         }
     }
 }

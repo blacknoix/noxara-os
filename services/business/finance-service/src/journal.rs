@@ -27,6 +27,16 @@ pub mod codes {
     pub const PAYROLL_DEDUCTIONS: &str = "2300";
     /// Net pay clearing (ACH/CSV batch).
     pub const NET_PAY_CLEARING: &str = "2400";
+    /// Inventory asset (Phase 2.5 — inventory-service receipts/issues).
+    pub const INVENTORY: &str = "1200";
+    /// Accounts payable — vendors (Phase 2.5 procure-to-pay).
+    pub const AP_VENDORS: &str = "2000";
+    /// Cost of goods sold (Phase 2.5 — stock issues).
+    pub const COGS: &str = "5200";
+    /// Depreciation expense (Phase 2.5 — fixed asset depreciation).
+    pub const DEPRECIATION_EXPENSE: &str = "5300";
+    /// Accumulated depreciation (contra-asset; Phase 2.5).
+    pub const ACCUMULATED_DEPRECIATION: &str = "1300";
 }
 
 #[derive(Debug, Clone)]
@@ -332,6 +342,29 @@ pub async fn ensure_ledger_accounts(
             "expense",
             "debit",
             510,
+        ),
+        (codes::INVENTORY, "Inventory", "asset", "debit", 120),
+        (
+            codes::AP_VENDORS,
+            "Accounts Payable — Vendors",
+            "liability",
+            "credit",
+            200,
+        ),
+        (codes::COGS, "Cost of Goods Sold", "expense", "debit", 520),
+        (
+            codes::DEPRECIATION_EXPENSE,
+            "Depreciation Expense",
+            "expense",
+            "debit",
+            530,
+        ),
+        (
+            codes::ACCUMULATED_DEPRECIATION,
+            "Accumulated Depreciation",
+            "asset",
+            "credit",
+            130,
         ),
     ];
     for (code, name, ty, normal, sort) in accounts {
