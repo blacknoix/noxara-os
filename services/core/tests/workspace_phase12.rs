@@ -449,10 +449,19 @@ async fn system_role_deny_matrix_unit() {
                 continue;
             }
             // Phase 2.3: Finance may read/approve payroll and post journals.
+            // Phase 2.4: Finance owns CoA / periods / bank / expense policy.
             if *role == Role::Finance
                 && matches!(
                     *perm,
-                    "hr.payroll.read" | "hr.payroll.approve" | "finance.journal.post"
+                    "hr.payroll.read"
+                        | "hr.payroll.approve"
+                        | "finance.journal.post"
+                        | "finance.account.manage"
+                        | "finance.period.close"
+                        | "finance.period.reopen"
+                        | "finance.bank.reconcile"
+                        | "finance.expense_policy.manage"
+                        | "finance.reimbursement.manage"
                 )
             {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));

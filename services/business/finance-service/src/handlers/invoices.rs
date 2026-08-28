@@ -912,9 +912,7 @@ pub async fn issue_invoice(
     let net = row.total_minor - row.tax_minor;
     let journal = invoice_issue_entry(invoice_id, currency, net, row.tax_minor, row.total_minor)
         .map_err(|e| validation(&request_id, format!("journal: {e}")))?;
-    post_journal(&mut tx, org_id, &journal)
-        .await
-        .map_err(internal(&request_id))?;
+    post_journal(&mut tx, org_id, &journal, &request_id).await?;
 
     sqlx::query(
         r#"

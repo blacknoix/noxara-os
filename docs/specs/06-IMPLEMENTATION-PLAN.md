@@ -35,7 +35,7 @@ Status: **Active** outline. Phase 0–2.2 merged; Phase 2.3 is this slice.
 
 | Phase | Notes |
 |-------|--------|
-| 2.4 | CoA / month-end |
+| 2.4 | CoA / month-end / bank rec / expense policy — **this PR** |
 | 2.5 | Inventory |
 | InvoiceDunning | Temporal dunning polish |
 | PDF / email | Nice-to-have |

@@ -263,9 +263,7 @@ pub async fn stripe_webhook(
 
         let journal = payment_entry(payment_id, currency, allocate_amount, unapplied)
             .map_err(|e| validation(&request_id, format!("journal: {e}")))?;
-        post_journal(&mut tx, org_uuid, &journal)
-            .await
-            .map_err(internal(&request_id))?;
+        post_journal(&mut tx, org_uuid, &journal, &request_id).await?;
 
         if let Some(inv_id) = invoice_uuid {
             if allocate_amount > 0 {

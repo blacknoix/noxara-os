@@ -1539,19 +1539,268 @@ export type JournalLineInput = {
 
 export type PostJournalRequest = {
   currency: string;
+  /** Document date `YYYY-MM-DD`; defaults to today. */
+  entry_date?: string;
   lines: JournalLineInput[];
   memo?: string;
-  /** Internal UUID of the source document (payroll run id). */
-  source_id: string;
+  /** Public id of the journal being reversed (`jrn_…`). */
+  reverses_of?: string;
+  /** Internal UUID of the source document (payroll run id).
+Empty / omitted for manual → generated UUID. */
+  source_id?: string;
   /** `payroll` or `manual`. */
   source_type: string;
 };
 
 export type JournalEntryDto = {
   currency: string;
+  entry_date: string;
   id: string;
   lines: JournalLineInput[];
   memo: string;
+  period_id?: string;
   source_id: string;
   source_type: string;
+};
+
+export type JournalListResponse = {
+  items: JournalEntryDto[];
+  total: number;
+};
+
+export type LedgerAccountDto = {
+  account_type: string;
+  code: string;
+  description?: string;
+  id: string;
+  is_active: boolean;
+  name: string;
+  normal_balance: string;
+  parent_id?: string;
+  sort_order: number;
+};
+
+export type LedgerAccountNode = {
+  account: LedgerAccountDto;
+  children: LedgerAccountNode[];
+};
+
+export type LedgerAccountTreeResponse = {
+  roots: LedgerAccountNode[];
+};
+
+export type CreateLedgerAccountRequest = {
+  /** `asset` | `liability` | `equity` | `revenue` | `income` | `expense` */
+  account_type: string;
+  code: string;
+  description?: string;
+  name: string;
+  normal_balance?: string;
+  parent_id?: string;
+  sort_order?: string;
+};
+
+export type UpdateLedgerAccountRequest = {
+  description?: string;
+  is_active?: string;
+  name?: string;
+  parent_id?: string;
+  sort_order?: string;
+};
+
+export type FiscalPeriodDto = {
+  checklist: Record<string, unknown>;
+  closed_at?: string;
+  code: string;
+  end_date: string;
+  id: string;
+  name: string;
+  reopen_reason?: string;
+  reopened_at?: string;
+  start_date: string;
+  status: string;
+};
+
+export type FiscalPeriodListResponse = {
+  items: FiscalPeriodDto[];
+  total: number;
+};
+
+export type CreateFiscalPeriodRequest = {
+  code: string;
+  end_date: string;
+  name: string;
+  start_date: string;
+};
+
+export type ClosePeriodRequest = {
+  /** Optional checklist override applied before close. */
+  checklist?: string;
+};
+
+export type ReopenPeriodRequest = {
+  reason: string;
+};
+
+export type TrialBalanceRow = {
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  credit_minor: number;
+  debit_minor: number;
+};
+
+export type TrialBalanceResponse = {
+  balanced: boolean;
+  currency: string;
+  period_id?: string;
+  rows: TrialBalanceRow[];
+  total_credit_minor: number;
+  total_debit_minor: number;
+};
+
+export type ProfitAndLossResponse = {
+  currency: string;
+  expense_total_minor: number;
+  expenses: ReportLine[];
+  from?: string;
+  net_income_minor: number;
+  period_id?: string;
+  revenue: ReportLine[];
+  revenue_total_minor: number;
+  to?: string;
+};
+
+export type BalanceSheetResponse = {
+  as_of: string;
+  assets: ReportLine[];
+  assets_total_minor: number;
+  currency: string;
+  equity: ReportLine[];
+  equity_total_minor: number;
+  liabilities: ReportLine[];
+  liabilities_total_minor: number;
+  period_id?: string;
+};
+
+export type ReportLine = {
+  account_code: string;
+  account_name: string;
+  amount_minor: number;
+};
+
+export type BankAccountDto = {
+  account_number_mask?: string;
+  currency: string;
+  id: string;
+  institution?: string;
+  is_active: boolean;
+  ledger_account_id: string;
+  name: string;
+};
+
+export type CreateBankAccountRequest = {
+  account_number_mask?: string;
+  currency: string;
+  institution?: string;
+  /** Ledger account public id (`acc_…`) or code (e.g. `1000`). */
+  ledger_account_id: string;
+  name: string;
+};
+
+export type BankStatementDto = {
+  bank_account_id: string;
+  closing_minor: number;
+  currency: string;
+  id: string;
+  line_count: number;
+  opening_minor: number;
+  source: string;
+  statement_date: string;
+};
+
+export type ImportStatementRequest = {
+  closing_minor?: string;
+  csv: string;
+  opening_minor?: string;
+  statement_date?: string;
+};
+
+export type ImportStatementResponse = {
+  lines_imported: number;
+  statement: BankStatementDto;
+};
+
+export type ReconcileResponse = {
+  match_rate: number;
+  matched: number;
+  reconciliations: ReconciliationDto[];
+  unmatched: number;
+};
+
+export type ReconciliationDto = {
+  amount_minor: number;
+  auto_matched: boolean;
+  bank_account_id: string;
+  id: string;
+  match_kind: string;
+  matched_payment_id?: string;
+  statement_line_id: string;
+};
+
+export type ExpensePolicyDto = {
+  auto_approve_under_minor: number;
+  category_limits: CategoryLimitDto[];
+  id: string;
+  is_active: boolean;
+  mileage_rate_minor: number;
+  mileage_unit: string;
+  name: string;
+  over_limit_action: string;
+  per_diem_minor: number;
+  require_receipt_over_minor: number;
+};
+
+export type UpsertExpensePolicyRequest = {
+  auto_approve_under_minor?: string;
+  category_limits?: string;
+  mileage_rate_minor?: string;
+  mileage_unit?: string;
+  name?: string;
+  over_limit_action?: string;
+  per_diem_minor?: string;
+  require_receipt_over_minor?: string;
+};
+
+export type CategoryLimitDto = {
+  category_code: string;
+  currency: string;
+  max_amount_minor: number;
+};
+
+export type ReimbursementBatchDto = {
+  approval_id?: string;
+  created_at: string;
+  currency: string;
+  expense_ids: string[];
+  id: string;
+  status: string;
+  total_minor: number;
+};
+
+export type CreateReimbursementBatchRequest = {
+  currency?: string;
+  expense_ids: string[];
+};
+
+export type CardTransactionDto = {
+  amount_minor: number;
+  currency: string;
+  description?: string;
+  id: string;
+  matched_expense_id?: string;
+  merchant?: string;
+  reference?: string;
+  status: string;
+  txn_date: string;
 };

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://companyos.dev/events/finance.reconciliation.matched.v1.json",
+  "title": "finance.reconciliation.matched.v1",
+  "type": "object",
+  "required": [
+    "event_id",
+    "subject",
+    "org_id",
+    "context",
+    "aggregate",
+    "event_type",
+    "version",
+    "occurred_at",
+    "actor",
+    "payload",
+    "idempotency_key"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "subject": {
+      "type": "string",
+      "pattern": "^companyos\\.org[^.]+\\.finance\\.reconciliation\\.matched\\.v1$"
+    },
+    "org_id": {
+      "type": "string"
+    },
+    "context": {
+      "const": "finance"
+    },
+    "aggregate": {
+      "const": "reconciliation"
+    },
+    "event_type": {
+      "const": "matched"
+    },
+    "version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "object"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "statement_id",
+        "matched"
+      ],
+      "additionalProperties": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

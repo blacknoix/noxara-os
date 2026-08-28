@@ -44,6 +44,14 @@ Finance **projects** `sales.customer.created` (and ignores deal/quote for projec
 
 Emitted in the same transaction as the domain write via the shared outbox.
 
+## Finance (Phase 2.4)
+
+- `companyos.{org_}.finance.journal.posted.v1`
+- `companyos.{org_}.finance.period.closed.v1` / `.reopened.v1`
+- `companyos.{org_}.finance.statement.imported.v1`
+- `companyos.{org_}.finance.reconciliation.matched.v1`
+- `companyos.{org_}.finance.reimbursement.batched.v1`
+
 ## Operations (Phase 1.6)
 
 - `companyos.{org_}.operations.project.created.v1`

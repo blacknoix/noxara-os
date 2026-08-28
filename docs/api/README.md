@@ -34,6 +34,14 @@ Finance bounded context, mounted at **`/api/v1/finance/...`** (proxied by the ga
 - `GET|POST /api/v1/operations/approval-policies` — versioned policy CRUD (`operations.approval.manage`)
 - `POST /api/v1/sales/quotes/{id}/send` — discount ≥ threshold → `pending_approval` hold via approval engine
 - `GET /api/v1/finance/reports/summary`
+- `GET /api/v1/finance/accounts` — chart of accounts tree; `POST` / `PATCH` manage
+- `GET|POST /api/v1/finance/journals` — list + post balanced journals (payroll/manual); period-aware
+- `GET|POST /api/v1/finance/periods` — fiscal periods; `.../close`, `.../reopen`, checklist
+- `GET|POST /api/v1/finance/bank/accounts` — bank accounts; statement CSV import + auto-match
+- `GET|PUT /api/v1/finance/expense-policies` — policy, mileage/per-diem, category limits
+- `POST /api/v1/finance/card-transactions/import` + auto-match
+- `GET|POST /api/v1/finance/reimbursements` — reimbursement batches (approval-routed)
+- `GET /api/v1/finance/reports/trial-balance|profit-and-loss|balance-sheet`
 - `POST /api/v1/finance/webhooks/stripe` — idempotent provider fixtures
 - `POST /api/v1/finance/events/sales/apply` — in-process CRM event projection (tests)
 - `GET /api/v1/finance/openapi.json`

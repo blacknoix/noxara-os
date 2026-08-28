@@ -183,6 +183,14 @@ impl Role {
                 perms::hr_payroll_read(),
                 perms::hr_payroll_approve(),
                 perms::finance_journal_post(),
+                perms::finance_account_manage(),
+                perms::finance_period_read(),
+                perms::finance_period_close(),
+                perms::finance_period_reopen(),
+                perms::finance_bank_read(),
+                perms::finance_bank_reconcile(),
+                perms::finance_expense_policy_manage(),
+                perms::finance_reimbursement_manage(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -308,6 +316,8 @@ impl Role {
                 perms::hr_payroll_approve(),
                 perms::hr_payroll_run(),
                 perms::finance_journal_post(),
+                perms::finance_period_read(),
+                perms::finance_bank_read(),
             ]),
             Self::Member => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -858,6 +868,30 @@ mod tests {
             ("finance.journal.post", Role::Member),
             ("finance.journal.post", Role::ReadOnly),
             ("finance.journal.post", Role::Sales),
+            ("finance.account.manage", Role::Member),
+            ("finance.account.manage", Role::ReadOnly),
+            ("finance.account.manage", Role::Sales),
+            ("finance.account.manage", Role::Manager),
+            ("finance.period.close", Role::Member),
+            ("finance.period.close", Role::ReadOnly),
+            ("finance.period.close", Role::Sales),
+            ("finance.period.close", Role::Manager),
+            ("finance.period.reopen", Role::Member),
+            ("finance.period.reopen", Role::ReadOnly),
+            ("finance.period.reopen", Role::Sales),
+            ("finance.period.reopen", Role::Manager),
+            ("finance.bank.reconcile", Role::Member),
+            ("finance.bank.reconcile", Role::ReadOnly),
+            ("finance.bank.reconcile", Role::Sales),
+            ("finance.bank.reconcile", Role::Manager),
+            ("finance.expense_policy.manage", Role::Member),
+            ("finance.expense_policy.manage", Role::ReadOnly),
+            ("finance.expense_policy.manage", Role::Sales),
+            ("finance.expense_policy.manage", Role::Manager),
+            ("finance.reimbursement.manage", Role::Member),
+            ("finance.reimbursement.manage", Role::ReadOnly),
+            ("finance.reimbursement.manage", Role::Sales),
+            ("finance.reimbursement.manage", Role::Manager),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);
@@ -888,6 +922,10 @@ mod tests {
         assert!(is_allowed(&finance, &perms::hr_payroll_read()));
         assert!(is_allowed(&finance, &perms::hr_payroll_approve()));
         assert!(is_allowed(&finance, &perms::finance_journal_post()));
+        assert!(is_allowed(&finance, &perms::finance_account_manage()));
+        assert!(is_allowed(&finance, &perms::finance_period_close()));
+        assert!(is_allowed(&finance, &perms::finance_period_reopen()));
+        assert!(is_allowed(&finance, &perms::finance_bank_reconcile()));
         assert!(!is_allowed(&finance, &perms::hr_payroll_write()));
         assert!(!is_allowed(&finance, &perms::hr_payroll_run()));
         // Manager can run People write/onboard/offboard + payroll
