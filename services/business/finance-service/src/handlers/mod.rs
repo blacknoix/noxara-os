@@ -15,6 +15,7 @@ pub mod periods;
 pub mod policy;
 pub mod recurring;
 pub mod reports;
+pub mod vendor_bills;
 pub mod webhooks;
 
 use axum::http::HeaderMap;
@@ -41,6 +42,7 @@ pub fn router() -> Router<AppState> {
         .merge(periods::router())
         .merge(bank::router())
         .merge(policy::router())
+        .merge(vendor_bills::router())
 }
 
 /// Map a `sqlx::Error` to an internal `AppError`, capturing `request_id`.

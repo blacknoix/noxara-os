@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://companyos.dev/events/inventory.stock.movement_recorded.v1.json",
+  "title": "inventory.stock.movement_recorded.v1",
+  "type": "object",
+  "required": [
+    "event_id",
+    "subject",
+    "org_id",
+    "context",
+    "aggregate",
+    "event_type",
+    "version",
+    "occurred_at",
+    "actor",
+    "payload",
+    "idempotency_key"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "subject": {
+      "type": "string",
+      "pattern": "^companyos\\.org[^.]+\\.inventory\\.stock\\.movement_recorded\\.v1$"
+    },
+    "org_id": {
+      "type": "string"
+    },
+    "context": {
+      "const": "inventory"
+    },
+    "aggregate": {
+      "const": "stock"
+    },
+    "event_type": {
+      "const": "movement_recorded"
+    },
+    "version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "object"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

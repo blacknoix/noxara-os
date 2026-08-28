@@ -38,6 +38,7 @@ struct GatewayState {
     file_url: String,
     ai_url: String,
     hr_url: String,
+    inventory_url: String,
     redis_url: Option<String>,
     client: reqwest::Client,
     keyring: KeyRing,
@@ -71,6 +72,8 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8089".into());
     let ai_url = std::env::var("AI_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8092".into());
     let hr_url = std::env::var("HR_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8088".into());
+    let inventory_url =
+        std::env::var("INVENTORY_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8093".into());
     let redis_url = std::env::var("REDIS_URL").ok().filter(|s| !s.is_empty());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
@@ -90,6 +93,7 @@ async fn main() -> anyhow::Result<()> {
         file_url,
         ai_url,
         hr_url,
+        inventory_url,
         redis_url,
         client: reqwest::Client::new(),
         keyring,
@@ -138,6 +142,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/finance/{*rest}", any(proxy_finance))
         .route("/api/v1/operations/{*rest}", any(proxy_operations))
         .route("/api/v1/people/{*rest}", any(proxy_people))
+        .route("/api/v1/inventory/{*rest}", any(proxy_inventory))
         // Platform (Phase 1.8) — SSE stream registered before the catch-all.
         .route("/api/v1/notifications/stream", get(notifications_stream))
         .route("/api/v1/notifications/{*rest}", any(proxy_notifications))
@@ -406,6 +411,20 @@ async fn proxy_people(State(state): State<GatewayState>, req: Request) -> Respon
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     proxy_to(&state, req, &upstream, &state.hr_url, true, "hr").await
+}
+
+async fn proxy_inventory(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.inventory_url,
+        true,
+        "inventory",
+    )
+    .await
 }
 
 async fn proxy_notifications(State(state): State<GatewayState>, req: Request) -> Response {

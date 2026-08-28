@@ -738,6 +738,49 @@ pub struct PerDiemResponse {
     pub expense: ExpenseDto,
 }
 
+// ---------------------------------------------------------------------------
+// Vendor bills (Phase 2.5 — procure-to-pay support for inventory-service).
+// AP is booked at goods-receipt time; a bill is a record of that liability.
+// ---------------------------------------------------------------------------
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct VendorBillDto {
+    pub id: String,
+    pub supplier_ref: String,
+    pub source_type: String,
+    pub source_id: Option<String>,
+    pub currency: String,
+    pub amount_minor: i64,
+    pub amount_paid_minor: i64,
+    pub status: String,
+    pub memo: Option<String>,
+    pub payment_journal_public_id: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct VendorBillListResponse {
+    pub items: Vec<VendorBillDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateVendorBillRequest {
+    pub supplier_ref: String,
+    pub source_type: Option<String>,
+    pub source_id: Option<String>,
+    pub currency: String,
+    pub amount_minor: i64,
+    pub memo: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PayVendorBillRequest {
+    pub amount_minor: Option<i64>,
+    pub memo: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CardTransactionDto {
     pub id: String,

@@ -81,6 +81,45 @@ const GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: 'inventory',
+    label: 'Inventory',
+    items: [
+      { href: '/inventory/items', label: 'Items', short: 'I', perm: 'inventory.item.read' },
+      {
+        href: '/inventory/warehouses',
+        label: 'Warehouses',
+        short: 'W',
+        perm: 'inventory.warehouse.read',
+      },
+      { href: '/inventory/stock', label: 'Stock', short: 'K', perm: 'inventory.stock.read' },
+      {
+        href: '/inventory/suppliers',
+        label: 'Suppliers',
+        short: 'U',
+        perm: 'inventory.supplier.read',
+      },
+      {
+        href: '/inventory/purchase-requests',
+        label: 'Purchase requests',
+        short: 'R',
+        perm: 'inventory.purchase_request.read',
+      },
+      {
+        href: '/inventory/purchase-orders',
+        label: 'Purchase orders',
+        short: 'O',
+        perm: 'inventory.purchase_order.read',
+      },
+      {
+        href: '/inventory/goods-receipts',
+        label: 'Goods receipts',
+        short: 'G',
+        perm: 'inventory.goods_receipt.read',
+      },
+      { href: '/inventory/assets', label: 'Assets', short: 'A', perm: 'inventory.asset.read' },
+    ],
+  },
+  {
     id: 'people',
     label: 'People',
     items: [

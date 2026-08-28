@@ -3282,6 +3282,162 @@
         }
       }
     },
+    "/api/v1/finance/vendor-bills": {
+      "get": {
+        "tags": [
+          "finance-vendor-bills"
+        ],
+        "summary": "GET /api/v1/finance/vendor-bills",
+        "operationId": "list_vendor_bills",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance-vendor-bills"
+        ],
+        "summary": "POST /api/v1/finance/vendor-bills",
+        "operationId": "create_vendor_bill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVendorBillRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/vendor-bills/{id}": {
+      "get": {
+        "tags": [
+          "finance-vendor-bills"
+        ],
+        "summary": "GET /api/v1/finance/vendor-bills/{id}",
+        "operationId": "get_vendor_bill",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/finance/vendor-bills/{id}/pay": {
+      "post": {
+        "tags": [
+          "finance-vendor-bills"
+        ],
+        "summary": "POST /api/v1/finance/vendor-bills/{id}/pay",
+        "operationId": "pay_vendor_bill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayVendorBillRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/v1/finance/webhooks/stripe": {
       "post": {
         "tags": [
@@ -6774,6 +6930,1508 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assets": {
+      "get": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "GET /api/v1/inventory/assets",
+        "operationId": "list_assets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryAssetListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "POST /api/v1/inventory/assets",
+        "operationId": "create_asset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInventoryAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryAssetDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assets/{id}": {
+      "get": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "GET /api/v1/inventory/assets/{id}",
+        "operationId": "get_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryAssetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "PATCH /api/v1/inventory/assets/{id}",
+        "operationId": "update_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventoryAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryAssetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assets/{id}/assign": {
+      "post": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "POST /api/v1/inventory/assets/{id}/assign",
+        "operationId": "assign_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetAssignmentDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assets/{id}/depreciate": {
+      "post": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "POST /api/v1/inventory/assets/{id}/depreciate",
+        "description": "Straight-line depreciation for whole months elapsed since\n`last_depreciated_at` (or `acquired_at` on the first run) through\n`as_of_date` (defaults to today). A run with zero elapsed months (e.g. a\nsame-day retry) is a no-op \u2014 no journal is posted and `last_depreciated_at`\nis left untouched, which is what makes calling this endpoint repeatedly\nsafe without a separate Idempotency-Key ledger. Posting the journal and\nupdating the asset happen in one transaction: a finance rejection (e.g. a\nclosed fiscal period) rolls back the accumulated-depreciation update too.",
+        "operationId": "depreciate_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepreciateAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepreciateAssetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assets/{id}/maintenance-schedules": {
+      "post": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "POST /api/v1/inventory/assets/{id}/maintenance-schedules",
+        "operationId": "create_maintenance_schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaintenanceScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceScheduleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assets/{id}/return": {
+      "post": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "POST /api/v1/inventory/assets/{id}/return",
+        "operationId": "return_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetAssignmentDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/goods-receipts": {
+      "get": {
+        "tags": [
+          "inventory-goods-receipts"
+        ],
+        "summary": "GET /api/v1/inventory/goods-receipts",
+        "operationId": "list_goods_receipts",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoodsReceiptListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-goods-receipts"
+        ],
+        "summary": "POST /api/v1/inventory/goods-receipts",
+        "operationId": "create_goods_receipt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoodsReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoodsReceiptDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/goods-receipts/{id}": {
+      "get": {
+        "tags": [
+          "inventory-goods-receipts"
+        ],
+        "summary": "GET /api/v1/inventory/goods-receipts/{id}",
+        "operationId": "get_goods_receipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoodsReceiptDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/goods-receipts/{id}/post": {
+      "post": {
+        "tags": [
+          "inventory-goods-receipts"
+        ],
+        "summary": "POST /api/v1/inventory/goods-receipts/{id}/post",
+        "description": "Posts each GRN line as a `receipt` stock movement, accumulates the\nmatching PO line's `qty_received`, recomputes the PO status, and posts a\nsingle Dr Inventory / Cr AP journal to finance-service for the total\nreceived value. All in one transaction: a rejected journal (e.g. a\nclosed fiscal period) rolls back the stock movements and PO update too.",
+        "operationId": "post_goods_receipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoodsReceiptDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/items": {
+      "get": {
+        "tags": [
+          "inventory-items"
+        ],
+        "summary": "GET /api/v1/inventory/items",
+        "operationId": "list_items",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-items"
+        ],
+        "summary": "POST /api/v1/inventory/items",
+        "operationId": "create_item",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInventoryItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/items/{id}": {
+      "get": {
+        "tags": [
+          "inventory-items"
+        ],
+        "summary": "GET /api/v1/inventory/items/{id}",
+        "operationId": "get_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "inventory-items"
+        ],
+        "summary": "PATCH /api/v1/inventory/items/{id}",
+        "operationId": "update_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventoryItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/items/{id}/stock": {
+      "get": {
+        "tags": [
+          "inventory-items"
+        ],
+        "summary": "GET /api/v1/inventory/items/{id}/stock",
+        "operationId": "get_item_stock",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockLevelListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/maintenance/due": {
+      "get": {
+        "tags": [
+          "inventory-assets"
+        ],
+        "summary": "GET /api/v1/inventory/maintenance/due",
+        "operationId": "list_maintenance_due",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceScheduleListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/movements": {
+      "get": {
+        "tags": [
+          "inventory-movements"
+        ],
+        "summary": "GET /api/v1/inventory/movements",
+        "operationId": "list_movements",
+        "parameters": [
+          {
+            "name": "warehouse_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-movements"
+        ],
+        "summary": "POST /api/v1/inventory/movements",
+        "operationId": "create_movement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStockMovementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/procure-to-pay/vendor-bill": {
+      "post": {
+        "tags": [
+          "inventory-procure-to-pay"
+        ],
+        "summary": "POST /api/v1/inventory/procure-to-pay/vendor-bill",
+        "description": "Records the AP liability for a *posted* goods receipt against\n`supplier_ref` (finance-service's own supplier reference \u2014 inventory\ndoes not own the AP supplier master). The bill amount is the sum of the\nGRN's line values (`qty_received * unit_cost_minor`), i.e. exactly the\nvalue already booked to Inventory/AP via [`finance_client::post_receipt_journal`]\nwhen the GRN was posted.",
+        "operationId": "create_vendor_bill_from_receipt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVendorBillFromReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillProxyDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/procure-to-pay/vendor-bill/{id}/pay": {
+      "post": {
+        "tags": [
+          "inventory-procure-to-pay"
+        ],
+        "summary": "POST /api/v1/inventory/procure-to-pay/vendor-bill/{id}/pay",
+        "description": "`{id}` is finance-service's own vendor-bill public id (`vb_\u2026`) \u2014 the id\nreturned by [`create_vendor_bill_from_receipt`]. Dr AP / Cr Cash is\nposted entirely on finance's side; inventory-service only forwards the\nrequest and relays the resulting bill state back to its own caller.",
+        "operationId": "pay_vendor_bill",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayVendorBillRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorBillProxyDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-orders": {
+      "get": {
+        "tags": [
+          "inventory-purchase-orders"
+        ],
+        "summary": "GET /api/v1/inventory/purchase-orders",
+        "operationId": "list_purchase_orders",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-purchase-orders"
+        ],
+        "summary": "POST /api/v1/inventory/purchase-orders",
+        "operationId": "create_purchase_order",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-orders/{id}": {
+      "get": {
+        "tags": [
+          "inventory-purchase-orders"
+        ],
+        "summary": "GET /api/v1/inventory/purchase-orders/{id}",
+        "operationId": "get_purchase_order",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-orders/{id}/issue": {
+      "post": {
+        "tags": [
+          "inventory-purchase-orders"
+        ],
+        "summary": "POST /api/v1/inventory/purchase-orders/{id}/issue",
+        "operationId": "issue_purchase_order",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-requests": {
+      "get": {
+        "tags": [
+          "inventory-purchase-requests"
+        ],
+        "summary": "GET /api/v1/inventory/purchase-requests",
+        "operationId": "list_purchase_requests",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-purchase-requests"
+        ],
+        "summary": "POST /api/v1/inventory/purchase-requests",
+        "operationId": "create_purchase_request",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-requests/{id}": {
+      "get": {
+        "tags": [
+          "inventory-purchase-requests"
+        ],
+        "summary": "GET /api/v1/inventory/purchase-requests/{id}",
+        "operationId": "get_purchase_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-requests/{id}/decide": {
+      "post": {
+        "tags": [
+          "inventory-purchase-requests"
+        ],
+        "summary": "POST /api/v1/inventory/purchase-requests/{id}/decide \u2014 approval callback\nfrom `companyos-project` (approvals). Requires the same write permission;\nthe callback authenticates as an actor with organization-scope access\n(mirrors `hr-service`'s payroll `/decide` endpoint).",
+        "operationId": "decide_purchase_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecidePurchaseRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/purchase-requests/{id}/submit": {
+      "post": {
+        "tags": [
+          "inventory-purchase-requests"
+        ],
+        "summary": "POST /api/v1/inventory/purchase-requests/{id}/submit",
+        "operationId": "submit_purchase_request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/stock/reconcile": {
+      "post": {
+        "tags": [
+          "inventory-movements"
+        ],
+        "summary": "POST /api/v1/inventory/stock/reconcile",
+        "operationId": "reconcile_stock",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileStockRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconcileStockResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/suppliers": {
+      "get": {
+        "tags": [
+          "inventory-suppliers"
+        ],
+        "summary": "GET /api/v1/inventory/suppliers",
+        "operationId": "list_suppliers",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-suppliers"
+        ],
+        "summary": "POST /api/v1/inventory/suppliers",
+        "operationId": "create_supplier",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/suppliers/{id}": {
+      "get": {
+        "tags": [
+          "inventory-suppliers"
+        ],
+        "summary": "GET /api/v1/inventory/suppliers/{id}",
+        "operationId": "get_supplier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "inventory-suppliers"
+        ],
+        "summary": "PATCH /api/v1/inventory/suppliers/{id}",
+        "operationId": "update_supplier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSupplierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/warehouses": {
+      "get": {
+        "tags": [
+          "inventory-warehouses"
+        ],
+        "summary": "GET /api/v1/inventory/warehouses",
+        "operationId": "list_warehouses",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "inventory-warehouses"
+        ],
+        "summary": "POST /api/v1/inventory/warehouses",
+        "operationId": "create_warehouse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWarehouseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/warehouses/{id}": {
+      "get": {
+        "tags": [
+          "inventory-warehouses"
+        ],
+        "summary": "GET /api/v1/inventory/warehouses/{id}",
+        "operationId": "get_warehouse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "inventory-warehouses"
+        ],
+        "summary": "PATCH /api/v1/inventory/warehouses/{id}",
+        "operationId": "update_warehouse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWarehouseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
           }
         }
       }
@@ -10558,6 +12216,44 @@
           }
         }
       },
+      "CreateVendorBillRequest": {
+        "type": "object",
+        "required": [
+          "supplier_ref",
+          "currency",
+          "amount_minor"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplier_ref": {
+            "type": "string"
+          }
+        }
+      },
       "CreditNoteDto": {
         "type": "object",
         "required": [
@@ -11581,6 +13277,25 @@
           }
         }
       },
+      "PayVendorBillRequest": {
+        "type": "object",
+        "properties": {
+          "amount_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Defaults to the full outstanding balance when omitted."
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "PaymentDto": {
         "type": "object",
         "required": [
@@ -12519,6 +14234,93 @@
               "integer",
               "null"
             ],
+            "format": "int64"
+          }
+        }
+      },
+      "VendorBillDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_ref",
+          "source_type",
+          "currency",
+          "amount_minor",
+          "amount_paid_minor",
+          "status",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount_paid_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payment_journal_public_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_ref": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "VendorBillListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VendorBillDto"
+            }
+          },
+          "total": {
+            "type": "integer",
             "format": "int64"
           }
         }
@@ -17487,6 +19289,1601 @@
             "format": "int64"
           }
         }
+      },
+      "AssetAssignmentDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "assignee_employee_public_id",
+          "assigned_at"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "assigned_at": {
+            "type": "string"
+          },
+          "assignee_employee_public_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "returned_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AssignAssetRequest": {
+        "type": "object",
+        "required": [
+          "assignee_employee_public_id"
+        ],
+        "properties": {
+          "assignee_employee_public_id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateGoodsReceiptLineRequest": {
+        "type": "object",
+        "required": [
+          "po_line_id",
+          "qty_received"
+        ],
+        "properties": {
+          "po_line_id": {
+            "type": "string"
+          },
+          "qty_received": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_cost_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Defaults to the PO line's `unit_cost_minor` when omitted."
+          }
+        }
+      },
+      "CreateGoodsReceiptRequest": {
+        "type": "object",
+        "required": [
+          "purchase_order_id",
+          "lines"
+        ],
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateGoodsReceiptLineRequest"
+            }
+          },
+          "purchase_order_id": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateInventoryAssetRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "acquisition_cost_minor",
+          "currency"
+        ],
+        "properties": {
+          "acquired_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "acquisition_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "asset_tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "salvage_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "useful_life_months": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "CreateInventoryItemRequest": {
+        "type": "object",
+        "required": [
+          "sku",
+          "name",
+          "currency"
+        ],
+        "properties": {
+          "allow_negative_stock": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "reorder_point_qty": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "uom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateMaintenanceScheduleRequest": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "title",
+          "interval_days",
+          "next_due_at"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "interval_days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "next_due_at": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePurchaseOrderLineRequest": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "warehouse_id",
+          "qty_ordered",
+          "unit_cost_minor"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "qty_ordered": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePurchaseOrderRequest": {
+        "type": "object",
+        "required": [
+          "supplier_id",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePurchaseOrderLineRequest"
+            }
+          },
+          "purchase_request_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplier_id": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePurchaseRequestLineRequest": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "qty",
+          "unit_cost_estimate_minor"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_cost_estimate_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CreatePurchaseRequestRequest": {
+        "type": "object",
+        "required": [
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "budget_account_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePurchaseRequestLineRequest"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateStockMovementRequest": {
+        "type": "object",
+        "required": [
+          "warehouse_id",
+          "item_id",
+          "qty_delta",
+          "movement_type"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "movement_type": {
+            "type": "string"
+          },
+          "qty_delta": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Signed quantity delta. Positive for receipt/return/transfer_in,\nnegative for issue/transfer_out. `adjustment` may be either sign."
+          },
+          "source_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_cost_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSupplierRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "currency"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "payment_terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateVendorBillFromReceiptRequest": {
+        "type": "object",
+        "required": [
+          "goods_receipt_id",
+          "supplier_ref"
+        ],
+        "properties": {
+          "goods_receipt_id": {
+            "type": "string"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "supplier_ref": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateWarehouseRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "DecidePurchaseRequestRequest": {
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DepreciateAssetRequest": {
+        "type": "object",
+        "properties": {
+          "as_of_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO date to depreciate through (defaults to today)."
+          }
+        }
+      },
+      "DepreciateAssetResponse": {
+        "type": "object",
+        "required": [
+          "asset",
+          "depreciation_expense_minor"
+        ],
+        "properties": {
+          "asset": {
+            "$ref": "#/components/schemas/InventoryAssetDto"
+          },
+          "depreciation_expense_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "journal_public_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DriftAlertDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "warehouse_id",
+          "item_id",
+          "cached_qty",
+          "movement_sum_qty",
+          "detected_at"
+        ],
+        "properties": {
+          "cached_qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "detected_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "movement_sum_qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "GoodsReceiptDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "purchase_order_id",
+          "status",
+          "lines",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "journal_public_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptLineDto"
+            }
+          },
+          "purchase_order_id": {
+            "type": "string"
+          },
+          "received_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GoodsReceiptLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "po_line_id",
+          "item_id",
+          "warehouse_id",
+          "qty_received",
+          "unit_cost_minor"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "po_line_id": {
+            "type": "string"
+          },
+          "qty_received": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "GoodsReceiptListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "InventoryAssetDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "acquisition_cost_minor",
+          "currency",
+          "useful_life_months",
+          "salvage_minor",
+          "accumulated_depreciation_minor",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "accumulated_depreciation_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "acquired_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "acquisition_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "asset_tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_depreciated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "salvage_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "useful_life_months": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InventoryAssetListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryAssetDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "InventoryItemDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "uom",
+          "currency",
+          "reorder_point_qty",
+          "allow_negative_stock",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "allow_negative_stock": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "reorder_point_qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "uom": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InventoryItemListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItemDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MaintenanceScheduleDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "title",
+          "interval_days",
+          "next_due_at"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "interval_days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last_completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next_due_at": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "MaintenanceScheduleListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaintenanceScheduleDto"
+            }
+          }
+        }
+      },
+      "PurchaseOrderDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_id",
+          "status",
+          "currency",
+          "total_amount_minor",
+          "lines",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "issued_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderLineDto"
+            }
+          },
+          "purchase_request_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "type": "string"
+          },
+          "total_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PurchaseOrderLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "item_id",
+          "warehouse_id",
+          "qty_ordered",
+          "qty_received",
+          "unit_cost_minor",
+          "line_amount_minor"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "line_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qty_ordered": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qty_received": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "PurchaseOrderListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PurchaseRequestDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "requester_user_id",
+          "currency",
+          "total_amount_minor",
+          "lines",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "budget_account_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestLineDto"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requester_user_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PurchaseRequestLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "item_id",
+          "qty",
+          "unit_cost_estimate_minor",
+          "line_amount_minor"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "line_amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit_cost_estimate_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PurchaseRequestListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ReconcileStockRequest": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "warehouse_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ReconcileStockResponse": {
+        "type": "object",
+        "required": [
+          "checked",
+          "drift_count",
+          "alerts"
+        ],
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DriftAlertDto"
+            }
+          },
+          "checked": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "drift_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ReturnAssetRequest": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "StockLevelDto": {
+        "type": "object",
+        "required": [
+          "warehouse_id",
+          "item_id",
+          "qty_on_hand",
+          "avg_unit_cost_minor",
+          "updated_at"
+        ],
+        "properties": {
+          "avg_unit_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "last_movement_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qty_on_hand": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "StockLevelListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockLevelDto"
+            }
+          }
+        }
+      },
+      "StockMovementDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "warehouse_id",
+          "item_id",
+          "qty_delta",
+          "unit_cost_minor",
+          "currency",
+          "movement_type",
+          "created_at"
+        ],
+        "properties": {
+          "avg_unit_cost_minor_after": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cogs_journal_public_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Present only when this movement was an issue/transfer-out and a COGS\njournal was posted to finance-service."
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "low_stock": {
+            "type": "boolean"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "movement_type": {
+            "type": "string"
+          },
+          "qty_delta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qty_on_hand_after": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_cost_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "warehouse_id": {
+            "type": "string"
+          }
+        }
+      },
+      "StockMovementListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockMovementDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SupplierDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "payment_terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SupplierListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UpdateInventoryAssetRequest": {
+        "type": "object",
+        "properties": {
+          "asset_tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "salvage_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "useful_life_months": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateInventoryItemRequest": {
+        "type": "object",
+        "properties": {
+          "allow_negative_stock": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reorder_point_qty": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "UpdateSupplierRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payment_terms": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateWarehouseRequest": {
+        "type": "object",
+        "properties": {
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "VendorBillProxyDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "supplier_ref",
+          "source_type",
+          "currency",
+          "amount_minor",
+          "amount_paid_minor",
+          "status"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount_paid_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "payment_journal_public_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplier_ref": {
+            "type": "string"
+          }
+        }
+      },
+      "WarehouseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "WarehouseListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       }
     }
   },
@@ -17604,6 +21001,10 @@
       "description": "Expense policy, cards, reimbursements"
     },
     {
+      "name": "finance-vendor-bills",
+      "description": "Procure-to-pay vendor bills (inventory-service)"
+    },
+    {
       "name": "operations-projects",
       "description": "Projects (Operations)"
     },
@@ -17718,6 +21119,42 @@
     {
       "name": "ai",
       "description": "CompanyOS AI copilot"
+    },
+    {
+      "name": "inventory-warehouses",
+      "description": "Warehouse master data"
+    },
+    {
+      "name": "inventory-items",
+      "description": "SKU master data + stock levels"
+    },
+    {
+      "name": "inventory-movements",
+      "description": "Append-only stock ledger + reconciliation"
+    },
+    {
+      "name": "inventory-suppliers",
+      "description": "Supplier master data"
+    },
+    {
+      "name": "inventory-purchase-requests",
+      "description": "Purchase requests (draft -> approved -> converted)"
+    },
+    {
+      "name": "inventory-purchase-orders",
+      "description": "Purchase orders issued to suppliers"
+    },
+    {
+      "name": "inventory-goods-receipts",
+      "description": "Goods receipt notes (partial receipt supported)"
+    },
+    {
+      "name": "inventory-assets",
+      "description": "Fixed asset register, assignment, depreciation, maintenance"
+    },
+    {
+      "name": "inventory-procure-to-pay",
+      "description": "Vendor bill proxy to finance-service"
     }
   ]
 }

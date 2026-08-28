@@ -951,6 +951,135 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Post balanced journal entries (payroll and other source types)",
         sensitive: true,
     },
+    // --- Inventory & Procurement (Phase 2.5) — permission context `inventory` ---
+    PermissionDef {
+        id: "inventory.item.read",
+        context: "inventory",
+        resource: "item",
+        action: "read",
+        description: "View inventory items and stock levels",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.item.write",
+        context: "inventory",
+        resource: "item",
+        action: "write",
+        description: "Create and update inventory items",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.warehouse.read",
+        context: "inventory",
+        resource: "warehouse",
+        action: "read",
+        description: "View warehouses",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.warehouse.write",
+        context: "inventory",
+        resource: "warehouse",
+        action: "write",
+        description: "Create and update warehouses",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.stock.read",
+        context: "inventory",
+        resource: "stock",
+        action: "read",
+        description: "View stock levels and movement history",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.stock.move",
+        context: "inventory",
+        resource: "stock",
+        action: "move",
+        description: "Record stock movements (receipt, issue, adjustment, transfer) and reconcile",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.supplier.read",
+        context: "inventory",
+        resource: "supplier",
+        action: "read",
+        description: "View suppliers",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.supplier.write",
+        context: "inventory",
+        resource: "supplier",
+        action: "write",
+        description: "Create and update suppliers",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.purchase_request.read",
+        context: "inventory",
+        resource: "purchase_request",
+        action: "read",
+        description: "View purchase requests",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.purchase_request.write",
+        context: "inventory",
+        resource: "purchase_request",
+        action: "write",
+        description: "Create, submit, and decide purchase requests",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.purchase_order.read",
+        context: "inventory",
+        resource: "purchase_order",
+        action: "read",
+        description: "View purchase orders",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.purchase_order.write",
+        context: "inventory",
+        resource: "purchase_order",
+        action: "write",
+        description: "Create and issue purchase orders",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.goods_receipt.read",
+        context: "inventory",
+        resource: "goods_receipt",
+        action: "read",
+        description: "View goods receipts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.goods_receipt.write",
+        context: "inventory",
+        resource: "goods_receipt",
+        action: "write",
+        description: "Create and post goods receipts (updates stock + posts finance journal)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "inventory.asset.read",
+        context: "inventory",
+        resource: "asset",
+        action: "read",
+        description: "View fixed assets, assignments, and maintenance schedules",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "inventory.asset.write",
+        context: "inventory",
+        resource: "asset",
+        action: "write",
+        description: "Create/update fixed assets, assign/return, depreciate, schedule maintenance",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -988,6 +1117,14 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "finance.bank.reconcile",
     "finance.expense_policy.manage",
     "finance.reimbursement.manage",
+    "inventory.item.write",
+    "inventory.warehouse.write",
+    "inventory.stock.move",
+    "inventory.supplier.write",
+    "inventory.purchase_request.write",
+    "inventory.purchase_order.write",
+    "inventory.goods_receipt.write",
+    "inventory.asset.write",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1345,6 +1482,54 @@ pub mod perms {
     }
     pub fn finance_reimbursement_manage() -> PermissionId {
         PermissionId::from("finance.reimbursement.manage")
+    }
+    pub fn inventory_item_read() -> PermissionId {
+        PermissionId::from("inventory.item.read")
+    }
+    pub fn inventory_item_write() -> PermissionId {
+        PermissionId::from("inventory.item.write")
+    }
+    pub fn inventory_warehouse_read() -> PermissionId {
+        PermissionId::from("inventory.warehouse.read")
+    }
+    pub fn inventory_warehouse_write() -> PermissionId {
+        PermissionId::from("inventory.warehouse.write")
+    }
+    pub fn inventory_stock_read() -> PermissionId {
+        PermissionId::from("inventory.stock.read")
+    }
+    pub fn inventory_stock_move() -> PermissionId {
+        PermissionId::from("inventory.stock.move")
+    }
+    pub fn inventory_supplier_read() -> PermissionId {
+        PermissionId::from("inventory.supplier.read")
+    }
+    pub fn inventory_supplier_write() -> PermissionId {
+        PermissionId::from("inventory.supplier.write")
+    }
+    pub fn inventory_purchase_request_read() -> PermissionId {
+        PermissionId::from("inventory.purchase_request.read")
+    }
+    pub fn inventory_purchase_request_write() -> PermissionId {
+        PermissionId::from("inventory.purchase_request.write")
+    }
+    pub fn inventory_purchase_order_read() -> PermissionId {
+        PermissionId::from("inventory.purchase_order.read")
+    }
+    pub fn inventory_purchase_order_write() -> PermissionId {
+        PermissionId::from("inventory.purchase_order.write")
+    }
+    pub fn inventory_goods_receipt_read() -> PermissionId {
+        PermissionId::from("inventory.goods_receipt.read")
+    }
+    pub fn inventory_goods_receipt_write() -> PermissionId {
+        PermissionId::from("inventory.goods_receipt.write")
+    }
+    pub fn inventory_asset_read() -> PermissionId {
+        PermissionId::from("inventory.asset.read")
+    }
+    pub fn inventory_asset_write() -> PermissionId {
+        PermissionId::from("inventory.asset.write")
     }
 }
 

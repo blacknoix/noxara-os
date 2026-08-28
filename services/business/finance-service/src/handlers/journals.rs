@@ -375,11 +375,23 @@ pub async fn post_journal_handler(
         &request_id,
     )?;
 
+    const ALLOWED_SOURCE_TYPES: &[&str] = &[
+        "payroll",
+        "manual",
+        "inventory_receipt",
+        "inventory_cogs",
+        "inventory_depreciation",
+        "vendor_bill",
+        "vendor_payment",
+    ];
     let source_type = body.source_type.trim();
-    if source_type != "payroll" && source_type != "manual" {
+    if !ALLOWED_SOURCE_TYPES.contains(&source_type) {
         return Err(validation(
             &request_id,
-            "source_type must be payroll or manual",
+            format!(
+                "source_type must be one of: {}",
+                ALLOWED_SOURCE_TYPES.join(", ")
+            ),
         ));
     }
 
@@ -522,13 +534,14 @@ pub async fn post_journal_handler(
         Some(rid) => format!("Reversal of jrn_{rid}"),
         None => format!("{source_type} journal for {source_id}"),
     };
+    let source_type_static = ALLOWED_SOURCE_TYPES
+        .iter()
+        .find(|s| **s == source_type)
+        .copied()
+        .unwrap_or("manual");
     let draft = JournalDraft {
         memo: body.memo.clone().unwrap_or(default_memo),
-        source_type: if source_type == "payroll" {
-            "payroll"
-        } else {
-            "manual"
-        },
+        source_type: source_type_static,
         source_id,
         currency,
         lines,

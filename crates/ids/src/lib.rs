@@ -84,6 +84,34 @@ pub enum IdKind {
     CardTransaction,
     /// Reimbursement batch (`reimb_`).
     ReimbursementBatch,
+    /// Warehouse (`wh_`).
+    Warehouse,
+    /// Inventory item (`item_`).
+    InventoryItem,
+    /// Stock movement (`mv_`).
+    StockMovement,
+    /// Supplier (`sup_`).
+    Supplier,
+    /// Purchase request (`pr_`).
+    PurchaseRequest,
+    /// Purchase request line (`prl_`).
+    PurchaseRequestLine,
+    /// Purchase order (`po_`).
+    PurchaseOrder,
+    /// Purchase order line (`poln_` — `pol_` is taken by `ExpensePolicy`).
+    PurchaseOrderLine,
+    /// Goods receipt note (`grn_`).
+    GoodsReceipt,
+    /// Goods receipt line (`grl_`).
+    GoodsReceiptLine,
+    /// Fixed asset (`ast_`) — inventory-owned, not HR people_asset.
+    FixedAsset,
+    /// Asset assignment (`asa_`).
+    AssetAssignment,
+    /// Maintenance schedule (`mnt_`).
+    MaintenanceSchedule,
+    /// Vendor bill (`vb_`) — finance-owned procure-to-pay record.
+    VendorBill,
 }
 
 impl IdKind {
@@ -141,6 +169,20 @@ impl IdKind {
             Self::ExpensePolicy => "pol_",
             Self::CardTransaction => "card_",
             Self::ReimbursementBatch => "reimb_",
+            Self::Warehouse => "wh_",
+            Self::InventoryItem => "item_",
+            Self::StockMovement => "mv_",
+            Self::Supplier => "sup_",
+            Self::PurchaseRequest => "pr_",
+            Self::PurchaseRequestLine => "prl_",
+            Self::PurchaseOrder => "po_",
+            Self::PurchaseOrderLine => "poln_",
+            Self::GoodsReceipt => "grn_",
+            Self::GoodsReceiptLine => "grl_",
+            Self::FixedAsset => "ast_",
+            Self::AssetAssignment => "asa_",
+            Self::MaintenanceSchedule => "mnt_",
+            Self::VendorBill => "vb_",
         }
     }
 
@@ -198,6 +240,20 @@ impl IdKind {
             "pol_" => Some(Self::ExpensePolicy),
             "card_" => Some(Self::CardTransaction),
             "reimb_" => Some(Self::ReimbursementBatch),
+            "wh_" => Some(Self::Warehouse),
+            "item_" => Some(Self::InventoryItem),
+            "mv_" => Some(Self::StockMovement),
+            "sup_" => Some(Self::Supplier),
+            "pr_" => Some(Self::PurchaseRequest),
+            "prl_" => Some(Self::PurchaseRequestLine),
+            "po_" => Some(Self::PurchaseOrder),
+            "poln_" => Some(Self::PurchaseOrderLine),
+            "grn_" => Some(Self::GoodsReceipt),
+            "grl_" => Some(Self::GoodsReceiptLine),
+            "ast_" => Some(Self::FixedAsset),
+            "asa_" => Some(Self::AssetAssignment),
+            "mnt_" => Some(Self::MaintenanceSchedule),
+            "vb_" => Some(Self::VendorBill),
             _ => None,
         }
     }
@@ -304,6 +360,20 @@ impl FromStr for PublicId {
             ("pol_", IdKind::ExpensePolicy),
             ("card_", IdKind::CardTransaction),
             ("reimb_", IdKind::ReimbursementBatch),
+            ("prl_", IdKind::PurchaseRequestLine),
+            ("poln_", IdKind::PurchaseOrderLine),
+            ("grl_", IdKind::GoodsReceiptLine),
+            ("grn_", IdKind::GoodsReceipt),
+            ("asa_", IdKind::AssetAssignment),
+            ("mnt_", IdKind::MaintenanceSchedule),
+            ("item_", IdKind::InventoryItem),
+            ("wh_", IdKind::Warehouse),
+            ("mv_", IdKind::StockMovement),
+            ("sup_", IdKind::Supplier),
+            ("pr_", IdKind::PurchaseRequest),
+            ("po_", IdKind::PurchaseOrder),
+            ("ast_", IdKind::FixedAsset),
+            ("vb_", IdKind::VendorBill),
             ("pl_", IdKind::Pipeline),
             ("dl_", IdKind::Deal),
             ("cn_", IdKind::CreditNote),
@@ -435,6 +505,20 @@ mod tests {
             IdKind::ExpensePolicy,
             IdKind::CardTransaction,
             IdKind::ReimbursementBatch,
+            IdKind::Warehouse,
+            IdKind::InventoryItem,
+            IdKind::StockMovement,
+            IdKind::Supplier,
+            IdKind::PurchaseRequest,
+            IdKind::PurchaseRequestLine,
+            IdKind::PurchaseOrder,
+            IdKind::PurchaseOrderLine,
+            IdKind::GoodsReceipt,
+            IdKind::GoodsReceiptLine,
+            IdKind::FixedAsset,
+            IdKind::AssetAssignment,
+            IdKind::MaintenanceSchedule,
+            IdKind::VendorBill,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

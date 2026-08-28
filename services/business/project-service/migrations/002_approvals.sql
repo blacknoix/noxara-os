@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS operations_approval_policy (
     public_id       TEXT NOT NULL,
     name            TEXT NOT NULL,
     subject_type    TEXT NOT NULL CHECK (subject_type IN (
-        'expense', 'quote_discount', 'generic'
+        'expense', 'quote_discount', 'generic',
+        'leave_request', 'payroll_run', 'purchase_request'
     )),
     -- When false, policy is not considered for new routing.
     is_active       BOOLEAN NOT NULL DEFAULT true,
@@ -27,6 +28,14 @@ CREATE TABLE IF NOT EXISTS operations_approval_policy (
 CREATE INDEX IF NOT EXISTS operations_approval_policy_org_idx
     ON operations_approval_policy (org_id, subject_type)
     WHERE is_active;
+-- Widen subject_type for pre-existing databases created before HR/Payroll
+-- (leave_request, payroll_run) and Inventory P2P (purchase_request) landed.
+ALTER TABLE operations_approval_policy DROP CONSTRAINT IF EXISTS operations_approval_policy_subject_type_check;
+ALTER TABLE operations_approval_policy ADD CONSTRAINT operations_approval_policy_subject_type_check
+    CHECK (subject_type IN (
+        'expense', 'quote_discount', 'generic',
+        'leave_request', 'payroll_run', 'purchase_request'
+    ));
 ALTER TABLE operations_approval_policy ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_policy FORCE ROW LEVEL SECURITY;
 CREATE POLICY operations_approval_policy_tenant_isolation ON operations_approval_policy
@@ -49,7 +58,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_policy_version_org_idx
     ON operations_approval_policy_version (org_id, policy_id, version);
 ALTER TABLE operations_approval_policy_version ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_policy_version FORCE ROW LEVEL SECURITY;
-    ON operations_approval_policy_version;
 CREATE POLICY operations_approval_policy_version_tenant_isolation
     ON operations_approval_policy_version
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
@@ -160,7 +168,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_decision_org_idx
     ON operations_approval_decision (org_id, approval_id, created_at);
 ALTER TABLE operations_approval_decision ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_decision FORCE ROW LEVEL SECURITY;
-    ON operations_approval_decision;
 CREATE POLICY operations_approval_decision_tenant_isolation
     ON operations_approval_decision
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
@@ -188,7 +195,6 @@ CREATE INDEX IF NOT EXISTS operations_approval_delegation_org_idx
     WHERE revoked_at IS NULL;
 ALTER TABLE operations_approval_delegation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_delegation FORCE ROW LEVEL SECURITY;
-    ON operations_approval_delegation;
 CREATE POLICY operations_approval_delegation_tenant_isolation
     ON operations_approval_delegation
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
