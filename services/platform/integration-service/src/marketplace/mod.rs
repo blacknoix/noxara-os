@@ -127,7 +127,15 @@ pub(crate) async fn emit_event(
     payload: serde_json::Value,
     request_id: &str,
 ) -> Result<(), AppError> {
-    let envelope = EventEnvelope::new(org_id, Context::Admin, AGGREGATE, event_type, 1, actor, payload);
+    let envelope = EventEnvelope::new(
+        org_id,
+        Context::Admin,
+        AGGREGATE,
+        event_type,
+        1,
+        actor,
+        payload,
+    );
     companyos_outbox::insert_event(&mut **tx, &envelope)
         .await
         .map_err(|error| AppError::new(ErrorCode::Internal, request_id, error.to_string()))?;

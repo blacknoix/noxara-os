@@ -103,7 +103,11 @@ pub fn default_checklist() -> Vec<ChecklistItem> {
 /// Derived security gate: every `security_*` item is complete (and at least one exists).
 pub fn security_review_complete(items: &[ChecklistItem]) -> bool {
     let mut security_items = items.iter().filter(|i| i.is_security()).peekable();
-    security_items.peek().is_some() && items.iter().filter(|i| i.is_security()).all(|i| i.completed)
+    security_items.peek().is_some()
+        && items
+            .iter()
+            .filter(|i| i.is_security())
+            .all(|i| i.completed)
 }
 
 /// Publication gate: required items complete **and** security review complete.
@@ -282,7 +286,10 @@ mod tests {
     fn default_checklist_has_at_least_two_security_items() {
         let items = default_checklist();
         let security = items.iter().filter(|i| i.is_security()).count();
-        assert!(security >= 2, "expected >= 2 security items, got {security}");
+        assert!(
+            security >= 2,
+            "expected >= 2 security items, got {security}"
+        );
         assert!(items.iter().filter(|i| i.is_security()).all(|i| i.required));
     }
 

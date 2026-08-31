@@ -19,12 +19,18 @@ use crate::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/marketplace/catalogue", get(catalogue::list_catalogue))
+        .route(
+            "/api/v1/marketplace/catalogue",
+            get(catalogue::list_catalogue),
+        )
         .route(
             "/api/v1/marketplace/listings",
             post(publisher::create_listing),
         )
-        .route("/api/v1/marketplace/listings/mine", get(publisher::list_mine))
+        .route(
+            "/api/v1/marketplace/listings/mine",
+            get(publisher::list_mine),
+        )
         .route(
             "/api/v1/marketplace/listings/{public_id}",
             get(catalogue::get_listing),

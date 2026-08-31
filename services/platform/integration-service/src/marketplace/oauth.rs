@@ -189,7 +189,8 @@ pub async fn exchange_authorization_code(
     };
 
     let mut tx = pool.begin().await.map_err(internal(request_id))?;
-    let client = authenticate_client(&mut tx, &req.client_id, &req.client_secret, request_id).await?;
+    let client =
+        authenticate_client(&mut tx, &req.client_id, &req.client_secret, request_id).await?;
 
     let row: Option<AuthCodeRow> = sqlx::query_as(
         "SELECT id, org_id, listing_id, code_challenge, code_challenge_method, redirect_uri, \
@@ -202,7 +203,10 @@ pub async fn exchange_authorization_code(
     .map_err(internal(request_id))?;
 
     let Some(auth_code) = row else {
-        return Err(unauthorized(request_id, "authorization code not recognised"));
+        return Err(unauthorized(
+            request_id,
+            "authorization code not recognised",
+        ));
     };
     if auth_code.used_at.is_some() {
         return Err(unauthorized(request_id, "authorization code already used"));
@@ -273,7 +277,8 @@ pub async fn exchange_refresh_token(
     };
 
     let mut tx = pool.begin().await.map_err(internal(request_id))?;
-    let client = authenticate_client(&mut tx, &req.client_id, &req.client_secret, request_id).await?;
+    let client =
+        authenticate_client(&mut tx, &req.client_id, &req.client_secret, request_id).await?;
     let resolved = resolve_token(&mut tx, refresh, TOKEN_REFRESH, request_id).await?;
     if resolved.listing_id != client.listing_id {
         return Err(unauthorized(

@@ -106,7 +106,8 @@ pub async fn submit_listing(
 
     let mut tx = state.pool.begin().await.map_err(internal(request_id))?;
     set_org(&mut tx, auth.ctx.org_id, request_id).await?;
-    let listing = listings::submit_listing(&mut tx, auth.ctx.org_id, listing_id, request_id).await?;
+    let listing =
+        listings::submit_listing(&mut tx, auth.ctx.org_id, listing_id, request_id).await?;
     review::ensure_review(&mut tx, auth.ctx.org_id, listing_id, request_id).await?;
 
     emit_event(

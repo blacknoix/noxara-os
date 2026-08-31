@@ -13,9 +13,7 @@ use super::types::{
     CreateListingRequest, ListingDto, KIND_FIRST_PARTY, KIND_THIRD_PARTY, LISTING_DRAFT,
     LISTING_PUBLISHED, LISTING_SUBMITTED,
 };
-use super::{
-    conflict, internal, not_found, org_public, string_array, validation,
-};
+use super::{conflict, internal, not_found, org_public, string_array, validation};
 
 pub const LISTING_COLUMNS: &str = "id, org_id, public_id, slug, name, description, listing_kind, \
      connector_key, requested_scopes, redirect_uris, webhook_subscriptions, status, created_by, \
@@ -410,7 +408,9 @@ mod tests {
     #[test]
     fn rejects_non_http_and_loopback_redirects() {
         assert!(validate_urls(&["ftp://x.example/cb".into()], false, "t", "redirect_uri").is_err());
-        assert!(validate_urls(&["http://127.0.0.1/cb".into()], false, "t", "redirect_uri").is_err());
+        assert!(
+            validate_urls(&["http://127.0.0.1/cb".into()], false, "t", "redirect_uri").is_err()
+        );
         assert!(validate_urls(&["https://8.8.8.8/cb".into()], false, "t", "redirect_uri").is_ok());
     }
 

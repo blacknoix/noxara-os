@@ -18,14 +18,13 @@ use uuid::Uuid;
 
 use super::listings::ListingRow;
 use super::tokens::{issue_tokens, revoke_install_tokens};
-use super::types::{
-    InstallDto, IntegrationDto, TokenPair, INSTALL_ACTIVE, INSTALL_REVOKED,
-};
+use super::types::{InstallDto, IntegrationDto, TokenPair, INSTALL_ACTIVE, INSTALL_REVOKED};
 use super::{
     conflict, emit_event, forbidden, internal, not_found, org_public, string_array, validation,
 };
 
-const INSTALL_COLUMNS: &str = "id, org_id, public_id, listing_id, listing_public_id, listing_slug, \
+const INSTALL_COLUMNS: &str =
+    "id, org_id, public_id, listing_id, listing_public_id, listing_slug, \
      listing_name, listing_kind, connector_key, consented_scopes, status, installed_by, \
      installed_at, revoked_at, revoked_by, outbound_enabled, inbound_enabled, last_error";
 
@@ -107,7 +106,10 @@ pub fn validate_consent(
         if !requested.iter().any(|r| r == scope) {
             return Err(validation(
                 request_id,
-                format!("scope {scope} is not requested by listing {}", listing.public_id),
+                format!(
+                    "scope {scope} is not requested by listing {}",
+                    listing.public_id
+                ),
             ));
         }
         if !is_allowed(principal, &PermissionId::from(scope.as_str())) {
@@ -207,12 +209,18 @@ pub async fn create_install(
         if !requested.iter().any(|r| r == scope) {
             return Err(validation(
                 request_id,
-                format!("scope {scope} is not requested by listing {}", listing.public_id),
+                format!(
+                    "scope {scope} is not requested by listing {}",
+                    listing.public_id
+                ),
             ));
         }
     }
     if consented.is_empty() {
-        return Err(validation(request_id, "consent must include at least one scope"));
+        return Err(validation(
+            request_id,
+            "consent must include at least one scope",
+        ));
     }
 
     let id = new_uuid_v7();
@@ -393,8 +401,8 @@ pub async fn reconsent(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use companyos_authz::Role;
     use chrono::Utc;
+    use companyos_authz::Role;
 
     fn listing(kind: &str, scopes: &[&str]) -> ListingRow {
         ListingRow {
@@ -426,11 +434,16 @@ mod tests {
 
     #[test]
     fn consent_cannot_exceed_installer_permissions() {
-        let listing = listing("third_party", &["sales.customer.read", "finance.invoice.issue"]);
+        let listing = listing(
+            "third_party",
+            &["sales.customer.read", "finance.invoice.issue"],
+        );
         let member = Principal::with_roles(vec![Role::Member]);
         assert!(validate_consent(&listing, &["sales.customer.read".into()], &member, "t").is_ok());
         // Member holds no finance.invoice.issue, so it cannot be delegated.
-        assert!(validate_consent(&listing, &["finance.invoice.issue".into()], &member, "t").is_err());
+        assert!(
+            validate_consent(&listing, &["finance.invoice.issue".into()], &member, "t").is_err()
+        );
     }
 
     #[test]

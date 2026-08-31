@@ -24,8 +24,7 @@ pub async fn authorize(
     Json(req): Json<AuthorizeRequest>,
 ) -> Result<Json<AuthorizeResponse>, AppError> {
     let request_id = auth.ctx.request_id.as_str();
-    let principal =
-        enforce_permission(&state, &auth, perms::admin_marketplace_install()).await?;
+    let principal = enforce_permission(&state, &auth, perms::admin_marketplace_install()).await?;
     let listing_id = parse_public_id(IdKind::MarketplaceApp, &req.listing_id, request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(request_id))?;
@@ -92,8 +91,12 @@ pub async fn authorize_permission(
     Json(req): Json<AuthorizePermissionRequest>,
 ) -> Result<Json<AuthorizePermissionResponse>, AppError> {
     let request_id = "oauth-authorize-permission";
-    let decision =
-        oauth_svc::authorize_permission(&state.pool, &req.access_token, &req.permission, request_id)
-            .await?;
+    let decision = oauth_svc::authorize_permission(
+        &state.pool,
+        &req.access_token,
+        &req.permission,
+        request_id,
+    )
+    .await?;
     Ok(Json(decision))
 }

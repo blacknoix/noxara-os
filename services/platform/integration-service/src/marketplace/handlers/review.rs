@@ -71,7 +71,14 @@ pub async fn update_checklist(
     // A submitted listing picked up by a reviewer moves to in_review; already
     // approved or published listings keep their status.
     let listing = if listing.status == "submitted" {
-        listings::set_status(&mut tx, auth.ctx.org_id, listing_id, "in_review", request_id).await?
+        listings::set_status(
+            &mut tx,
+            auth.ctx.org_id,
+            listing_id,
+            "in_review",
+            request_id,
+        )
+        .await?
     } else {
         listing
     };
