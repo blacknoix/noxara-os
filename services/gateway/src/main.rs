@@ -1,8 +1,12 @@
-//! CompanyOS gateway / BFF — Phase 1.9.
+//! CompanyOS gateway / BFF — Phase 3.3.
 //!
-//! Authenticates access JWTs (org-scoped), resolves tenant, runs a coarse authz
-//! pre-check, attaches request context headers, and proxies to core, CRM,
-//! Finance, Operations, platform, and AI.
+//! Authenticates access JWTs (org-scoped) or organization API keys, resolves
+//! tenant, runs a coarse authz pre-check (or public allowlist for API keys),
+//! attaches request context headers, and proxies to core, CRM, Finance,
+//! Operations, platform, and AI.
+
+mod api_key_auth;
+mod public_routes;
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
@@ -26,6 +30,11 @@ use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetReques
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
 
+use api_key_auth::{
+    apply_deprecation_headers, check_rate_limit, enforce_api_key_route, exchange_api_key,
+    log_api_key_usage, rate_limited_response, ApiKeyAuthContext, ApiKeyRateLimiter, RateLimitInfo,
+};
+
 #[derive(Clone)]
 struct GatewayState {
     core_url: String,
@@ -45,10 +54,20 @@ struct GatewayState {
     keyring: KeyRing,
     jwks_cache: Arc<RwLock<JwksCache>>,
     local_auth: bool,
+    api_key_limiter: Arc<ApiKeyRateLimiter>,
 }
 
 struct JwksCache {
     fetched_at: Option<Instant>,
+}
+
+/// Outcome of gateway authentication (JWT session or API key).
+struct AuthOutcome {
+    claims: Option<AccessClaims>,
+    /// Replace outbound `Authorization` with minted access token (API-key path).
+    minted_bearer: Option<String>,
+    rate_limit: Option<RateLimitInfo>,
+    api_key_id: Option<String>,
 }
 
 #[tokio::main]
@@ -103,6 +122,7 @@ async fn main() -> anyhow::Result<()> {
         keyring,
         jwks_cache: Arc::new(RwLock::new(JwksCache { fetched_at: None })),
         local_auth,
+        api_key_limiter: Arc::new(ApiKeyRateLimiter::new()),
     };
 
     let x_request_id = http::HeaderName::from_static("x-request-id");
@@ -128,17 +148,22 @@ async fn main() -> anyhow::Result<()> {
                 Json(serde_json::json!({
                     "service": "companyos-gateway",
                     "auth": if state.local_auth {
-                        "JWT primary + LOCAL-ONLY bypass enabled"
+                        "JWT primary + API keys + LOCAL-ONLY bypass enabled"
                     } else {
-                        "JWT primary (LOCAL-ONLY bypass off)"
+                        "JWT primary + API keys (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "2.1"
+                    "phase": "3.3"
                 }))
             }),
         )
         // Auth endpoints: proxy without requiring access token (login/register/refresh…).
         .route("/api/v1/auth/{*rest}", any(proxy_auth))
+        // Internal core↔gateway paths (API-key exchange) — never require gateway JWT.
+        .route("/api/v1/internal/{*rest}", any(proxy_internal))
         .route("/api/v1/openapi.json", any(proxy_openapi))
+        // TODO(phase-3.3): serve a filtered public OpenAPI doc once core exposes it;
+        // for now proxy the full catalogue without auth.
+        .route("/api/v1/openapi.public.json", any(proxy_openapi_public))
         .route("/api/v1/hello", any(proxy_hello))
         .route("/api/v1/dashboard", any(proxy_dashboard))
         .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
@@ -225,53 +250,208 @@ fn local_bypass_ok(headers: &HeaderMap) -> bool {
         && headers.contains_key("x-companyos-dev-user-id")
 }
 
-async fn authenticate(
-    state: &GatewayState,
-    headers: &HeaderMap,
-    path: &str,
-    request_id: &str,
-) -> Result<Option<AccessClaims>, AppError> {
-    // Auth routes and openapi are public at the gateway.
-    if path.starts_with("/api/v1/auth/") || path.starts_with("/api/v1/openapi") {
-        return Ok(None);
-    }
+fn is_jwt_shape(token: &str) -> bool {
+    token.matches('.').count() == 2
+}
 
-    if let Some(auth) = headers
+fn extract_bearer(headers: &HeaderMap) -> Option<&str> {
+    headers
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "))
+}
+
+fn extract_api_key_header(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .filter(|s| !s.is_empty())
+}
+
+async fn authenticate_api_key(
+    state: &GatewayState,
+    raw_key: &str,
+    method: &str,
+    path: &str,
+    request_id: &str,
+) -> Result<ApiKeyAuthContext, Response> {
+    let exchange = exchange_api_key(&state.client, &state.core_url, raw_key, request_id)
+        .await
+        .map_err(|e| e.into_response())?;
+
+    enforce_api_key_route(method, path, &exchange.scopes, request_id)
+        .map_err(|e| e.into_response())?;
+
+    let rate = check_rate_limit(
+        &state.api_key_limiter,
+        state.redis_url.as_deref(),
+        &exchange.api_key_id,
+        exchange.rate_limit_per_minute,
+    )
+    .await
+    .map_err(|info| rate_limited_response(request_id, info))?;
+
+    // Prefer verifying the minted JWT so upstream headers match claims.
+    refresh_jwks(state).await;
+    let claims = verify_access_token(&state.keyring, &exchange.access_token).map_err(|e| {
+        AppError::new(
+            ErrorCode::Internal,
+            request_id,
+            format!("exchanged token failed verification: {e}"),
+        )
+        .into_response()
+    })?;
+
+    Ok(ApiKeyAuthContext {
+        claims,
+        minted_bearer: Some(exchange.access_token),
+        rate_limit: rate,
+        api_key_id: exchange.api_key_id,
+    })
+}
+
+async fn authenticate(
+    state: &GatewayState,
+    headers: &HeaderMap,
+    method: &str,
+    path: &str,
+    request_id: &str,
+) -> Result<AuthOutcome, Response> {
+    // Auth routes, openapi, and internal exchange are public at the gateway.
+    if path.starts_with("/api/v1/auth/")
+        || path.starts_with("/api/v1/openapi")
+        || path.starts_with("/api/v1/internal/")
     {
-        refresh_jwks(state).await;
-        match verify_access_token(&state.keyring, auth) {
-            Ok(claims) => {
-                coarse_authz(&claims, path)
-                    .map_err(|d| AppError::new(ErrorCode::Forbidden, request_id, d))?;
-                return Ok(Some(claims));
-            }
-            Err(e) => {
-                if state.local_auth && auth.matches('.').count() != 2 {
-                    tracing::warn!(request_id, "gateway accepting LOCAL-ONLY unsigned bearer");
-                    return Ok(None);
+        return Ok(AuthOutcome {
+            claims: None,
+            minted_bearer: None,
+            rate_limit: None,
+            api_key_id: None,
+        });
+    }
+
+    // Prefer explicit API key header.
+    if let Some(key) = extract_api_key_header(headers) {
+        let ctx = authenticate_api_key(state, key, method, path, request_id).await?;
+        return Ok(AuthOutcome {
+            claims: Some(ctx.claims),
+            minted_bearer: ctx.minted_bearer,
+            rate_limit: Some(ctx.rate_limit),
+            api_key_id: Some(ctx.api_key_id),
+        });
+    }
+
+    if let Some(auth) = extract_bearer(headers) {
+        if is_jwt_shape(auth) {
+            refresh_jwks(state).await;
+            match verify_access_token(&state.keyring, auth) {
+                Ok(claims) => {
+                    if claims.is_api_key() {
+                        let scopes = claims.scopes.clone().unwrap_or_default();
+                        enforce_api_key_route(method, path, &scopes, request_id)
+                            .map_err(|e| e.into_response())?;
+                        // No exchange metadata — apply a conservative default rate limit.
+                        let api_key_id = claims
+                            .api_key_id
+                            .clone()
+                            .unwrap_or_else(|| "unknown".into());
+                        let rate = check_rate_limit(
+                            &state.api_key_limiter,
+                            state.redis_url.as_deref(),
+                            &api_key_id,
+                            60,
+                        )
+                        .await
+                        .map_err(|info| rate_limited_response(request_id, info))?;
+                        return Ok(AuthOutcome {
+                            claims: Some(claims),
+                            minted_bearer: None,
+                            rate_limit: Some(rate),
+                            api_key_id: Some(api_key_id),
+                        });
+                    }
+                    coarse_authz(&claims, path)
+                        .map_err(|d| {
+                            AppError::new(ErrorCode::Forbidden, request_id, d).into_response()
+                        })?;
+                    return Ok(AuthOutcome {
+                        claims: Some(claims),
+                        minted_bearer: None,
+                        rate_limit: None,
+                        api_key_id: None,
+                    });
                 }
-                return Err(AppError::new(
-                    ErrorCode::Unauthorized,
-                    request_id,
-                    format!("invalid access token: {e}"),
-                ));
+                Err(e) => {
+                    return Err(AppError::new(
+                        ErrorCode::Unauthorized,
+                        request_id,
+                        format!("invalid access token: {e}"),
+                    )
+                    .into_response());
+                }
             }
+        }
+
+        // Opaque Bearer — treat as API key (unless LOCAL-ONLY unsigned fallback).
+        match exchange_api_key(&state.client, &state.core_url, auth, request_id).await {
+            Ok(exchange) => {
+                if let Err(e) = enforce_api_key_route(method, path, &exchange.scopes, request_id) {
+                    return Err(e.into_response());
+                }
+                let rate = check_rate_limit(
+                    &state.api_key_limiter,
+                    state.redis_url.as_deref(),
+                    &exchange.api_key_id,
+                    exchange.rate_limit_per_minute,
+                )
+                .await
+                .map_err(|info| rate_limited_response(request_id, info))?;
+                refresh_jwks(state).await;
+                let claims =
+                    verify_access_token(&state.keyring, &exchange.access_token).map_err(|e| {
+                        AppError::new(
+                            ErrorCode::Internal,
+                            request_id,
+                            format!("exchanged token failed verification: {e}"),
+                        )
+                        .into_response()
+                    })?;
+                return Ok(AuthOutcome {
+                    claims: Some(claims),
+                    minted_bearer: Some(exchange.access_token),
+                    rate_limit: Some(rate),
+                    api_key_id: Some(exchange.api_key_id),
+                });
+            }
+            Err(e) if state.local_auth && matches!(e.code, ErrorCode::Unauthorized) => {
+                tracing::warn!(request_id, "gateway accepting LOCAL-ONLY unsigned bearer");
+                return Ok(AuthOutcome {
+                    claims: None,
+                    minted_bearer: None,
+                    rate_limit: None,
+                    api_key_id: None,
+                });
+            }
+            Err(e) => return Err(e.into_response()),
         }
     }
 
     if state.local_auth && local_bypass_ok(headers) {
         tracing::warn!(request_id, "gateway LOCAL-ONLY header bypass");
-        return Ok(None);
+        return Ok(AuthOutcome {
+            claims: None,
+            minted_bearer: None,
+            rate_limit: None,
+            api_key_id: None,
+        });
     }
 
     Err(AppError::new(
         ErrorCode::Unauthorized,
         request_id,
-        "Bearer access token required",
-    ))
+        "Bearer access token or X-Api-Key required",
+    )
+    .into_response())
 }
 
 fn with_query(req: &Request, path: &str) -> String {
@@ -289,6 +469,7 @@ async fn proxy_to(
     require_auth: bool,
     upstream_label: &str,
 ) -> Response {
+    let started = Instant::now();
     let request_id = req
         .headers()
         .get("x-request-id")
@@ -302,16 +483,29 @@ async fn proxy_to(
         .map(|(p, _)| p)
         .unwrap_or(upstream_path);
 
-    let claims = if require_auth {
-        match authenticate(state, req.headers(), auth_path, &request_id).await {
-            Ok(c) => c,
-            Err(e) => return e.into_response(),
+    let method = req.method().clone();
+    let auth = if require_auth {
+        match authenticate(
+            state,
+            req.headers(),
+            method.as_str(),
+            auth_path,
+            &request_id,
+        )
+        .await
+        {
+            Ok(a) => a,
+            Err(e) => return e,
         }
     } else {
-        None
+        AuthOutcome {
+            claims: None,
+            minted_bearer: None,
+            rate_limit: None,
+            api_key_id: None,
+        }
     };
 
-    let method = req.method().clone();
     let mut headers = req.headers().clone();
     let body_bytes = match axum::body::to_bytes(req.into_body(), 2_097_152).await {
         Ok(b) => b,
@@ -320,7 +514,14 @@ async fn proxy_to(
         }
     };
 
-    if let Some(c) = claims {
+    if let Some(ref token) = auth.minted_bearer {
+        if let Ok(v) = HeaderValue::from_str(&format!("Bearer {token}")) {
+            headers.insert(axum::http::header::AUTHORIZATION, v);
+        }
+        headers.remove("x-api-key");
+    }
+
+    if let Some(ref c) = auth.claims {
         // Propagate resolved tenant + actor context for core (in addition to Bearer).
         if let Ok(v) = HeaderValue::from_str(&c.org_id) {
             headers.insert("x-companyos-org-id", v);
@@ -331,10 +532,15 @@ async fn proxy_to(
         if let Ok(v) = HeaderValue::from_str(&c.sid.to_string()) {
             headers.insert("x-companyos-session-id", v);
         }
+        if let Some(ref kid) = c.api_key_id {
+            if let Ok(v) = HeaderValue::from_str(kid) {
+                headers.insert("x-companyos-api-key-id", v);
+            }
+        }
     }
 
     let url = format!("{}{}", base_url.trim_end_matches('/'), upstream_path);
-    let mut outbound = state.client.request(method, &url);
+    let mut outbound = state.client.request(method.clone(), &url);
     for (k, v) in headers.iter() {
         if k == axum::http::header::HOST || k == axum::http::header::CONTENT_LENGTH {
             continue;
@@ -370,13 +576,39 @@ async fn proxy_to(
     }
     builder = builder.header("x-request-id", &request_id);
     let bytes = resp.bytes().await.unwrap_or_default();
-    builder.body(Body::from(bytes)).unwrap_or_else(|_| {
+    let mut response = builder.body(Body::from(bytes)).unwrap_or_else(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             "gateway response build failed",
         )
             .into_response()
-    })
+    });
+
+    if let Some(rl) = auth.rate_limit {
+        rl.apply_headers(response.headers_mut());
+        apply_deprecation_headers(response.headers_mut());
+    }
+
+    if let Some(api_key_id) = auth.api_key_id {
+        let org_id = auth
+            .claims
+            .as_ref()
+            .map(|c| c.org_id.clone())
+            .unwrap_or_default();
+        log_api_key_usage(
+            state.client.clone(),
+            state.core_url.clone(),
+            api_key_id,
+            org_id,
+            method.to_string(),
+            auth_path.to_string(),
+            status.as_u16(),
+            started.elapsed().as_millis(),
+            request_id,
+        );
+    }
+
+    response
 }
 
 async fn proxy_hello(State(state): State<GatewayState>, req: Request) -> Response {
@@ -511,6 +743,28 @@ async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Respo
     .await
 }
 
+/// Public OpenAPI — no auth required.
+/// TODO(phase-3.3): core should expose a filtered `/api/v1/openapi.public.json`;
+/// until then we proxy the full OpenAPI document.
+async fn proxy_openapi_public(State(state): State<GatewayState>, req: Request) -> Response {
+    proxy_to(
+        &state,
+        req,
+        "/api/v1/openapi.json",
+        &state.core_url,
+        false,
+        "core",
+    )
+    .await
+}
+
+async fn proxy_internal(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    // Internal exchange / usage — gateway must not require JWT.
+    proxy_to(&state, req, &upstream, &state.core_url, false, "core").await
+}
+
 async fn proxy_auth(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
@@ -534,16 +788,18 @@ async fn notifications_stream(
         .unwrap_or("unknown")
         .to_string();
 
-    let claims = match authenticate(
+    let auth = authenticate(
         &state,
         req.headers(),
+        "GET",
         "/api/v1/notifications/stream",
         &request_id,
     )
-    .await
-    {
-        Ok(Some(c)) => c,
-        Ok(None) => {
+    .await?;
+
+    let claims = match auth.claims {
+        Some(c) => c,
+        None => {
             return Err(AppError::new(
                 ErrorCode::Unauthorized,
                 request_id,
@@ -551,8 +807,17 @@ async fn notifications_stream(
             )
             .into_response());
         }
-        Err(e) => return Err(e.into_response()),
     };
+
+    // API keys are not allowed on the notification SSE (not a public route).
+    if claims.is_api_key() {
+        return Err(AppError::new(
+            ErrorCode::Forbidden,
+            request_id,
+            "API keys may only access public API routes",
+        )
+        .into_response());
+    }
 
     let org_id = claims.org_id.clone();
     let user_id = claims.sub.clone();
