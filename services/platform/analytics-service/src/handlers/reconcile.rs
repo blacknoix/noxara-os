@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::auth::AuthCtx;
 use crate::state::AppState;
-use crate::types::ReconcileResponse;
+use crate::types::AnalyticsReconcileResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct ReconcileBody {
@@ -19,24 +19,30 @@ pub struct ReconcileBody {
 #[utoipa::path(
     post,
     path = "/api/v1/analytics/reconcile/nightly",
-    responses((status = 200, body = ReconcileResponse)),
+    responses((status = 200, body = AnalyticsReconcileResponse)),
     tag = "analytics"
 )]
 pub async fn nightly(
     State(state): State<AppState>,
     auth: AuthCtx,
     Json(body): Json<ReconcileBody>,
-) -> Result<Json<ReconcileResponse>, AppError> {
+) -> Result<Json<AnalyticsReconcileResponse>, AppError> {
     let request_id = auth.ctx.request_id.clone();
     let org = body.org_id.unwrap_or_else(|| auth.ctx.org_id.as_uuid());
+    if org != auth.ctx.org_id.as_uuid() {
+        return Err(AppError::new(
+            ErrorCode::Forbidden,
+            &request_id,
+            "reconcile org_id does not match authenticated tenant",
+        ));
+    }
 
     let mut tx = state
         .pool
         .begin()
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
-    sqlx::query("SELECT set_config('app.analytics_ingest', '1', true)")
-        .execute(&mut *tx)
+    companyos_tenancy::set_session_org_id(&mut tx, auth.ctx.org_id)
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
@@ -51,7 +57,7 @@ pub async fn nightly(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    Ok(Json(ReconcileResponse {
+    Ok(Json(AnalyticsReconcileResponse {
         mirror_count,
         expected_count: body.expected_count,
         matched: mirror_count == body.expected_count,

@@ -2465,9 +2465,7 @@ export type BranchArm = {
   path: string;
 };
 
-export type HumanStepKind = {
-
-};
+export type HumanStepKind = "approval" | "inbox";
 
 export type SimulateRequest = {
   graph: WorkflowGraph;
@@ -2562,4 +2560,320 @@ export type MonitorResponse = {
 export type MigrateInstanceRequest = {
   /** Stub: keep-old-version is the safe default; explicit migrate later. */
   target_version: number;
+};
+
+export type InvoiceIssuedFact = {
+  amount_minor?: string;
+  currency?: string;
+  event_id: string;
+  invoice_id: string;
+  issued_at: string;
+  org_id: string;
+};
+
+export type FactsResponse = {
+  facts: InvoiceIssuedFact[];
+};
+
+export type AnalyticsIngestResponse = {
+  accepted: boolean;
+  duplicate: boolean;
+  fact?: string;
+};
+
+export type AnalyticsReconcileResponse = {
+  expected_count: number;
+  matched: boolean;
+  mirror_count: number;
+};
+
+export type FactSource = "deal_stage_change" | "invoice_lifecycle" | "payment" | "expense" | "task_lifecycle" | "ai_usage" | "api_request" | "invoice_issued";
+
+export type MeasureKind = "sum" | "count" | "avg";
+
+export type MetricUnit = "money_minor" | "count" | "tokens";
+
+export type MetricDefinition = {
+  description: string;
+  dimensions: string[];
+  display_name: string;
+  drill_route: string;
+  fact: FactSource;
+  /** Flagship metrics appear in benchmark/trend views. */
+  flagship: boolean;
+  measure: MeasureKind;
+  /** Column used for sum/avg (ignored for count). */
+  measure_field: string;
+  /** Stable machine name — unique across the catalogue. */
+  name: string;
+  /** Permission required to see this metric's values (same as fact source). */
+  required_permission: string;
+  unit: MetricUnit;
+};
+
+export type MetricListResponse = {
+  metrics: MetricDefinition[];
+};
+
+export type QueryFilter = {
+  field: string;
+  op: string;
+  value: Record<string, unknown>;
+};
+
+export type QueryRow = {
+  dimensions: Record<string, unknown>;
+  drill_links: string[];
+  record_ids: string[];
+  value: number;
+};
+
+export type QueryResult = {
+  dry_run: boolean;
+  elapsed_ms: number;
+  eventually_consistent: boolean;
+  filtered_by_permission: boolean;
+  freshness_as_of?: string;
+  metric: string;
+  permission_denied_empty: boolean;
+  rows: QueryRow[];
+};
+
+export type ReportDefinition = {
+  dimensions?: string[];
+  filters?: QueryFilter[];
+  group_by?: string[];
+  metric: string;
+  /** Must be present — query guard rejects missing org_id. */
+  org_id?: string;
+  visualization?: string;
+};
+
+export type ReportDto = {
+  created_at: string;
+  created_by: string;
+  definition: ReportDefinition;
+  description: string;
+  id: string;
+  name: string;
+  org_id: string;
+  updated_at: string;
+  updated_by: string;
+  visualization: string;
+};
+
+export type CreateReportRequest = {
+  definition: ReportDefinition;
+  description?: string;
+  name: string;
+};
+
+export type UpdateReportRequest = {
+  definition?: string;
+  description?: string;
+  name?: string;
+};
+
+export type ReportListResponse = {
+  reports: ReportDto[];
+};
+
+export type RunReportRequest = {
+  dry_run?: boolean;
+};
+
+export type RunReportResponse = {
+  report_id?: string;
+  result: QueryResult;
+  run_id: string;
+};
+
+export type SimulateQueryRequest = {
+  definition: ReportDefinition;
+};
+
+export type DashboardDto = {
+  created_at: string;
+  created_by: string;
+  description: string;
+  id: string;
+  layout: Record<string, unknown>;
+  name: string;
+  org_id: string;
+  updated_at: string;
+  updated_by: string;
+  widgets: WidgetDto[];
+};
+
+export type CreateDashboardRequest = {
+  description?: string;
+  layout?: Record<string, unknown>;
+  name: string;
+};
+
+export type UpdateDashboardRequest = {
+  description?: string;
+  layout?: Record<string, unknown>;
+  name?: string;
+};
+
+export type DashboardListResponse = {
+  dashboards: DashboardDto[];
+};
+
+export type WidgetDto = {
+  config: Record<string, unknown>;
+  created_at: string;
+  dashboard_id: string;
+  id: string;
+  metric_name: string;
+  position: number;
+  title: string;
+  visualization: string;
+};
+
+export type UpsertWidgetRequest = {
+  config?: Record<string, unknown>;
+  id?: string;
+  metric_name: string;
+  position?: number;
+  title: string;
+  visualization?: string;
+};
+
+export type ForecastMethod = "trailing_average" | "linear_trend";
+
+export type ForecastRequest = {
+  history_periods?: number;
+  horizon_periods?: number;
+  method?: string;
+  org_id: string;
+  /** One of: revenue, cash_flow, pipeline, headcount (maps to governed metrics). */
+  series: string;
+};
+
+export type ForecastPoint = {
+  period_index: number;
+  period_label: string;
+  value: number;
+};
+
+export type ForecastInputs = {
+  history_periods: number;
+  history_values: number[];
+  horizon_periods: number;
+  method_params: Record<string, unknown>;
+};
+
+export type ForecastResponse = {
+  explainability: string;
+  forecast: ForecastPoint[];
+  history: ForecastPoint[];
+  /** Explicit inputs used — DoD: every forecast exposes inputs + method. */
+  inputs: ForecastInputs;
+  method: ForecastMethod;
+  metric: string;
+  series: string;
+  unit: MetricUnit;
+};
+
+export type ExportRequest = {
+  format?: string;
+};
+
+export type ExportResponse = {
+  content: string;
+  content_type: string;
+  file_id: string;
+  format: string;
+  report_id: string;
+  row_count: number;
+  run_id: string;
+};
+
+export type ScheduleDto = {
+  channel: string;
+  created_at: string;
+  cron: string;
+  enabled: boolean;
+  export_format: string;
+  id: string;
+  last_run_at?: string;
+  next_run_at?: string;
+  recipients: string[];
+  report_id: string;
+  timezone: string;
+  updated_at: string;
+};
+
+export type CreateScheduleRequest = {
+  channel?: string;
+  cron: string;
+  enabled?: boolean;
+  export_format?: string;
+  recipients?: string[];
+  report_id: string;
+  timezone?: string;
+};
+
+export type UpdateScheduleRequest = {
+  channel?: string;
+  cron?: string;
+  enabled?: string;
+  export_format?: string;
+  recipients?: string;
+  timezone?: string;
+};
+
+export type FireScheduleRequest = {
+  channel?: string;
+  export_format?: string;
+};
+
+export type FireScheduleResponse = {
+  export: ExportResponse;
+  run_id: string;
+  schedule_id: string;
+  state: string;
+  workflow_id: string;
+  workflow_type: string;
+};
+
+export type FreshnessResponse = {
+  eventually_consistent: boolean;
+  lag_seconds: number;
+  last_event_at?: string;
+  last_ingest_at?: string;
+  org_id: string;
+};
+
+export type BenchmarkMetric = {
+  current_value: number;
+  display_name: string;
+  metric: string;
+  previous_value: number;
+  trend_percent?: string;
+  unit: MetricUnit;
+};
+
+export type BenchmarkResponse = {
+  benchmarks: BenchmarkMetric[];
+  org_id: string;
+  window_days: number;
+};
+
+export type DrillRequest = {
+  definition: ReportDefinition;
+  limit?: string;
+};
+
+export type DrillRecord = {
+  link: string;
+  record_id: string;
+};
+
+export type DrillResponse = {
+  filtered_by_permission: boolean;
+  metric: string;
+  records: DrillRecord[];
 };

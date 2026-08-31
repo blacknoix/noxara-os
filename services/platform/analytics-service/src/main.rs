@@ -16,6 +16,7 @@ async fn main() -> anyhow::Result<()> {
         .connect(&database_url)
         .await?;
 
+    companyos_outbox::migrate(&pool).await?;
     migrate(&pool).await?;
 
     let ring = auth::build_keyring();

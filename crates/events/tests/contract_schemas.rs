@@ -36,6 +36,7 @@ fn parse_schema_name(stem: &str) -> (Context, &str, &str, u32) {
         "admin" => Context::Admin,
         "auth" => Context::Auth,
         "workflow" => Context::Workflow,
+        "analytics" => Context::Analytics,
         other => panic!("unknown context {other}"),
     };
     (context, parts[1], parts[2], version)

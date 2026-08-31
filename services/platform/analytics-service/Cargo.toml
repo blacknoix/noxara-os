@@ -20,6 +20,7 @@ companyos-errors = { workspace = true }
 companyos-telemetry = { workspace = true }
 companyos-tenancy = { workspace = true }
 companyos-events = { workspace = true }
+companyos-outbox = { workspace = true }
 companyos-authz = { workspace = true }
 companyos-auth-token = { workspace = true }
 axum = { workspace = true }
