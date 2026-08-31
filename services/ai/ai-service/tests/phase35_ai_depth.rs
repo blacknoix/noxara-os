@@ -289,10 +289,7 @@ async fn insight_refresh_is_propose_only() {
         .iter()
         .filter_map(|o| o["insight_type"].as_str())
         .collect();
-    assert!(
-        types.iter().any(|t| *t == "stale_deal"),
-        "expected stale_deal: {body}"
-    );
+    assert!(types.contains(&"stale_deal"), "expected stale_deal: {body}");
     assert!(
         types
             .iter()
