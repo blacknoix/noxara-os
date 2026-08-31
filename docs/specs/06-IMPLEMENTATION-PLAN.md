@@ -55,6 +55,11 @@ Implemented in `companyos-integration` (`src/marketplace/`, `migrations/001_mark
 - Mock PKCE OAuth: authorize → single-use code → token exchange → refresh rotation, plus
   `POST /api/v1/marketplace/oauth/authorize-permission` for resource-server checks.
 - Session JWT / local auth only — marketplace routes are not on the public API-key allowlist.
+- Gateway proxies `/api/v1/marketplace/*` and `/api/v1/integrations/*` to integration-service;
+  OAuth token + authorize-permission endpoints are unauthenticated at the gateway (client
+  credentials / opaque app tokens).
+- Web UI: catalogue, listing consent, installs, publisher, reviewer, and Settings →
+  Integrations (first-party connectors via the same install APIs).
 
 Not yet done: a real connector runtime (the five seeded connectors are catalogue entries
 only), cross-org publisher review staffing, and marketplace billing.
