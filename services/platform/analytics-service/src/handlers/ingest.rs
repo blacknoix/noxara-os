@@ -54,6 +54,7 @@ fn supported_fact(envelope: &EventEnvelope) -> Option<FactSource> {
         (Context::Operations, "task", "created" | "completed" | "updated") => {
             Some(FactSource::TaskLifecycle)
         }
+        (Context::Operations, "timesheet" | "time_entry", _) => Some(FactSource::TimeEntry),
         (Context::Ai, "usage", "recorded") => Some(FactSource::AiUsage),
         _ => None,
     }
@@ -180,6 +181,33 @@ async fn insert_fact(
             .await
             .map_err(internal(request_id))?;
         }
+        FactSource::TimeEntry => {
+            let minutes = payload_i64(payload, &["minutes"]).unwrap_or(0);
+            let billable = payload
+                .get("billable")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+            let billable_minutes = if billable { minutes } else { 0 };
+            sqlx::query(
+                "INSERT INTO analytics_fact_time_entry \
+                 (event_id, org_id, time_entry_id, timesheet_id, project_id, membership_user_id, \
+                  minutes, billable_minutes, lifecycle_event, occurred_at) \
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (event_id) DO NOTHING",
+            )
+            .bind(envelope.event_id)
+            .bind(org)
+            .bind(payload_text(payload, &["time_entry_id", "id"]).unwrap_or("unknown"))
+            .bind(payload_text(payload, &["timesheet_id"]))
+            .bind(payload_text(payload, &["project_id"]))
+            .bind(payload_text(payload, &["membership_user_id"]))
+            .bind(minutes)
+            .bind(billable_minutes)
+            .bind(&envelope.event_type)
+            .bind(envelope.occurred_at)
+            .execute(&mut **tx)
+            .await
+            .map_err(internal(request_id))?;
+        }
         FactSource::AiUsage => {
             sqlx::query(
                 "INSERT INTO analytics_fact_ai_usage \
@@ -209,6 +237,36 @@ fn clickhouse_row(envelope: &EventEnvelope, fact: FactSource) -> Value {
         "occurred_at": envelope.occurred_at.format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
     });
     let object = row.as_object_mut().expect("object");
+
+    if fact == FactSource::TimeEntry {
+        let minutes = payload_i64(payload, &["minutes"]).unwrap_or(0);
+        let billable = payload
+            .get("billable")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
+        let billable_minutes = if billable { minutes } else { 0 };
+        object.insert(
+            "time_entry_id".into(),
+            json!(payload_text(payload, &["time_entry_id", "id"]).unwrap_or("unknown")),
+        );
+        object.insert(
+            "timesheet_id".into(),
+            json!(payload_text(payload, &["timesheet_id"]).unwrap_or("")),
+        );
+        object.insert(
+            "project_id".into(),
+            json!(payload_text(payload, &["project_id"]).unwrap_or("")),
+        );
+        object.insert(
+            "membership_user_id".into(),
+            json!(payload_text(payload, &["membership_user_id"]).unwrap_or("")),
+        );
+        object.insert("minutes".into(), json!(minutes));
+        object.insert("billable_minutes".into(), json!(billable_minutes));
+        object.insert("lifecycle_event".into(), json!(envelope.event_type));
+        return row;
+    }
+
     let fields: &[(&str, Value)] = match fact {
         FactSource::InvoiceLifecycle => &[
             (
@@ -300,6 +358,7 @@ fn clickhouse_row(envelope: &EventEnvelope, fact: FactSource) -> Value {
                 json!(payload_text(payload, &["status"]).unwrap_or("")),
             ),
         ],
+        FactSource::TimeEntry => &[],
         FactSource::AiUsage => &[
             (
                 "usage_kind",
