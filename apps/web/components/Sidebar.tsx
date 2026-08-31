@@ -184,7 +184,7 @@ const GROUPS: NavGroup[] = [
         short: 'Z',
         perm: 'admin.access_review.read',
       },
-      { href: '/developers', label: 'Developers', short: 'D' },
+      { href: '/developers', label: 'Developers', short: 'D', perm: null },
       { href: '/members', label: 'Members', short: 'P', perm: 'workspace.member.read' },
     ],
   },
