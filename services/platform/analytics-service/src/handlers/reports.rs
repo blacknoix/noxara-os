@@ -22,7 +22,6 @@ use super::{authorize, ensure_human, internal, not_found, parse_id, set_org, use
 
 #[derive(Debug, FromRow)]
 struct ReportRow {
-    id: Uuid,
     public_id: String,
     org_id: Uuid,
     name: String,
@@ -82,7 +81,7 @@ async fn fetch_report(
     request_id: &str,
 ) -> Result<ReportRow, AppError> {
     sqlx::query_as(
-        "SELECT id, public_id, org_id, name, description, definition, visualization, \
+        "SELECT public_id, org_id, name, description, definition, visualization, \
          created_by, updated_by, created_at, updated_at \
          FROM analytics_report WHERE org_id = $1 AND id = $2",
     )
@@ -128,7 +127,7 @@ pub async fn list_reports(
     let mut tx = state.pool.begin().await.map_err(internal(request_id))?;
     set_org(&mut tx, auth.ctx.org_id, request_id).await?;
     let rows: Vec<ReportRow> = sqlx::query_as(
-        "SELECT id, public_id, org_id, name, description, definition, visualization, \
+        "SELECT public_id, org_id, name, description, definition, visualization, \
          created_by, updated_by, created_at, updated_at FROM analytics_report \
          WHERE org_id = $1 ORDER BY updated_at DESC LIMIT 200",
     )
@@ -173,7 +172,7 @@ pub async fn create_report(
         "INSERT INTO analytics_report \
          (id, public_id, org_id, name, description, definition, visualization, created_by, updated_by) \
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8) \
-         RETURNING id, public_id, org_id, name, description, definition, visualization, \
+         RETURNING public_id, org_id, name, description, definition, visualization, \
          created_by, updated_by, created_at, updated_at",
     )
     .bind(id)
@@ -256,7 +255,7 @@ pub async fn update_report(
          definition = COALESCE($5, definition), \
          visualization = COALESCE($6, visualization), updated_by = $7, updated_at = now() \
          WHERE org_id = $1 AND id = $2 \
-         RETURNING id, public_id, org_id, name, description, definition, visualization, \
+         RETURNING public_id, org_id, name, description, definition, visualization, \
          created_by, updated_by, created_at, updated_at",
     )
     .bind(auth.ctx.org_id.as_uuid())

@@ -36,7 +36,6 @@ struct DashboardRow {
 
 #[derive(Debug, FromRow)]
 struct WidgetRow {
-    id: Uuid,
     public_id: String,
     dashboard_id: Uuid,
     title: String,
@@ -84,7 +83,7 @@ async fn widgets_for(
     request_id: &str,
 ) -> Result<Vec<WidgetDto>, AppError> {
     let rows: Vec<WidgetRow> = sqlx::query_as(
-        "SELECT id, public_id, dashboard_id, title, metric_name, visualization, \
+        "SELECT public_id, dashboard_id, title, metric_name, visualization, \
          config, position, created_at FROM analytics_dashboard_widget \
          WHERE org_id = $1 AND dashboard_id = $2 ORDER BY position, created_at",
     )
@@ -350,7 +349,7 @@ pub async fn upsert_widget(
          title = EXCLUDED.title, metric_name = EXCLUDED.metric_name, \
          visualization = EXCLUDED.visualization, config = EXCLUDED.config, \
          position = EXCLUDED.position \
-         RETURNING id, public_id, dashboard_id, title, metric_name, visualization, \
+         RETURNING public_id, dashboard_id, title, metric_name, visualization, \
          config, position, created_at",
     )
     .bind(widget_id)
