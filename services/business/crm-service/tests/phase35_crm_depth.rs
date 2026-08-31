@@ -41,6 +41,7 @@ fn crm_app(pool: PgPool, ring: KeyRing) -> Router {
 struct Seeded {
     pool: PgPool,
     ring: KeyRing,
+    #[allow(dead_code)]
     org: OrgId,
     owner_token: String,
     sales_token: String,
