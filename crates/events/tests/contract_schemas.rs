@@ -35,6 +35,7 @@ fn parse_schema_name(stem: &str) -> (Context, &str, &str, u32) {
         "inventory" => Context::Inventory,
         "admin" => Context::Admin,
         "auth" => Context::Auth,
+        "workflow" => Context::Workflow,
         other => panic!("unknown context {other}"),
     };
     (context, parts[1], parts[2], version)
@@ -101,6 +102,18 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
         ("access_review", "completed") => serde_json::json!({ "id": "arv_test" }),
         ("retention", "changed") => serde_json::json!({ "default_retention_days": 2555 }),
         ("sso", "linked") => serde_json::json!({ "sso_config_id": "sso_test" }),
+        ("definition", "published") => serde_json::json!({
+            "id": "wfd_test",
+            "version_id": "wfv_test",
+            "version": 1
+        }),
+        ("instance", "started" | "completed" | "failed" | "cancelled" | "waiting") => {
+            serde_json::json!({
+                "id": "wfi_test",
+                "definition_id": "wfd_test",
+                "version_id": "wfv_test"
+            })
+        }
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

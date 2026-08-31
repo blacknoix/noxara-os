@@ -78,6 +78,12 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: '/ops/projects', label: 'Projects', short: 'P', perm: 'operations.project.read' },
       { href: '/ops/tasks', label: 'Tasks', short: 'T', perm: 'operations.task.read' },
+      {
+        href: '/workflows',
+        label: 'Workflows',
+        short: 'W',
+        perm: 'operations.workflow.read',
+      },
     ],
   },
   {

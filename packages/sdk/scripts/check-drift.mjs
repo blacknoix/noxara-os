@@ -122,6 +122,23 @@ for (const name of [
   }
 }
 
+if (!doc.paths['/api/v1/workflows/definitions'] || !doc.paths['/api/v1/workflows/simulate']) {
+  console.error('OpenAPI drift: missing workflow paths');
+  process.exit(1);
+}
+for (const name of [
+  'WorkflowDefinitionDto',
+  'WorkflowInstanceDto',
+  'WorkflowGraph',
+  'SimulateResult',
+  'MonitorResponse',
+]) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing schema ${name}`);
+    process.exit(1);
+  }
+}
+
 if (!existsSync(join(root, 'src/generated.ts'))) {
   console.error('Missing src/generated.ts — run pnpm generate:sdk');
   process.exit(1);

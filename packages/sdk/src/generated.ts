@@ -2364,3 +2364,202 @@ export type RotateApiKeyResponse = {
   /** Raw secret — returned only once, at rotation time. */
   secret: string;
 };
+
+export type WorkflowDefinitionDto = {
+  created_at: string;
+  created_by: string;
+  current_published_version?: string;
+  description: string;
+  graph?: string;
+  id: string;
+  latest_version_id?: string;
+  name: string;
+  status: string;
+  updated_at: string;
+};
+
+export type WorkflowDefinitionListResponse = {
+  items: WorkflowDefinitionDto[];
+};
+
+export type CreateWorkflowDefinitionRequest = {
+  description?: string;
+  graph: WorkflowGraph;
+  name: string;
+};
+
+export type UpdateWorkflowDefinitionRequest = {
+  description?: string;
+  graph?: string;
+  name?: string;
+};
+
+export type WorkflowVersionDto = {
+  created_at: string;
+  definition_id: string;
+  graph: WorkflowGraph;
+  id: string;
+  published_at?: string;
+  published_by?: string;
+  required_permissions: string[];
+  version: number;
+};
+
+export type WorkflowVersionListResponse = {
+  items: WorkflowVersionDto[];
+};
+
+export type PublishWorkflowRequest = {
+  /** Optional note; publish always creates a new immutable version from current draft graph. */
+  note?: string;
+};
+
+export type StartWorkflowRequest = {
+  /** When true, start is rejected — use /simulate instead (defense in depth). */
+  dry_run?: boolean;
+  payload?: Record<string, unknown>;
+};
+
+export type WorkflowInstanceDto = {
+  actor_user_id: string;
+  completed_at?: string;
+  current_node_id?: string;
+  definition_id: string;
+  error_message?: string;
+  id: string;
+  sla_deadline?: string;
+  started_at: string;
+  status: string;
+  step_count: number;
+  temporal_workflow_id: string;
+  updated_at: string;
+  version_id: string;
+  version_number: number;
+  waiting_until?: string;
+};
+
+export type WorkflowInstanceListResponse = {
+  items: WorkflowInstanceDto[];
+};
+
+export type WorkflowGraph = {
+  /** Entry node id after the trigger fires. */
+  entry: string;
+  nodes: WorkflowNode[];
+  /** Optional SLA deadline from start (seconds). Soft signal for monitor. */
+  sla_seconds?: string;
+  trigger: WorkflowTrigger;
+};
+
+export type WorkflowTrigger = {
+
+};
+
+export type WorkflowNode = {
+
+};
+
+export type BranchArm = {
+  equals: Record<string, unknown>;
+  next: string;
+  path: string;
+};
+
+export type HumanStepKind = {
+
+};
+
+export type SimulateRequest = {
+  graph: WorkflowGraph;
+  /** Optional override; defaults to org max_steps_per_instance. */
+  max_steps?: string;
+  payload?: Record<string, unknown>;
+};
+
+export type SimulateResult = {
+  error?: string;
+  ok: boolean;
+  /** Always true — documents the dry-run contract for clients/tests. */
+  side_effects: boolean;
+  steps: SimulateStepResult[];
+};
+
+export type SimulateStepResult = {
+  action?: string;
+  detail?: string;
+  node_id: string;
+  node_type: string;
+  permission?: string;
+  permission_allowed?: string;
+  status: string;
+  step_index: number;
+};
+
+export type TriggerCatalogueEntry = {
+  aggregate: string;
+  context: string;
+  description: string;
+  event_key: string;
+  event_type: string;
+  /** Subject suffix after org: `{context}.{aggregate}.{event}.v1` */
+  subject_suffix: string;
+};
+
+export type ActionCatalogueEntry = {
+  description: string;
+  /** High-risk actions (journals) stay in catalogue but Member cannot use them. */
+  high_risk: boolean;
+  /** Relative HTTP path under the owning service (for documentation / activities). */
+  http_method: string;
+  http_path: string;
+  key: string;
+  /** Permission checked at save time and at run time (deny by default). */
+  required_permission: string;
+};
+
+export type TriggerCatalogueResponse = {
+  items: TriggerCatalogueEntry[];
+};
+
+export type ActionCatalogueResponse = {
+  items: ActionCatalogueEntry[];
+};
+
+export type FixtureWorkflowDto = {
+  description: string;
+  graph: WorkflowGraph;
+  name: string;
+};
+
+export type FixtureListResponse = {
+  items: FixtureWorkflowDto[];
+};
+
+export type OrgBoundsDto = {
+  max_concurrent: number;
+  max_steps_per_instance: number;
+};
+
+export type UpdateOrgBoundsRequest = {
+  max_concurrent: number;
+  max_steps_per_instance: number;
+};
+
+export type MonitorSummaryDto = {
+  cancelled: number;
+  completed: number;
+  failed: number;
+  running: number;
+  sla_breached: number;
+  waiting: number;
+};
+
+export type MonitorResponse = {
+  instances: WorkflowInstanceDto[];
+  summary: MonitorSummaryDto;
+};
+
+export type MigrateInstanceRequest = {
+  /** Stub: keep-old-version is the safe default; explicit migrate later. */
+  target_version: number;
+};

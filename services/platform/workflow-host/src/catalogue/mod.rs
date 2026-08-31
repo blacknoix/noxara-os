@@ -1,4 +1,4 @@
-//! Workflow catalogue — Phase 1.8 + Phase 2.1 types hosted by companyos-workflow-host.
+//! Workflow catalogue — Phase 1.8 + Phase 2.x + Phase 3.1 types hosted by companyos-workflow-host.
 
 pub mod approval_process;
 pub mod data_import;
@@ -12,6 +12,7 @@ pub mod payroll_run;
 pub mod quote_to_invoice;
 pub mod tenant_deletion;
 pub mod user_offboarding;
+pub mod user_workflow;
 
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +31,8 @@ pub enum WorkflowType {
     EmployeeOffboarding,
     LeaveCarryForward,
     PayrollRun,
+    /// Configurable org-scoped workflow (Phase 3.1).
+    UserWorkflow,
 }
 
 impl WorkflowType {
@@ -47,6 +50,7 @@ impl WorkflowType {
             Self::EmployeeOffboarding => "EmployeeOffboarding",
             Self::LeaveCarryForward => "LeaveCarryForward",
             Self::PayrollRun => "PayrollRun",
+            Self::UserWorkflow => "UserWorkflow",
         }
     }
 
@@ -64,11 +68,16 @@ impl WorkflowType {
             Self::EmployeeOffboarding,
             Self::LeaveCarryForward,
             Self::PayrollRun,
+            Self::UserWorkflow,
         ]
     }
 }
 
 /// Build Temporal workflow id: `{org_id}:{WorkflowType}:{business_id}`.
+///
+/// For [`WorkflowType::UserWorkflow`], `business_id` should be
+/// `{definition_id}:{instance_id}` yielding
+/// `{org_id}:UserWorkflow:{definition_id}:{instance_id}`.
 pub fn workflow_id(org_id: &str, wf: WorkflowType, business_id: &str) -> String {
     format!("{org_id}:{}:{business_id}", wf.as_str())
 }

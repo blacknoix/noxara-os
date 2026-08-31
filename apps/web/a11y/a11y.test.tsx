@@ -574,4 +574,68 @@ describe('a11y', () => {
     );
     await expectNoSeriousAxeViolations(container);
   });
+
+  it('workflows builder landmarks have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Workflows</h1>
+        <p>Configure event-driven automations. Definitions are data — not code.</p>
+        <section aria-labelledby="fixtures-heading">
+          <h2 id="fixtures-heading">Start from a fixture</h2>
+          <button type="button">Deal won → task</button>
+        </section>
+        <section aria-labelledby="list-heading">
+          <h2 id="list-heading">Definitions</h2>
+          <EmptyState title="No workflows yet" description="Create a definition or start from a fixture." />
+        </section>
+        <form>
+          <Input label="Name" name="name" />
+          <Textarea label="Description" name="description" />
+          <label>
+            Trigger
+            <select name="trigger" aria-label="Trigger">
+              <option value="manual">Manual / API start</option>
+              <option value="sales.deal.won">sales.deal.won</option>
+            </select>
+          </label>
+          <button type="submit">Save draft</button>
+        </form>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('workflow monitor landmarks have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Workflow monitor</h1>
+        <section aria-labelledby="summary-heading">
+          <h2 id="summary-heading">Summary</h2>
+          <dl>
+            <div>
+              <dt>Running</dt>
+              <dd>0</dd>
+            </div>
+            <div>
+              <dt>Waiting</dt>
+              <dd>1</dd>
+            </div>
+            <div>
+              <dt>Failed</dt>
+              <dd>0</dd>
+            </div>
+            <div>
+              <dt>SLA breached</dt>
+              <dd>0</dd>
+            </div>
+          </dl>
+        </section>
+        <section aria-labelledby="active-heading">
+          <h2 id="active-heading">Active & failed</h2>
+          <EmptyState title="Nothing to show" description="No running instances." />
+        </section>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
 });

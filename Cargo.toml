@@ -24,6 +24,7 @@ members = [
     "services/platform/analytics-service",
     "services/platform/file-service",
     "services/platform/workflow-host",
+    "services/platform/workflow-service",
     "services/ai/ai-service",
 ]
 default-members = [
@@ -50,6 +51,7 @@ default-members = [
     "services/platform/analytics-service",
     "services/platform/file-service",
     "services/platform/workflow-host",
+    "services/platform/workflow-service",
     "services/ai/ai-service",
 ]
 

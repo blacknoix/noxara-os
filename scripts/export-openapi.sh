@@ -14,6 +14,7 @@ SEARCH_TMP="/tmp/companyos-search-openapi.json"
 FILE_TMP="/tmp/companyos-file-openapi.json"
 AI_TMP="/tmp/companyos-ai-openapi.json"
 INV_TMP="/tmp/companyos-inventory-openapi.json"
+WF_TMP="/tmp/companyos-workflow-openapi.json"
 
 cd "$ROOT"
 
@@ -47,6 +48,9 @@ cargo run -p companyos-ai --example export_openapi >"$AI_TMP"
 echo "==> Exporting Inventory OpenAPI (offline)..."
 cargo run -p companyos-inventory --example export_openapi >"$INV_TMP"
 
+echo "==> Exporting Workflow OpenAPI (offline)..."
+cargo run -p companyos-workflow --example export_openapi >"$WF_TMP"
+
 export ROOT_OVERRIDE="$ROOT"
 python3 <<'PY'
 import json
@@ -65,6 +69,7 @@ docs = [
     json.loads(Path("/tmp/companyos-file-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-ai-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-inventory-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-workflow-openapi.json").read_text()),
 ]
 
 merged = dict(docs[0])

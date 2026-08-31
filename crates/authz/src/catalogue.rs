@@ -698,6 +698,47 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Create and publish versioned approval policies (policy.manage)",
         sensitive: true,
     },
+    // --- Operations / Configurable workflows (Phase 3.1) ---
+    PermissionDef {
+        id: "operations.workflow.read",
+        context: "operations",
+        resource: "workflow",
+        action: "read",
+        description: "View workflow definitions, versions, instances, and monitor",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.workflow.write",
+        context: "operations",
+        resource: "workflow",
+        action: "write",
+        description: "Create and update draft workflow definitions",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.workflow.publish",
+        context: "operations",
+        resource: "workflow",
+        action: "publish",
+        description: "Publish a workflow definition version (human commit; never AI auto-publish)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "operations.workflow.run",
+        context: "operations",
+        resource: "workflow",
+        action: "run",
+        description: "Start, cancel, or retry workflow instances",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.workflow.manage",
+        context: "operations",
+        resource: "workflow",
+        action: "manage",
+        description: "Manage org workflow bounds (concurrency caps) and force-control runs",
+        sensitive: true,
+    },
     // --- Platform (Phase 1.8) ---
     PermissionDef {
         id: "platform.notification.read",
@@ -1178,6 +1219,8 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "finance.expense.approve",
     "operations.approval.decide",
     "operations.approval.manage",
+    "operations.workflow.publish",
+    "operations.workflow.manage",
     "ai.settings.manage",
     "hr.employee.read_sensitive",
     "hr.field.compensation_read",
@@ -1486,6 +1529,21 @@ pub mod perms {
     }
     pub fn operations_approval_policy_manage() -> PermissionId {
         PermissionId::from("operations.approval.manage")
+    }
+    pub fn operations_workflow_read() -> PermissionId {
+        PermissionId::from("operations.workflow.read")
+    }
+    pub fn operations_workflow_write() -> PermissionId {
+        PermissionId::from("operations.workflow.write")
+    }
+    pub fn operations_workflow_publish() -> PermissionId {
+        PermissionId::from("operations.workflow.publish")
+    }
+    pub fn operations_workflow_run() -> PermissionId {
+        PermissionId::from("operations.workflow.run")
+    }
+    pub fn operations_workflow_manage() -> PermissionId {
+        PermissionId::from("operations.workflow.manage")
     }
     pub fn platform_notification_read() -> PermissionId {
         PermissionId::from("platform.notification.read")

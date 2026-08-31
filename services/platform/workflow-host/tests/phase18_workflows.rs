@@ -69,8 +69,12 @@ fn workflow_id_and_namespace_defaults() {
         workflow_id("org_abc", WorkflowType::PayrollRun, "payrun_1"),
         "org_abc:PayrollRun:payrun_1"
     );
+    assert_eq!(
+        workflow_id("org_abc", WorkflowType::UserWorkflow, "wfd_1:wfi_1"),
+        "org_abc:UserWorkflow:wfd_1:wfi_1"
+    );
     // Default when env unset in unit test process — may already be set in CI.
     let ns = temporal_namespace();
     assert!(ns == "companyos-local" || ns == "companyos-ci" || !ns.is_empty());
-    assert_eq!(WorkflowType::all().len(), 12);
+    assert_eq!(WorkflowType::all().len(), 13);
 }
