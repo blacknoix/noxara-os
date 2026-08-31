@@ -24,7 +24,7 @@ use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
 use crate::principal::{
-    enforce_any_scope, load_membership_scope, required_scope_for_owner_row, MembershipScope,
+    enforce_any_scope, load_membership_scope_for, required_scope_for_owner_row, MembershipScope,
 };
 use crate::quotes_math::{compute_quote_totals, LineInput};
 use crate::scope::{push_owner_predicate, scope_for_permission};
@@ -298,8 +298,7 @@ pub async fn list_quotes(
     let org_id = auth.ctx.org_id.as_uuid();
     let actor = auth.ctx.actor.user_id;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_read(),
@@ -383,13 +382,7 @@ pub async fn create_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_create(),
@@ -551,13 +544,7 @@ pub async fn get_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_read(),
@@ -607,13 +594,7 @@ pub async fn update_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_update(),
@@ -822,13 +803,7 @@ pub async fn send_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_update(),
@@ -999,13 +974,7 @@ pub async fn approval_complete(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_update(),
@@ -1058,13 +1027,7 @@ pub async fn approval_reject(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_update(),
@@ -1115,13 +1078,7 @@ pub async fn accept_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_accept(),
@@ -1232,13 +1189,7 @@ pub async fn reject_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let quote_id = parse_public_id(IdKind::Quote, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_quote_update(),

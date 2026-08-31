@@ -2342,6 +2342,77 @@ export type ApiKeyView = {
   scopes: string[];
 };
 
+export type WebhookEndpointView = {
+  id: string;
+  url: string;
+  description: string;
+  event_types: string[];
+  secret_prefix: string;
+  status: string;
+  failure_count: number;
+  last_delivery_at?: string;
+  created_at: string;
+  disabled_at?: string;
+  disabled_reason?: string;
+};
+
+export type WebhookEndpointListResponse = {
+  items: WebhookEndpointView[];
+};
+
+export type CreateWebhookEndpointRequest = {
+  url: string;
+  description?: string;
+  event_types: string[];
+};
+
+export type CreateWebhookEndpointResponse = {
+  endpoint: WebhookEndpointView;
+  secret: string;
+};
+
+export type RotateWebhookSecretResponse = {
+  endpoint: WebhookEndpointView;
+  secret: string;
+};
+
+export type WebhookDeliveryView = {
+  id: string;
+  endpoint_id: string;
+  event_subject: string;
+  event_type: string;
+  attempt: number;
+  status: string;
+  status_code?: number;
+  response_body?: string;
+  delivered_at?: string;
+  next_retry_at?: string;
+  created_at: string;
+};
+
+export type WebhookDeliveryListResponse = {
+  items: WebhookDeliveryView[];
+};
+
+export type ReplayWebhookResponse = {
+  delivery: WebhookDeliveryView;
+};
+
+export type ApiKeyExchangeResponse = {
+  access_token: string;
+  api_key_id: string;
+  org_id: string;
+  scopes: string[];
+  /** Per-key rate limit (requests per minute). Prefer this over deprecated rate_limit_rpm. */
+  rate_limit_per_minute: number;
+  /** Deprecated alias of rate_limit_per_minute. Dual-published for 180 days. */
+  rate_limit_rpm?: number;
+};
+
+export type DisableWebhookRequest = {
+  reason?: string;
+};
+
 export type ApiKeyListResponse = {
   items: ApiKeyView[];
 };

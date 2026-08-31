@@ -759,7 +759,7 @@ async fn api_keys_lifecycle_create_rotate_revoke() {
                 .body(Body::from(
                     serde_json::json!({
                         "name": "CI integration key",
-                        "scopes": ["read:reports"],
+                        "scopes": ["sales.customer.read"],
                         "expires_at": null,
                     })
                     .to_string(),

@@ -11,6 +11,7 @@ ingestion, and the outbox → NATS JetStream relay live here.
 | `companyos-analytics` | `:8087` | ADR-011 facts from events only → ClickHouse or Postgres mirror `analytics_fact_invoice_issued` |
 | `companyos-file` | `:8089` | Presigned upload (MinIO or local stub); allowlist pdf/png/jpeg/webp ≤10MB |
 | `companyos-workflow-host` | `:8091` | Temporal catalogue host (`TEMPORAL_NAMESPACE`, default `companyos-local`) |
+| `companyos-integration` | `:8095` | Outbound org webhooks — enqueue from events, SSRF-safe dispatch, HMAC sign |
 
 ## Env
 
@@ -24,6 +25,9 @@ ingestion, and the outbox → NATS JetStream relay live here.
 | `AUTH_MAIL_DIR` | notification | Email catcher dir (else stdout + `.tmp/mail`) |
 | `TEMPORAL_ADDRESS` | workflow-host | Default `127.0.0.1:7233` |
 | `TEMPORAL_NAMESPACE` | workflow-host | Default `companyos-local`; CI uses `companyos-ci` — **never share across env** |
+| `INTEGRATION_BIND` | integration | Default `0.0.0.0:8095` |
+| `INTEGRATION_SERVICE_URL` | gateway/clients | Default `http://127.0.0.1:8095` |
+| `WEBHOOK_ENCRYPTION_KEY` | integration/core | Base64 32-byte AES key (else derived from `AUTH_JWT_SECRET`) |
 | `COMPANYOS_LOCAL_AUTH` | HTTP services | Dev/test `X-CompanyOS-Dev-*` headers |
 
 ## Workflow catalogue

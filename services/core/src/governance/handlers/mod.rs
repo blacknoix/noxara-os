@@ -18,7 +18,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use super::types::*;
-use super::{access_review, api_keys, audit_verify, retention};
+use super::{access_review, api_key_exchange, api_keys, audit_verify, retention, webhooks};
 use super::{authorize, internal, outbox_internal, validation};
 use crate::auth::extract::AuthUser;
 use crate::state::AppState;
@@ -57,6 +57,31 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/governance/api-keys/{id}/revoke",
             post(revoke_api_key),
+        )
+        .route(
+            "/api/v1/governance/webhooks",
+            get(list_webhooks).post(create_webhook),
+        )
+        .route(
+            "/api/v1/governance/webhooks/{id}/rotate",
+            post(rotate_webhook),
+        )
+        .route(
+            "/api/v1/governance/webhooks/{id}/disable",
+            post(disable_webhook),
+        )
+        .route(
+            "/api/v1/governance/webhooks/{id}/deliveries",
+            get(list_webhook_deliveries),
+        )
+        .route(
+            "/api/v1/governance/webhooks/deliveries/{id}/replay",
+            post(replay_webhook_delivery),
+        )
+        .route("/api/v1/internal/api-keys/exchange", post(exchange_api_key))
+        .route(
+            "/api/v1/internal/api-keys/usage",
+            post(record_api_key_usage),
         )
 }
 
@@ -450,6 +475,8 @@ pub async fn create_api_key(
     if body.name.trim().is_empty() {
         return Err(validation(&request_id, "name required"));
     }
+    let scopes = crate::public_scopes::validate_requested_scopes(&body.scopes)
+        .map_err(|e| validation(&request_id, e))?;
     let expires_at = parse_optional_rfc3339(body.expires_at.as_deref(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -462,7 +489,7 @@ pub async fn create_api_key(
         user.ctx.org_id,
         user.ctx.actor.user_id,
         body.name.trim(),
-        &body.scopes,
+        &scopes,
         expires_at,
         &request_id,
     )
@@ -528,5 +555,265 @@ pub async fn revoke_api_key(
 
     Ok(Json(MessageResponse {
         message: "api key revoked".into(),
+    }))
+}
+
+// --- Outbound webhooks (Phase 3.3) ---
+
+#[utoipa::path(get, path = "/api/v1/governance/webhooks", tag = "governance",
+    responses((status = 200, body = WebhookEndpointListResponse)))]
+pub async fn list_webhooks(
+    State(state): State<AppState>,
+    user: AuthUser,
+) -> Result<Json<WebhookEndpointListResponse>, AppError> {
+    let request_id = user.ctx.request_id.clone();
+    authorize(&state, &user, &perms::admin_webhook_read()).await?;
+    let items = webhooks::list_endpoints(&state.pool, user.ctx.org_id, &request_id).await?;
+    Ok(Json(WebhookEndpointListResponse { items }))
+}
+
+#[utoipa::path(post, path = "/api/v1/governance/webhooks", tag = "governance",
+    request_body = CreateWebhookEndpointRequest,
+    responses((status = 201, body = CreateWebhookEndpointResponse)))]
+pub async fn create_webhook(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Json(body): Json<CreateWebhookEndpointRequest>,
+) -> Result<(StatusCode, Json<CreateWebhookEndpointResponse>), AppError> {
+    let request_id = user.ctx.request_id.clone();
+    authorize(&state, &user, &perms::admin_webhook_write()).await?;
+
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, user.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+
+    let (endpoint, secret) = webhooks::create_endpoint(
+        &mut tx,
+        user.ctx.org_id,
+        user.ctx.actor.user_id,
+        body.url.trim(),
+        body.description.trim(),
+        &body.event_types,
+        &state.webhook_crypto,
+        &request_id,
+    )
+    .await?;
+
+    let envelope = EventEnvelope::new(
+        user.ctx.org_id,
+        Context::Admin,
+        "webhook",
+        "created",
+        1,
+        user.ctx.actor.clone(),
+        serde_json::json!({ "webhook_id": endpoint.id, "url_host": url_host(&endpoint.url) }),
+    );
+    insert_event(&mut *tx, &envelope)
+        .await
+        .map_err(outbox_internal(&request_id))?;
+
+    tx.commit().await.map_err(internal(&request_id))?;
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateWebhookEndpointResponse { endpoint, secret }),
+    ))
+}
+
+#[utoipa::path(post, path = "/api/v1/governance/webhooks/{id}/rotate", tag = "governance",
+    params(("id" = String, Path)), responses((status = 200, body = RotateWebhookSecretResponse)))]
+pub async fn rotate_webhook(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<String>,
+) -> Result<Json<RotateWebhookSecretResponse>, AppError> {
+    let request_id = user.ctx.request_id.clone();
+    authorize(&state, &user, &perms::admin_webhook_write()).await?;
+
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, user.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+
+    let (endpoint, secret) = webhooks::rotate_secret(
+        &mut tx,
+        user.ctx.org_id,
+        &id,
+        &state.webhook_crypto,
+        &request_id,
+    )
+    .await?;
+
+    let envelope = EventEnvelope::new(
+        user.ctx.org_id,
+        Context::Admin,
+        "webhook",
+        "rotated",
+        1,
+        user.ctx.actor.clone(),
+        serde_json::json!({ "webhook_id": endpoint.id }),
+    );
+    insert_event(&mut *tx, &envelope)
+        .await
+        .map_err(outbox_internal(&request_id))?;
+
+    tx.commit().await.map_err(internal(&request_id))?;
+    Ok(Json(RotateWebhookSecretResponse { endpoint, secret }))
+}
+
+#[utoipa::path(post, path = "/api/v1/governance/webhooks/{id}/disable", tag = "governance",
+    params(("id" = String, Path)), request_body = DisableWebhookRequest,
+    responses((status = 200, body = WebhookEndpointView)))]
+pub async fn disable_webhook(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<String>,
+    Json(body): Json<DisableWebhookRequest>,
+) -> Result<Json<WebhookEndpointView>, AppError> {
+    let request_id = user.ctx.request_id.clone();
+    authorize(&state, &user, &perms::admin_webhook_write()).await?;
+
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, user.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+
+    let endpoint =
+        webhooks::disable_endpoint(&mut tx, user.ctx.org_id, &id, &body.reason, &request_id)
+            .await?;
+
+    let envelope = EventEnvelope::new(
+        user.ctx.org_id,
+        Context::Admin,
+        "webhook",
+        "disabled",
+        1,
+        user.ctx.actor.clone(),
+        serde_json::json!({ "webhook_id": endpoint.id, "reason": body.reason }),
+    );
+    insert_event(&mut *tx, &envelope)
+        .await
+        .map_err(outbox_internal(&request_id))?;
+
+    tx.commit().await.map_err(internal(&request_id))?;
+    Ok(Json(endpoint))
+}
+
+#[utoipa::path(get, path = "/api/v1/governance/webhooks/{id}/deliveries", tag = "governance",
+    params(("id" = String, Path)), responses((status = 200, body = WebhookDeliveryListResponse)))]
+pub async fn list_webhook_deliveries(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<String>,
+) -> Result<Json<WebhookDeliveryListResponse>, AppError> {
+    let request_id = user.ctx.request_id.clone();
+    authorize(&state, &user, &perms::admin_webhook_read()).await?;
+    let items = webhooks::list_deliveries(&state.pool, user.ctx.org_id, &id, &request_id).await?;
+    Ok(Json(WebhookDeliveryListResponse { items }))
+}
+
+#[utoipa::path(post, path = "/api/v1/governance/webhooks/deliveries/{id}/replay", tag = "governance",
+    params(("id" = String, Path)), responses((status = 200, body = ReplayWebhookResponse)))]
+pub async fn replay_webhook_delivery(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<String>,
+) -> Result<Json<ReplayWebhookResponse>, AppError> {
+    let request_id = user.ctx.request_id.clone();
+    authorize(&state, &user, &perms::admin_webhook_replay()).await?;
+
+    let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
+    set_session_org_id(&mut tx, user.ctx.org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+
+    let delivery = webhooks::replay_delivery(&mut tx, user.ctx.org_id, &id, &request_id).await?;
+    tx.commit().await.map_err(internal(&request_id))?;
+    Ok(Json(ReplayWebhookResponse { delivery }))
+}
+
+/// Internal: gateway exchanges an API key hash for a short-lived access JWT.
+#[utoipa::path(post, path = "/api/v1/internal/api-keys/exchange", tag = "internal",
+    request_body = ApiKeyExchangeRequest, responses((status = 200, body = ApiKeyExchangeResponse)))]
+pub async fn exchange_api_key(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<ApiKeyExchangeRequest>,
+) -> Result<Response, AppError> {
+    let request_id = headers
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string();
+    if body.key_hash.trim().is_empty() {
+        return Err(validation(&request_id, "key_hash required"));
+    }
+    let resp = api_key_exchange::exchange(&state, body.key_hash.trim(), &request_id).await?;
+    // Deprecation exercise: dual-publish rate_limit_rpm; announce header.
+    let mut response = Json(resp).into_response();
+    response.headers_mut().insert(
+        header::HeaderName::from_static("deprecation"),
+        header::HeaderValue::from_static("true"),
+    );
+    response.headers_mut().insert(
+        header::HeaderName::from_static("sunset"),
+        header::HeaderValue::from_static("Sat, 27 Feb 2027 00:00:00 GMT"),
+    );
+    response.headers_mut().insert(
+        header::HeaderName::from_static("link"),
+        header::HeaderValue::from_static(
+            "</docs/developers/deprecation.md>; rel=\"deprecation\"; type=\"text/markdown\"",
+        ),
+    );
+    Ok(response)
+}
+
+fn url_host(url: &str) -> String {
+    url::Url::parse(url)
+        .ok()
+        .and_then(|u| u.host_str().map(|h| h.to_string()))
+        .unwrap_or_else(|| "unknown".into())
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApiKeyUsageRequest {
+    pub api_key_id: String,
+    pub org_id: String,
+    pub route: String,
+    pub method: String,
+    pub status_code: i32,
+    #[serde(default)]
+    pub duration_ms: i32,
+}
+
+pub async fn record_api_key_usage(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<ApiKeyUsageRequest>,
+) -> Result<Json<MessageResponse>, AppError> {
+    let request_id = headers
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string();
+    let org_id = body
+        .org_id
+        .parse::<companyos_ids::PublicId>()
+        .ok()
+        .and_then(|p| companyos_tenancy::OrgId::from_public(&p).ok())
+        .ok_or_else(|| validation(&request_id, "invalid org_id"))?;
+    api_key_exchange::record_usage(
+        &state.pool,
+        org_id,
+        &body.api_key_id,
+        &body.route,
+        &body.method,
+        body.status_code,
+        body.duration_ms,
+        &request_id,
+    )
+    .await?;
+    Ok(Json(MessageResponse {
+        message: "recorded".into(),
     }))
 }

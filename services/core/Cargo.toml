@@ -52,6 +52,7 @@ time = { workspace = true }
 reqwest = { workspace = true }
 jsonwebtoken = { workspace = true }
 thiserror = { workspace = true }
+aes-gcm = "0.10"
 
 [dev-dependencies]
 companyos-testkit = { workspace = true }

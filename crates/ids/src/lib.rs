@@ -138,6 +138,10 @@ pub enum IdKind {
     AnalyticsSchedule,
     /// Report / export run (`arun_`).
     AnalyticsRun,
+    /// Outbound webhook endpoint (`whk_`).
+    WebhookEndpoint,
+    /// Outbound webhook delivery (`whd_`).
+    WebhookDelivery,
 }
 
 impl IdKind {
@@ -222,6 +226,8 @@ impl IdKind {
             Self::AnalyticsWidget => "wdg_",
             Self::AnalyticsSchedule => "asch_",
             Self::AnalyticsRun => "arun_",
+            Self::WebhookEndpoint => "whk_",
+            Self::WebhookDelivery => "whd_",
         }
     }
 
@@ -306,6 +312,8 @@ impl IdKind {
             "wdg_" => Some(Self::AnalyticsWidget),
             "asch_" => Some(Self::AnalyticsSchedule),
             "arun_" => Some(Self::AnalyticsRun),
+            "whk_" => Some(Self::WebhookEndpoint),
+            "whd_" => Some(Self::WebhookDelivery),
             _ => None,
         }
     }
@@ -442,6 +450,8 @@ impl FromStr for PublicId {
             ("rpt_", IdKind::AnalyticsReport),
             ("adb_", IdKind::AnalyticsDashboard),
             ("wdg_", IdKind::AnalyticsWidget),
+            ("whk_", IdKind::WebhookEndpoint),
+            ("whd_", IdKind::WebhookDelivery),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {
@@ -597,6 +607,8 @@ mod tests {
             IdKind::AnalyticsWidget,
             IdKind::AnalyticsSchedule,
             IdKind::AnalyticsRun,
+            IdKind::WebhookEndpoint,
+            IdKind::WebhookDelivery,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

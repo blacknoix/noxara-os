@@ -108,7 +108,69 @@ merged["tags"] = merged_tags
 out_path = root / "packages/sdk/openapi.json"
 out_path.write_text(json.dumps(merged, indent=2) + "\n")
 print(f"wrote {out_path} ({len(merged_paths)} paths, {len(merged_schemas)} schemas)")
+
+# Filtered public contract for third-party SDKs (Phase 3.3).
+PUBLIC_PREFIXES = (
+    "/api/v1/sales/customers",
+    "/api/v1/sales/deals",
+    "/api/v1/sales/quotes",
+    "/api/v1/finance/invoices",
+    "/api/v1/finance/payments",
+    "/api/v1/governance/api-keys",
+    "/api/v1/governance/webhooks",
+    "/api/v1/openapi.public.json",
+)
+
+def is_public(path: str) -> bool:
+    return any(path == p or path.startswith(p + "/") or path.startswith(p) for p in PUBLIC_PREFIXES)
+
+public = dict(merged)
+public_paths = {k: v for k, v in merged_paths.items() if is_public(k)}
+# Mark operations
+for path, item in public_paths.items():
+    if isinstance(item, dict):
+        for method, op in item.items():
+            if isinstance(op, dict) and method in ("get", "post", "put", "patch", "delete"):
+                op = dict(op)
+                op["x-companyos-public"] = True
+                item[method] = op
+public["paths"] = public_paths
+public["info"] = {
+    "title": "CompanyOS Public API",
+    "version": "v1",
+    "description": "Stable public REST surface for third-party integrations (Phase 3.3).",
+}
+public["x-companyos-deprecation-policy"] = {
+    "window_days": 180,
+    "dual_publish": True,
+    "headers": ["Deprecation", "Sunset", "Link"],
+    "doc": "docs/developers/deprecation.md",
+}
+# Ensure deprecated dual-publish field is annotated when present.
+schemas = public.get("components", {}).get("schemas", {})
+ex = schemas.get("ApiKeyExchangeResponse", {})
+props = ex.get("properties", {})
+if "rate_limit_rpm" in props:
+    props["rate_limit_rpm"] = dict(props["rate_limit_rpm"])
+    props["rate_limit_rpm"]["deprecated"] = True
+    props["rate_limit_rpm"]["description"] = (
+        "Deprecated alias of rate_limit_per_minute. Dual-published for 180 days."
+    )
+    ex["properties"] = props
+    schemas["ApiKeyExchangeResponse"] = ex
+    public.setdefault("components", {})["schemas"] = schemas
+
+public_path = root / "packages/sdk/openapi.public.json"
+public_path.write_text(json.dumps(public, indent=2) + "\n")
+print(f"wrote {public_path} ({len(public_paths)} public paths)")
+
+# Freeze previous public snapshot for compatibility tests when absent.
+baseline = root / "packages/sdk/openapi.public.previous.json"
+if not baseline.exists():
+    baseline.write_text(json.dumps(public, indent=2) + "\n")
+    print(f"froze baseline {baseline}")
 PY
 
 (cd "$ROOT" && pnpm --filter @companyos/sdk generate)
-echo "Exported merged OpenAPI to packages/sdk/openapi.json"
+(cd "$ROOT" && pnpm --filter @companyos/sdk-python generate || node packages/sdk-python/scripts/generate.mjs)
+echo "Exported merged OpenAPI to packages/sdk/openapi.json (+ public)"

@@ -9,8 +9,10 @@
     "format:check": "prettier --check .",
     "build": "pnpm -r build",
     "dev:web": "pnpm --filter @companyos/web dev",
-    "generate:sdk": "pnpm --filter @companyos/sdk generate",
-    "check:openapi-drift": "pnpm --filter @companyos/sdk check:drift",
+    "generate:sdk": "pnpm --filter @companyos/sdk generate && pnpm --filter @companyos/sdk-python generate",
+    "check:openapi-drift": "pnpm --filter @companyos/sdk check:drift && pnpm --filter @companyos/sdk-python check:drift",
+    "check:public-compat": "node packages/sdk/scripts/check-public-compat.mjs",
+    "fixture:third-party": "node packages/sdk/fixtures/third_party_client.mjs",
     "test:a11y": "pnpm --filter @companyos/web test:a11y",
     "test:unit": "pnpm --filter @companyos/web test:unit"
   },

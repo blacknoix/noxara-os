@@ -32,6 +32,10 @@ pub struct AuthUser {
     pub family_id: Uuid,
     /// True when LOCAL-ONLY bypass was used.
     pub local_bypass: bool,
+    /// When set, caller authenticated with an organization API key; permissions
+    /// are exactly these scopes (already intersected with owner role).
+    pub api_key_scopes: Option<Vec<String>>,
+    pub api_key_id: Option<String>,
 }
 
 /// Hello-slice compatibility wrapper around [`AuthUser`].
@@ -96,6 +100,71 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
             format!("invalid access token: {e}"),
         )
     })?;
+
+    // API-key minted tokens: verify membership is active; skip session join.
+    if claims.is_api_key() {
+        let row: Option<(Option<chrono::DateTime<chrono::Utc>>, i64, String, String)> = {
+            let mut tx = state
+                .pool
+                .begin()
+                .await
+                .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            companyos_tenancy::set_session_org_id(&mut tx, OrgId::new(claims.org_uuid))
+                .await
+                .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            let row = sqlx::query_as(
+                r#"
+                SELECT revoked_at, policy_version, role, status
+                FROM membership
+                WHERE id = $1 AND user_id = $2 AND org_id = $3
+                "#,
+            )
+            .bind(claims.membership_id)
+            .bind(claims.user_id)
+            .bind(claims.org_uuid)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            tx.commit()
+                .await
+                .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            row
+        };
+        let Some((mem_revoked, policy_version, _role, status)) = row else {
+            return Err(AppError::new(
+                ErrorCode::Unauthorized,
+                request_id,
+                "membership not found",
+            ));
+        };
+        if mem_revoked.is_some() || status != "active" {
+            return Err(AppError::new(
+                ErrorCode::Unauthorized,
+                request_id,
+                "membership not active",
+            ));
+        }
+        if policy_version != claims.policy_version {
+            return Err(AppError::new(
+                ErrorCode::Unauthorized,
+                request_id,
+                "policy_version stale — re-issue API key token",
+            ));
+        }
+        let org_id = OrgId::new(claims.org_uuid);
+        let ctx = RequestContext::new(org_id, Actor::human(claims.user_id), request_id.to_string());
+        return Ok(AuthUser {
+            ctx,
+            roles: vec![],
+            membership_id: claims.membership_id,
+            policy_version,
+            session_id: claims.sid,
+            family_id: claims.family_id,
+            local_bypass: false,
+            api_key_scopes: claims.scopes.clone(),
+            api_key_id: claims.api_key_id.clone(),
+        });
+    }
 
     #[allow(clippy::type_complexity)]
     let row: Option<(
@@ -181,6 +250,8 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
         session_id: claims.sid,
         family_id: claims.family_id,
         local_bypass: false,
+        api_key_scopes: None,
+        api_key_id: None,
     })
 }
 
@@ -212,6 +283,8 @@ fn from_local_headers(parts: &Parts, request_id: &str) -> Result<Option<AuthUser
             session_id: Uuid::nil(),
             family_id: Uuid::nil(),
             local_bypass: true,
+            api_key_scopes: None,
+            api_key_id: None,
         }));
     }
     Ok(None)
@@ -255,6 +328,8 @@ fn from_unsigned_bearer(token: &str, request_id: &str) -> Result<Option<AuthUser
         session_id: Uuid::nil(),
         family_id: Uuid::nil(),
         local_bypass: true,
+        api_key_scopes: None,
+        api_key_id: None,
     }))
 }
 

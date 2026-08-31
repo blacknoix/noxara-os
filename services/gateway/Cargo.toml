@@ -1,6 +1,6 @@
 [package]
 name = "companyos-gateway"
-description = "CompanyOS API gateway / BFF — Phase 1.9 JWT auth + proxy + AI + notification SSE"
+description = "CompanyOS API gateway / BFF — Phase 3.3 JWT + API-key auth, public allowlist, rate limits"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

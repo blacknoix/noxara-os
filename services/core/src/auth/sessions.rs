@@ -139,6 +139,8 @@ async fn issue_refresh_and_access(
         iss: "companyos".into(),
         iat: 0,
         exp: 0,
+        api_key_id: None,
+        scopes: None,
     };
     let access =
         companyos_auth_token::mint_access_token(ring, claims, companyos_auth_token::access_ttl())
@@ -292,6 +294,8 @@ pub async fn rotate_refresh(
         iss: "companyos".into(),
         iat: 0,
         exp: 0,
+        api_key_id: None,
+        scopes: None,
     };
     let access =
         companyos_auth_token::mint_access_token(ring, claims, companyos_auth_token::access_ttl())
@@ -488,6 +492,8 @@ pub fn switch_org_access(
         iss: "companyos".into(),
         iat: 0,
         exp: 0,
+        api_key_id: None,
+        scopes: None,
     };
     companyos_auth_token::mint_access_token(ring, claims, companyos_auth_token::access_ttl())
         .map_err(|e| e.to_string())
