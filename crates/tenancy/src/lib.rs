@@ -147,6 +147,18 @@ pub async fn set_sso_lookup(conn: &mut sqlx::PgConnection) -> Result<(), Tenancy
     Ok(())
 }
 
+/// Allow gateway API-key exchange to look up `org_api_key` by `key_hash`
+/// before `app.org_id` is known (RLS bypass key, **read-only** policy).
+///
+/// **Must be called inside an open transaction.**
+pub async fn set_api_key_lookup(conn: &mut sqlx::PgConnection) -> Result<(), TenancyError> {
+    sqlx::query("SELECT set_config('app.api_key_lookup', '1', true)")
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| TenancyError::SessionBind(e.to_string()))?;
+    Ok(())
+}
+
 /// Allow invitation accept to look up a row by token hash (RLS bypass key).
 pub async fn set_invite_token_hash(
     conn: &mut sqlx::PgConnection,

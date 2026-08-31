@@ -137,3 +137,101 @@ pub struct RotateApiKeyResponse {
     /// Raw secret — returned only once, at rotation time.
     pub secret: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WebhookEndpointView {
+    pub id: String,
+    pub url: String,
+    pub description: String,
+    pub event_types: Vec<String>,
+    pub secret_prefix: String,
+    pub status: String,
+    pub failure_count: i32,
+    pub last_delivery_at: Option<String>,
+    pub created_at: String,
+    pub disabled_at: Option<String>,
+    pub disabled_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WebhookEndpointListResponse {
+    pub items: Vec<WebhookEndpointView>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateWebhookEndpointRequest {
+    pub url: String,
+    #[serde(default)]
+    pub description: String,
+    pub event_types: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateWebhookEndpointResponse {
+    pub endpoint: WebhookEndpointView,
+    /// Signing secret — returned only once, at creation time.
+    pub secret: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RotateWebhookSecretResponse {
+    pub endpoint: WebhookEndpointView,
+    /// Signing secret — returned only once, at rotation time.
+    pub secret: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DisableWebhookRequest {
+    #[serde(default = "default_disable_reason")]
+    pub reason: String,
+}
+
+fn default_disable_reason() -> String {
+    "disabled_by_operator".into()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WebhookDeliveryView {
+    pub id: String,
+    pub endpoint_id: String,
+    pub event_subject: String,
+    pub event_type: String,
+    pub attempt: i32,
+    pub status: String,
+    pub status_code: Option<i32>,
+    pub response_body: Option<String>,
+    pub delivered_at: Option<String>,
+    pub next_retry_at: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct WebhookDeliveryListResponse {
+    pub items: Vec<WebhookDeliveryView>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ReplayWebhookResponse {
+    pub delivery: WebhookDeliveryView,
+}
+
+/// Internal gateway ↔ core API key exchange (not part of the public catalogue).
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ApiKeyExchangeRequest {
+    /// SHA-256 hex hash of the raw API key (gateway hashes before calling).
+    pub key_hash: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ApiKeyExchangeResponse {
+    /// Short-lived access JWT with `api_key_id` + effective `scopes`.
+    pub access_token: String,
+    pub api_key_id: String,
+    pub org_id: String,
+    pub scopes: Vec<String>,
+    pub rate_limit_per_minute: i32,
+    /// Deprecated dual-published field (Phase 3.3 deprecation exercise).
+    /// Prefer `rate_limit_per_minute`. Present for 180 days.
+    #[serde(default)]
+    pub rate_limit_rpm: Option<i32>,
+}

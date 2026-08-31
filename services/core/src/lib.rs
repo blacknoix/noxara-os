@@ -5,7 +5,9 @@ pub mod dashboard;
 pub mod governance;
 pub mod hello;
 pub mod openapi;
+pub mod public_scopes;
 pub mod state;
+pub mod webhook_crypto;
 pub mod workspace;
 
 use axum::routing::get;
@@ -138,6 +140,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/003_workspace.sql"),
             include_str!("../migrations/004_governance.sql"),
             include_str!("../migrations/005_sso_login.sql"),
+            include_str!("../migrations/006_webhooks.sql"),
         ] {
             for stmt in split_sql(migration) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;

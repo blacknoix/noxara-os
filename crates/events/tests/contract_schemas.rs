@@ -103,6 +103,21 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
         ("access_review", "completed") => serde_json::json!({ "id": "arv_test" }),
         ("retention", "changed") => serde_json::json!({ "default_retention_days": 2555 }),
         ("sso", "linked") => serde_json::json!({ "sso_config_id": "sso_test" }),
+        ("webhook", "created" | "rotated" | "disabled") => serde_json::json!({
+            "webhook_id": "whk_test"
+        }),
+        ("webhook", "delivered" | "failed") => serde_json::json!({
+            "webhook_id": "whk_test",
+            "delivery_id": "whd_test",
+            "event_id": "00000000-0000-7000-8000-000000000001"
+        }),
+        ("api_key", "rotated") => serde_json::json!({ "api_key_id": "oak_test" }),
+        ("api_request", "recorded") => serde_json::json!({
+            "api_key_id": "oak_test",
+            "route": "/api/v1/hello",
+            "method": "GET",
+            "status_code": 200
+        }),
         ("definition", "published") => serde_json::json!({
             "id": "wfd_test",
             "version_id": "wfv_test",

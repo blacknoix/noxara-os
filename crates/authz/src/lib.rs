@@ -584,6 +584,39 @@ impl Principal {
         }
     }
 
+    /// Build a principal that only allows the given permission IDs (no role defaults).
+    /// Used for organization API keys after scopes ∩ owner-role intersection.
+    pub fn from_permission_ids<I, S>(ids: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        let statements = ids
+            .into_iter()
+            .map(|s| Statement {
+                effect: Effect::Allow,
+                permission: PermissionId::from(s.as_ref()),
+                scope: Scope::Organization,
+                conditions: vec![],
+            })
+            .collect();
+        Self {
+            roles: vec![],
+            statements,
+        }
+    }
+
+    /// Restrict this principal to the intersection of its current allows and `scopes`.
+    /// Empty `scopes` yields a principal that denies everything.
+    pub fn intersect_scopes(&self, scopes: &[String]) -> Self {
+        let allowed: HashSet<PermissionId> = scopes
+            .iter()
+            .map(|s| PermissionId::from(s.as_str()))
+            .filter(|p| is_allowed(self, p))
+            .collect();
+        Self::from_permission_ids(allowed.iter().map(|p| p.as_str().to_string()))
+    }
+
     /// Effective allowed permission IDs (for capability preview / nav).
     pub fn effective_allows(&self) -> HashSet<PermissionId> {
         let mut out = HashSet::new();

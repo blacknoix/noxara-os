@@ -1017,6 +1017,30 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         sensitive: true,
     },
     PermissionDef {
+        id: "admin.webhook.read",
+        context: "admin",
+        resource: "webhook",
+        action: "read",
+        description: "List webhook endpoints and delivery logs",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "admin.webhook.write",
+        context: "admin",
+        resource: "webhook",
+        action: "write",
+        description: "Create, update, rotate, and disable outbound webhook endpoints",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.webhook.replay",
+        context: "admin",
+        resource: "webhook",
+        action: "replay",
+        description: "Re-enqueue a logged webhook delivery",
+        sensitive: true,
+    },
+    PermissionDef {
         id: "hr.employee.write",
         context: "hr",
         resource: "employee",
@@ -1298,6 +1322,8 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "admin.audit.verify",
     "admin.retention.manage",
     "admin.api_key.manage",
+    "admin.webhook.write",
+    "admin.webhook.replay",
     "hr.employee.write",
     "hr.employee.onboard",
     "hr.employee.offboard",
@@ -1487,6 +1513,15 @@ pub mod perms {
     }
     pub fn admin_api_key_manage() -> PermissionId {
         PermissionId::from("admin.api_key.manage")
+    }
+    pub fn admin_webhook_read() -> PermissionId {
+        PermissionId::from("admin.webhook.read")
+    }
+    pub fn admin_webhook_write() -> PermissionId {
+        PermissionId::from("admin.webhook.write")
+    }
+    pub fn admin_webhook_replay() -> PermissionId {
+        PermissionId::from("admin.webhook.replay")
     }
     pub fn hr_field_compensation_read() -> PermissionId {
         PermissionId::from("hr.field.compensation_read")

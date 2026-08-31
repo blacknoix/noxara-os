@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://companyos.dev/events/admin.webhook.delivered.v1.json",
+  "title": "admin.webhook.delivered.v1",
+  "type": "object",
+  "required": [
+    "event_id",
+    "subject",
+    "org_id",
+    "context",
+    "aggregate",
+    "event_type",
+    "version",
+    "occurred_at",
+    "actor",
+    "payload",
+    "idempotency_key"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "subject": {
+      "type": "string",
+      "pattern": "^companyos\\.org[^.]+\\.admin\\.webhook\\.delivered\\.v1$"
+    },
+    "org_id": { "type": "string" },
+    "context": { "const": "admin" },
+    "aggregate": { "const": "webhook" },
+    "event_type": { "const": "delivered" },
+    "version": { "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "actor": { "type": "object" },
+    "payload": {
+      "type": "object",
+      "required": ["webhook_id", "delivery_id", "event_id"],
+      "additionalProperties": true
+    },
+    "idempotency_key": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

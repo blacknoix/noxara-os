@@ -4,12 +4,14 @@
 //! verification, per-org retention configuration, and organization API keys.
 
 pub mod access_review;
+pub mod api_key_exchange;
 pub mod api_keys;
 pub mod audit_verify;
 pub mod entitlement;
 pub mod handlers;
 pub mod retention;
 pub mod types;
+pub mod webhooks;
 
 pub use handlers::router;
 
@@ -36,19 +38,27 @@ pub(crate) fn require_perm(
 }
 
 /// Load the caller's [`Principal`] from membership + role grants and enforce `perm`.
+/// When the caller is an API key, the principal is built solely from the key's
+/// effective scopes (already intersected with the owner role at exchange time).
 pub(crate) async fn authorize(
     state: &AppState,
     user: &AuthUser,
     perm: &PermissionId,
 ) -> Result<Principal, AppError> {
     let request_id = user.ctx.request_id.clone();
-    let (principal, _policy_version, _membership_id) = crate::workspace::principal::load_principal(
-        &state.pool,
-        user.ctx.org_id,
-        user.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let principal = if let Some(ref scopes) = user.api_key_scopes {
+        Principal::from_permission_ids(scopes.iter().map(|s| s.as_str()))
+    } else {
+        let (principal, _policy_version, _membership_id) =
+            crate::workspace::principal::load_principal(
+                &state.pool,
+                user.ctx.org_id,
+                user.ctx.actor.user_id,
+                &request_id,
+            )
+            .await?;
+        principal
+    };
     require_perm(&principal, perm, &request_id)?;
     Ok(principal)
 }

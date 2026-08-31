@@ -14,6 +14,7 @@ pub struct AppState {
     pub auth_keys: AuthKeys,
     pub rate_limiter: Arc<RateLimiter>,
     pub perm_cache: Arc<PermissionSetCache>,
+    pub webhook_crypto: crate::webhook_crypto::WebhookEncryptor,
 }
 
 impl AppState {
@@ -23,6 +24,8 @@ impl AppState {
             auth_keys: AuthKeys::new(ring),
             rate_limiter: Arc::new(RateLimiter::auth_strict()),
             perm_cache: Arc::new(PermissionSetCache::default_5s()),
+            webhook_crypto: crate::webhook_crypto::WebhookEncryptor::from_env()
+                .expect("WEBHOOK_ENCRYPTION_KEY or local-dev fallback"),
         }
     }
 }
