@@ -179,7 +179,6 @@ impl Role {
                 perms::analytics_report_export(),
                 perms::analytics_dashboard_read(),
                 perms::analytics_dashboard_write(),
-                perms::analytics_schedule_write(),
                 perms::ai_copilot_use(),
                 perms::ai_proposal_create(),
                 perms::ai_proposal_commit(),
@@ -1069,6 +1068,7 @@ mod tests {
             ("analytics.schedule.write", Role::Member),
             ("analytics.schedule.write", Role::ReadOnly),
             ("analytics.schedule.write", Role::Sales),
+            ("analytics.schedule.write", Role::Finance),
             ("analytics.schedule.write", Role::Manager),
         ];
         for (perm, role) in deny_pairs {
