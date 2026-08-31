@@ -850,6 +850,8 @@ dependencies = [
  "base64",
  "bytes",
  "chrono",
+ "companyos-auth-token",
+ "companyos-authz",
  "companyos-core",
  "companyos-errors",
  "companyos-events",
