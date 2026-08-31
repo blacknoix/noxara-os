@@ -250,8 +250,16 @@ pub async fn create_listing(
     }
 
     validate_requested_scopes(&req.requested_scopes, request_id)?;
+    // Empty entries come from optional form fields; drop them rather than
+    // failing the whole create.
+    let redirect_uris: Vec<String> = req
+        .redirect_uris
+        .iter()
+        .map(|u| u.trim().to_string())
+        .filter(|u| !u.is_empty())
+        .collect();
     validate_urls(
-        &req.redirect_uris,
+        &redirect_uris,
         allow_private_urls,
         request_id,
         "redirect_uri",
@@ -291,7 +299,7 @@ pub async fn create_listing(
     .bind(listing_kind)
     .bind(req.connector_key.as_deref())
     .bind(json!(req.requested_scopes))
-    .bind(json!(req.redirect_uris))
+    .bind(json!(redirect_uris))
     .bind(json!(req.webhook_subscriptions))
     .bind(LISTING_DRAFT)
     .bind(created_by)

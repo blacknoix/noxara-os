@@ -13,6 +13,7 @@ use serde_json::json;
 use sqlx::{FromRow, Postgres, Transaction};
 use uuid::Uuid;
 
+use super::listings::ListingRow;
 use super::types::{ChecklistItem, ReviewDto};
 use super::{conflict, forbidden, internal, not_found};
 
@@ -42,11 +43,12 @@ impl ReviewRow {
         serde_json::from_value(self.checklist.clone()).unwrap_or_default()
     }
 
-    pub fn to_dto(&self, listing_public_id: &str, listing_status: &str) -> ReviewDto {
+    pub fn to_dto(&self, listing: &ListingRow) -> ReviewDto {
         ReviewDto {
             id: self.public_id.clone(),
-            listing_id: listing_public_id.to_string(),
-            listing_status: listing_status.to_string(),
+            listing_id: listing.public_id.clone(),
+            listing_name: listing.name.clone(),
+            listing_status: listing.status.clone(),
             checklist: self.checklist(),
             security_review_completed: self.security_review_completed,
             status: self.status.clone(),

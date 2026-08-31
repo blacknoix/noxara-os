@@ -102,6 +102,7 @@ pub struct CreateListingResponse {
 pub struct ReviewDto {
     pub id: String,
     pub listing_id: String,
+    pub listing_name: String,
     pub listing_status: String,
     pub checklist: Vec<ChecklistItem>,
     pub security_review_completed: bool,

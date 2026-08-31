@@ -38,7 +38,7 @@ pub async fn queue(
     for listing in &listings_in_queue {
         let review =
             review_svc::ensure_review(&mut tx, auth.ctx.org_id, listing.id, request_id).await?;
-        items.push(review.to_dto(&listing.public_id, &listing.status));
+        items.push(review.to_dto(listing));
     }
     tx.commit().await.map_err(internal(request_id))?;
 
@@ -84,7 +84,7 @@ pub async fn update_checklist(
     };
     tx.commit().await.map_err(internal(request_id))?;
 
-    Ok(Json(review.to_dto(&listing.public_id, &listing.status)))
+    Ok(Json(review.to_dto(&listing)))
 }
 
 /// Publish. Fails with 403 until every required item **and** the security

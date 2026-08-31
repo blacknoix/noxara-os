@@ -632,6 +632,115 @@ async fn review_queue_lists_submitted_listings() {
     assert_eq!(body["status"], "rejected");
 }
 
+/// The web app addresses review and uninstall through alias routes; they must
+/// behave identically to the canonical ones.
+#[tokio::test]
+async fn web_alias_routes_match_the_canonical_ones() {
+    let Some(pool) = pool().await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+    let app = marketplace_app(pool);
+    let publisher = Caller::owner();
+
+    let slug = format!("alias-{}", new_uuid_v7());
+    let (_, created) = call(
+        &app,
+        request(
+            "POST",
+            "/api/v1/marketplace/listings",
+            publisher,
+            Some(json!({
+                "name": "Alias App",
+                "slug": slug,
+                "requested_scopes": ["sales.customer.read"],
+                "redirect_uris": [""],
+            })),
+        ),
+    )
+    .await;
+    let listing_id = created["listing"]["id"].as_str().expect("id").to_string();
+    assert_eq!(
+        created["listing"]["redirect_uris"],
+        json!([]),
+        "blank redirect_uri entries are dropped"
+    );
+    call(
+        &app,
+        request(
+            "POST",
+            &format!("/api/v1/marketplace/listings/{listing_id}/submit"),
+            publisher,
+            None,
+        ),
+    )
+    .await;
+
+    let (status, body) = call(
+        &app,
+        request("GET", "/api/v1/marketplace/review", publisher, None),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["items"][0]["listing_id"], listing_id);
+    assert_eq!(body["items"][0]["listing_name"], "Alias App");
+
+    let all_items: Vec<String> = default_checklist().into_iter().map(|i| i.id).collect();
+    let (status, body) = call(
+        &app,
+        request(
+            "PATCH",
+            &format!("/api/v1/marketplace/listings/{listing_id}/review"),
+            publisher,
+            Some(json!({ "completed_item_ids": all_items })),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["security_review_completed"], true);
+
+    let (status, body) = call(
+        &app,
+        request(
+            "POST",
+            &format!("/api/v1/marketplace/listings/{listing_id}/publish"),
+            publisher,
+            None,
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let (status, body) = call(
+        &app,
+        request(
+            "GET",
+            &format!("/api/v1/marketplace/catalogue/{listing_id}"),
+            publisher,
+            None,
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["id"], listing_id);
+
+    let installer = Caller::owner();
+    let (_, body) = install(&app, installer, &listing_id, &["sales.customer.read"]).await;
+    let install_id = body["install"]["id"].as_str().expect("id").to_string();
+    let (status, body) = call(
+        &app,
+        request(
+            "DELETE",
+            &format!("/api/v1/marketplace/installs/{install_id}"),
+            installer,
+            None,
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["status"], "revoked");
+}
+
 // ---------------------------------------------------------------------------
 // 4. First-party connectors take the same path as third-party apps
 // ---------------------------------------------------------------------------
