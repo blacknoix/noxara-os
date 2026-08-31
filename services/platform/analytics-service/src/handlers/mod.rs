@@ -135,7 +135,7 @@ pub(crate) async fn set_org(
     org_id: OrgId,
     request_id: &str,
 ) -> Result<(), AppError> {
-    companyos_tenancy::set_session_org_id(&mut **tx, org_id)
+    companyos_tenancy::set_session_org_id(tx, org_id)
         .await
         .map_err(|error| AppError::new(ErrorCode::Internal, request_id, error.to_string()))
 }

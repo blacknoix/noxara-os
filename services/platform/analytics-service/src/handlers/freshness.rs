@@ -16,6 +16,8 @@ pub struct FreshnessQuery {
     pub org_id: String,
 }
 
+type FreshnessRow = (Option<DateTime<Utc>>, Option<DateTime<Utc>>, i64);
+
 #[utoipa::path(get, path = "/api/v1/analytics/freshness", tag = "analytics",
     params(("org_id" = String, Query)), responses((status = 200, body = FreshnessResponse)))]
 pub async fn freshness(
@@ -34,7 +36,7 @@ pub async fn freshness(
     authorize(&state, &auth, perms::analytics_report_read()).await?;
     let mut tx = state.pool.begin().await.map_err(internal(request_id))?;
     set_org(&mut tx, auth.ctx.org_id, request_id).await?;
-    let row: Option<(Option<DateTime<Utc>>, Option<DateTime<Utc>>, i64)> = sqlx::query_as(
+    let row: Option<FreshnessRow> = sqlx::query_as(
         "SELECT last_event_at, last_ingest_at, lag_seconds \
          FROM analytics_freshness WHERE org_id = $1",
     )
