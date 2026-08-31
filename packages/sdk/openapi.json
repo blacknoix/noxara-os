@@ -8764,6 +8764,450 @@
           }
         }
       }
+    },
+    "/api/v1/workflows/bounds": {
+      "get": {
+        "tags": [
+          "workflows-monitor"
+        ],
+        "operationId": "get_bounds",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgBoundsDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "workflows-monitor"
+        ],
+        "operationId": "update_bounds",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrgBoundsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgBoundsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/catalogue/actions": {
+      "get": {
+        "tags": [
+          "workflows-catalogue"
+        ],
+        "operationId": "list_actions",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionCatalogueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/catalogue/triggers": {
+      "get": {
+        "tags": [
+          "workflows-catalogue"
+        ],
+        "operationId": "list_triggers",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriggerCatalogueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/definitions": {
+      "get": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "list_definitions",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDefinitionListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "create_definition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkflowDefinitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDefinitionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/definitions/{id}": {
+      "get": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "get_definition",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDefinitionDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "update_definition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkflowDefinitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDefinitionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/definitions/{id}/publish": {
+      "post": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "publish_definition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishWorkflowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/definitions/{id}/start": {
+      "post": {
+        "tags": [
+          "workflows-instances"
+        ],
+        "operationId": "start_instance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartWorkflowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowInstanceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/definitions/{id}/versions": {
+      "get": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "list_versions",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/definitions/{id}/versions/{version}": {
+      "get": {
+        "tags": [
+          "workflows-definitions"
+        ],
+        "operationId": "get_version",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/fixtures": {
+      "get": {
+        "tags": [
+          "workflows-catalogue"
+        ],
+        "operationId": "list_fixtures",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FixtureListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/instances": {
+      "get": {
+        "tags": [
+          "workflows-instances"
+        ],
+        "operationId": "list_instances",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowInstanceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/instances/{id}": {
+      "get": {
+        "tags": [
+          "workflows-instances"
+        ],
+        "operationId": "get_instance",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowInstanceDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/instances/{id}/cancel": {
+      "post": {
+        "tags": [
+          "workflows-instances"
+        ],
+        "operationId": "cancel_instance",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/instances/{id}/migrate": {
+      "post": {
+        "tags": [
+          "workflows-instances"
+        ],
+        "operationId": "migrate_stub",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MigrateInstanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "501": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/monitor": {
+      "get": {
+        "tags": [
+          "workflows-monitor"
+        ],
+        "operationId": "monitor",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/simulate": {
+      "post": {
+        "tags": [
+          "workflows-simulate"
+        ],
+        "operationId": "simulate_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateResult"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -21605,6 +22049,907 @@
             "format": "int64"
           }
         }
+      },
+      "ActionCatalogueEntry": {
+        "type": "object",
+        "description": "One action a step may invoke.",
+        "required": [
+          "key",
+          "description",
+          "required_permission",
+          "http_method",
+          "http_path",
+          "high_risk"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "high_risk": {
+            "type": "boolean",
+            "description": "High-risk actions (journals) stay in catalogue but Member cannot use them."
+          },
+          "http_method": {
+            "type": "string",
+            "description": "Relative HTTP path under the owning service (for documentation / activities)."
+          },
+          "http_path": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "required_permission": {
+            "type": "string",
+            "description": "Permission checked at save time and at run time (deny by default)."
+          }
+        }
+      },
+      "ActionCatalogueResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionCatalogueEntry"
+            }
+          }
+        }
+      },
+      "BranchArm": {
+        "type": "object",
+        "required": [
+          "path",
+          "equals",
+          "next"
+        ],
+        "properties": {
+          "equals": {},
+          "next": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateWorkflowDefinitionRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "graph"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/WorkflowGraph"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "FixtureListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FixtureWorkflowDto"
+            }
+          }
+        }
+      },
+      "FixtureWorkflowDto": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "graph"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/WorkflowGraph"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "HumanStepKind": {
+        "type": "string",
+        "enum": [
+          "approval",
+          "inbox"
+        ]
+      },
+      "MigrateInstanceRequest": {
+        "type": "object",
+        "required": [
+          "target_version"
+        ],
+        "properties": {
+          "target_version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Stub: keep-old-version is the safe default; explicit migrate later."
+          }
+        }
+      },
+      "MonitorResponse": {
+        "type": "object",
+        "required": [
+          "summary",
+          "instances"
+        ],
+        "properties": {
+          "instances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowInstanceDto"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/MonitorSummaryDto"
+          }
+        }
+      },
+      "MonitorSummaryDto": {
+        "type": "object",
+        "required": [
+          "running",
+          "waiting",
+          "failed",
+          "completed",
+          "cancelled",
+          "sla_breached"
+        ],
+        "properties": {
+          "cancelled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "running": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sla_breached": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "waiting": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "OrgBoundsDto": {
+        "type": "object",
+        "required": [
+          "max_concurrent",
+          "max_steps_per_instance"
+        ],
+        "properties": {
+          "max_concurrent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_steps_per_instance": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PublishWorkflowRequest": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional note; publish always creates a new immutable version from current draft graph."
+          }
+        }
+      },
+      "SimulateRequest": {
+        "type": "object",
+        "required": [
+          "graph"
+        ],
+        "properties": {
+          "graph": {
+            "$ref": "#/components/schemas/WorkflowGraph"
+          },
+          "max_steps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional override; defaults to org max_steps_per_instance."
+          },
+          "payload": {}
+        }
+      },
+      "SimulateResult": {
+        "type": "object",
+        "required": [
+          "ok",
+          "steps",
+          "side_effects"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "side_effects": {
+            "type": "boolean",
+            "description": "Always true \u2014 documents the dry-run contract for clients/tests."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SimulateStepResult"
+            }
+          }
+        }
+      },
+      "SimulateStepResult": {
+        "type": "object",
+        "required": [
+          "step_index",
+          "node_id",
+          "node_type",
+          "status"
+        ],
+        "properties": {
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "node_id": {
+            "type": "string"
+          },
+          "node_type": {
+            "type": "string"
+          },
+          "permission": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "permission_allowed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "step_index": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StartWorkflowRequest": {
+        "type": "object",
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "description": "When true, start is rejected \u2014 use /simulate instead (defense in depth)."
+          },
+          "payload": {}
+        }
+      },
+      "TriggerCatalogueEntry": {
+        "type": "object",
+        "description": "One trigger a definition may bind to.",
+        "required": [
+          "event_key",
+          "context",
+          "aggregate",
+          "event_type",
+          "description",
+          "subject_suffix"
+        ],
+        "properties": {
+          "aggregate": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "event_key": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "subject_suffix": {
+            "type": "string",
+            "description": "Subject suffix after org: `{context}.{aggregate}.{event}.v1`"
+          }
+        }
+      },
+      "TriggerCatalogueResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerCatalogueEntry"
+            }
+          }
+        }
+      },
+      "UpdateOrgBoundsRequest": {
+        "type": "object",
+        "required": [
+          "max_concurrent",
+          "max_steps_per_instance"
+        ],
+        "properties": {
+          "max_concurrent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_steps_per_instance": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateWorkflowDefinitionRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "graph": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WorkflowGraph"
+              }
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "WorkflowDefinitionDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "status",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "current_published_version": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          },
+          "graph": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WorkflowGraph",
+                "description": "Present on get when a draft graph exists / latest version."
+              }
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "latest_version_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WorkflowDefinitionListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowDefinitionDto"
+            }
+          }
+        }
+      },
+      "WorkflowGraph": {
+        "type": "object",
+        "description": "Top-level workflow graph stored on a version.",
+        "required": [
+          "entry",
+          "trigger",
+          "nodes"
+        ],
+        "properties": {
+          "entry": {
+            "type": "string",
+            "description": "Entry node id after the trigger fires."
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowNode"
+            }
+          },
+          "sla_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional SLA deadline from start (seconds). Soft signal for monitor.",
+            "minimum": 0
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/WorkflowTrigger"
+          }
+        }
+      },
+      "WorkflowInstanceDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "definition_id",
+          "version_id",
+          "version_number",
+          "status",
+          "actor_user_id",
+          "temporal_workflow_id",
+          "step_count",
+          "started_at",
+          "updated_at"
+        ],
+        "properties": {
+          "actor_user_id": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "current_node_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "definition_id": {
+            "type": "string"
+          },
+          "error_message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "sla_deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "step_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "temporal_workflow_id": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version_id": {
+            "type": "string"
+          },
+          "version_number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "waiting_until": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "WorkflowInstanceListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowInstanceDto"
+            }
+          }
+        }
+      },
+      "WorkflowNode": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "action",
+              "type"
+            ],
+            "properties": {
+              "action": {
+                "type": "string",
+                "description": "Catalogue action key (create_task, send_notification, \u2026)."
+              },
+              "id": {
+                "type": "string"
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "params": {},
+              "type": {
+                "type": "string",
+                "enum": [
+                  "action"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "path",
+              "then_next",
+              "else_next",
+              "type"
+            ],
+            "properties": {
+              "else_next": {
+                "type": "string"
+              },
+              "equals": {},
+              "id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string",
+                "description": "Simple path equality: `payload.field == value`."
+              },
+              "then_next": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "condition"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "arms",
+              "default_next",
+              "type"
+            ],
+            "properties": {
+              "arms": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BranchArm"
+                },
+                "description": "First matching arm wins; else `default_next`."
+              },
+              "default_next": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "branch"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "duration_secs",
+              "next",
+              "type"
+            ],
+            "properties": {
+              "duration_secs": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "id": {
+                "type": "string"
+              },
+              "next": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "timer"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "on_approve",
+              "on_reject",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "$ref": "#/components/schemas/HumanStepKind",
+                "description": "`approval` \u2192 start approval via operations API; `inbox` \u2192 wait signal."
+              },
+              "on_approve": {
+                "type": "string"
+              },
+              "on_reject": {
+                "type": "string"
+              },
+              "params": {},
+              "type": {
+                "type": "string",
+                "enum": [
+                  "human"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "end"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "WorkflowTrigger": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Match a catalogue event key, e.g. `sales.deal.won`.",
+            "required": [
+              "event_key",
+              "kind"
+            ],
+            "properties": {
+              "event_key": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "domain_event"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Manual / API start only.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "manual"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "Domain-event trigger (from existing emitted events)."
+      },
+      "WorkflowVersionDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "definition_id",
+          "version",
+          "graph",
+          "required_permissions",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "definition_id": {
+            "type": "string"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/WorkflowGraph"
+          },
+          "id": {
+            "type": "string"
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "published_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required_permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "WorkflowVersionListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowVersionDto"
+            }
+          }
+        }
       }
     }
   },
@@ -21880,6 +23225,26 @@
     {
       "name": "inventory-procure-to-pay",
       "description": "Vendor bill proxy to finance-service"
+    },
+    {
+      "name": "workflows-catalogue",
+      "description": "Trigger/action catalogues and fixtures"
+    },
+    {
+      "name": "workflows-definitions",
+      "description": "Definition CRUD + versioned publish"
+    },
+    {
+      "name": "workflows-instances",
+      "description": "Start, list, cancel instances"
+    },
+    {
+      "name": "workflows-simulate",
+      "description": "Dry-run simulation (zero side effects)"
+    },
+    {
+      "name": "workflows-monitor",
+      "description": "Monitor running/waiting/failed/SLA + bounds"
     }
   ]
 }

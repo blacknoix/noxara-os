@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–2.5 merged; Phase 2.6 is this slice.
+Status: **Active** outline. Phase 0–2.6 merged; Phase 3.1 is this slice.
 
 ## Completed
 
@@ -21,32 +21,29 @@ Status: **Active** outline. Phase 0–2.5 merged; Phase 2.6 is this slice.
 | 2.3 | Payroll basics (`companyos-hr`): draft → calculate → approve → paid, journals via Finance HTTP, Temporal `PayrollRun` (ADR 021) |
 | 2.4 | Finance CoA, periods, bank rec, expense policy depth (ADR 022) |
 | 2.5 | Inventory & Procurement (`companyos-inventory`) |
+| 2.6 | Security & governance hardening (ABAC, field-level, access review, SSO, retention, API keys) |
 
-## Phase 2.6 — Security & governance hardening (this slice)
+## Phase 3.1 — Configurable workflow engine (this slice)
 
-Platform/governance — extend `crates/authz`, `companyos-core`, shared `audit_entry`. No new
-bounded context; thin governance module under core. Own tables keep `org_id` + RLS.
+`companyos-workflow` (`/api/v1/workflows/...`) + Temporal catalogue `UserWorkflow`.
 
-- **ABAC** condition library (time, location, delegation, record state) wired into PDP
-  `decide_with_context`; fail-closed; tests for time window + record state
-- **Field-level permissions**: `hr.field.compensation_read|government_id_read|bank_read`,
-  `finance.field.bank_account_read|salary_journal_read` — never bypass
-  `hr.employee.read_sensitive`; UI hides fields the principal cannot read
-- **Access review**: who-could / who-did from `permission_entitlement_history` + audited
-  sensitive reads; kickoff + CSV/JSON export; DoD Q&A under two minutes
-- **Audit**: append-only hash-chained partitions (DB trigger) + verify job fails closed
-- **SSO**: OIDC login path (enterprise / feature-flag gated); dual mocked IdPs in tests;
-  SCIM deferred to Phase 4
-- **Retention**: per-org config + dry-run cutoff selection (no live prod-like purge)
-- **Secrets**: hashed org API keys with create/rotate/revoke
-- **SOC 2 Type I readiness**: `docs/compliance/` control mapping, DPIA + sub-processor templates
-- API: `/api/v1/governance/...` via gateway; Idempotency-Key on mutating endpoints
+- Org-scoped definitions (`wfd_`) + immutable versions (`wfv_`) + instances (`wfi_`); RLS
+- Triggers from existing domain events; actions call service APIs with `on_behalf_of` creator
+- Permission check at save + every runtime action (deny by default; cannot exceed creator)
+- Version pin: in-flight keeps started version; publish does not mutate running instances
+- Runaway bounds: per-org concurrency + per-instance step cap (fail closed)
+- Simulation/dry-run: zero DB/outbox/HTTP side effects
+- Monitor: running / waiting / failed / SLA breaches
+- AI must not auto-publish (human `operations.workflow.publish`)
 
 ## Later (not this PR)
 
 | Phase | Notes |
 |-------|--------|
-| 3.x | Configurable workflows, public API, marketplace — **do not start** |
+| 3.2 | Analytics depth |
+| 3.3 | Public API / webhooks |
+| 3.4 | Marketplace |
+| 3.5 | Depth / polish |
 | InvoiceDunning | Temporal dunning polish |
 | PDF / email | Nice-to-have |
 | Mobile | Flutter / Tauri |
@@ -54,6 +51,6 @@ bounded context; thin governance module under core. Own tables keep `org_id` + R
 
 ## Cut order if needed
 
-Cut live Okta+Azure AD in CI, CMEK, private connectivity, SCIM, and paid SOC 2 Type I
-attestation before access-review Q&A, field-level HR/Finance, hash-chain verify, OIDC SSO
-path + second mocked IdP, retention config, and in-repo control/evidence pack.
+Cut NL authoring, full BPMN import, cross-org marketplace templates, arbitrary HTTP webhook
+actions (3.3), and visual debug time-travel before definition+versioning, event triggers,
+permission-checked actions, Temporal execution, dry-run, monitor, and runaway bounds.

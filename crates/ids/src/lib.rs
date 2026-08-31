@@ -120,6 +120,12 @@ pub enum IdKind {
     AccessReview,
     /// Organization secret (`sec_`).
     OrgSecret,
+    /// Workflow definition (`wfd_`).
+    WorkflowDefinition,
+    /// Workflow definition version (`wfv_`).
+    WorkflowVersion,
+    /// Workflow instance run (`wfi_`).
+    WorkflowInstance,
 }
 
 impl IdKind {
@@ -195,6 +201,9 @@ impl IdKind {
             Self::ApiKey => "apk_",
             Self::AccessReview => "arv_",
             Self::OrgSecret => "sec_",
+            Self::WorkflowDefinition => "wfd_",
+            Self::WorkflowVersion => "wfv_",
+            Self::WorkflowInstance => "wfi_",
         }
     }
 
@@ -270,6 +279,9 @@ impl IdKind {
             "apk_" => Some(Self::ApiKey),
             "arv_" => Some(Self::AccessReview),
             "sec_" => Some(Self::OrgSecret),
+            "wfd_" => Some(Self::WorkflowDefinition),
+            "wfv_" => Some(Self::WorkflowVersion),
+            "wfi_" => Some(Self::WorkflowInstance),
             _ => None,
         }
     }
@@ -397,6 +409,9 @@ impl FromStr for PublicId {
             ("apk_", IdKind::ApiKey),
             ("arv_", IdKind::AccessReview),
             ("sec_", IdKind::OrgSecret),
+            ("wfd_", IdKind::WorkflowDefinition),
+            ("wfv_", IdKind::WorkflowVersion),
+            ("wfi_", IdKind::WorkflowInstance),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {
