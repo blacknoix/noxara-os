@@ -119,11 +119,44 @@ type ClaimedRow = (
     i32,
 );
 
+/// Whether SSRF private/loopback checks are relaxed (tests / local echo only).
+///
+/// Prefer passing this explicitly rather than mutating process-wide env vars —
+/// integration tests run in parallel and raced on `COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE`.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct DispatchOptions {
+    pub allow_private: bool,
+}
+
+impl DispatchOptions {
+    /// Production-safe default: SSRF checks enforced.
+    pub fn strict() -> Self {
+        Self {
+            allow_private: false,
+        }
+    }
+
+    /// Read once from env (service boot). Prefer [`AppState`] over per-call env reads.
+    pub fn from_env() -> Self {
+        let allow_private = std::env::var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE")
+            .map(|v| v == "1")
+            .unwrap_or(false);
+        Self { allow_private }
+    }
+}
+
+enum ProcessOutcome {
+    Delivered,
+    FailedSsrf,
+    Failed,
+}
+
 /// Claim and process up to `limit` pending/retryable deliveries.
 pub async fn dispatch_once(
     pool: &PgPool,
     decryptor: &WebhookDecryptor,
     limit: i64,
+    opts: DispatchOptions,
 ) -> Result<DispatchStats, DispatchError> {
     let client = build_http_client()?;
     let mut stats = DispatchStats::default();
@@ -198,32 +231,30 @@ pub async fn dispatch_once(
     stats.claimed = claimed.len();
 
     for delivery in claimed {
-        match process_one(pool, decryptor, &client, &delivery).await {
-            Ok(true) => stats.delivered += 1,
-            Ok(false) => {
+        match process_one(pool, decryptor, &client, &delivery, opts).await {
+            Ok(ProcessOutcome::Delivered) => stats.delivered += 1,
+            Ok(ProcessOutcome::FailedSsrf) => {
                 stats.failed += 1;
                 stats.skipped_ssrf += 1;
             }
-            Err(_) => stats.failed += 1,
+            Ok(ProcessOutcome::Failed) | Err(_) => stats.failed += 1,
         }
     }
 
     Ok(stats)
 }
 
-/// Returns `Ok(true)` delivered, `Ok(false)` failed due to SSRF (no HTTP), `Err` other failure.
+/// Deliver one claimed row. SSRF policy comes from `opts` (not process env) so parallel
+/// tests cannot race on `COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE`.
 async fn process_one(
     pool: &PgPool,
     decryptor: &WebhookDecryptor,
     client: &reqwest::Client,
     d: &ClaimedDelivery,
-) -> Result<bool, DispatchError> {
+    opts: DispatchOptions,
+) -> Result<ProcessOutcome, DispatchError> {
     // SSRF: resolve/check before decrypt work is wasted; fail closed.
-    // Tests may set COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE=1 to hit a local echo server.
-    let ssrf_relaxed = std::env::var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE")
-        .map(|v| v == "1")
-        .unwrap_or(false);
-    if !ssrf_relaxed {
+    if !opts.allow_private {
         if let Err(e) = ssrf::assert_url_safe(&d.endpoint_url) {
             mark_failed(
                 pool,
@@ -234,7 +265,7 @@ async fn process_one(
                 true, // permanent for SSRF
             )
             .await?;
-            return Ok(false);
+            return Ok(ProcessOutcome::FailedSsrf);
         }
     }
 
@@ -246,10 +277,10 @@ async fn process_one(
         .map_err(|e| DispatchError::Http(format!("serialize payload: {e}")))?;
 
     // Re-check immediately before connect (DNS rebinding guard).
-    if !ssrf_relaxed {
+    if !opts.allow_private {
         if let Err(e) = ssrf::assert_url_safe(&d.endpoint_url) {
             mark_failed(pool, d, None, None, &format!("ssrf: {e}"), true).await?;
-            return Ok(false);
+            return Ok(ProcessOutcome::FailedSsrf);
         }
     }
 
@@ -274,7 +305,7 @@ async fn process_one(
             let truncated = truncate_response(&resp_body);
             if (200..300).contains(&status) {
                 mark_delivered(pool, d, status, &truncated).await?;
-                Ok(true)
+                Ok(ProcessOutcome::Delivered)
             } else {
                 mark_failed(
                     pool,
@@ -285,14 +316,14 @@ async fn process_one(
                     false,
                 )
                 .await?;
-                Ok(false)
+                Ok(ProcessOutcome::Failed)
             }
         }
         Err(e) => {
             // If redirect / connect somehow hit a blocked path, treat as SSRF-ish.
             let permanent = matches_ssrf_err(&e);
             mark_failed(pool, d, None, None, &e.to_string(), permanent).await?;
-            Ok(false)
+            Ok(ProcessOutcome::Failed)
         }
     }
 }
@@ -459,11 +490,16 @@ async fn mark_failed(
 }
 
 /// Background poll loop for reliability (tests + NATS-less envs).
-pub async fn run_poll_loop(pool: PgPool, decryptor: WebhookDecryptor, interval: Duration) {
+pub async fn run_poll_loop(
+    pool: PgPool,
+    decryptor: WebhookDecryptor,
+    interval: Duration,
+    opts: DispatchOptions,
+) {
     let mut tick = tokio::time::interval(interval);
     loop {
         tick.tick().await;
-        match dispatch_once(&pool, &decryptor, 25).await {
+        match dispatch_once(&pool, &decryptor, 25, opts).await {
             Ok(stats) if stats.claimed > 0 => {
                 tracing::info!(
                     claimed = stats.claimed,

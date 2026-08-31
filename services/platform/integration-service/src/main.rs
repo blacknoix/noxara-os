@@ -7,7 +7,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use companyos_integration::crypto::WebhookDecryptor;
-use companyos_integration::dispatcher::{run_nats_consumer, run_poll_loop};
+use companyos_integration::dispatcher::{run_nats_consumer, run_poll_loop, DispatchOptions};
 use companyos_integration::{build_router, migrate, AppState};
 use companyos_telemetry::init_tracing;
 use tracing::info;
@@ -27,7 +27,8 @@ async fn main() -> anyhow::Result<()> {
     migrate(&pool).await?;
 
     let decryptor = WebhookDecryptor::from_env()?;
-    let state = AppState::new(pool.clone(), decryptor.clone());
+    let dispatch_opts = DispatchOptions::from_env();
+    let state = AppState::with_dispatch_opts(pool.clone(), decryptor.clone(), dispatch_opts);
     let app = build_router(state);
 
     let poll_ms: u64 = std::env::var("INTEGRATION_POLL_MS")
@@ -38,7 +39,13 @@ async fn main() -> anyhow::Result<()> {
     let poll_pool = pool.clone();
     let poll_decryptor = decryptor.clone();
     tokio::spawn(async move {
-        run_poll_loop(poll_pool, poll_decryptor, Duration::from_millis(poll_ms)).await;
+        run_poll_loop(
+            poll_pool,
+            poll_decryptor,
+            Duration::from_millis(poll_ms),
+            dispatch_opts,
+        )
+        .await;
     });
 
     if let Ok(nats_url) = std::env::var("NATS_URL") {

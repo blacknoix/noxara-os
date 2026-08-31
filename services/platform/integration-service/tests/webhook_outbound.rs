@@ -13,7 +13,7 @@ use companyos_core::webhook_crypto::WebhookEncryptor;
 use companyos_events::{Context, EventEnvelope};
 use companyos_ids::{new_uuid_v7, IdKind, PublicId};
 use companyos_integration::crypto::WebhookDecryptor;
-use companyos_integration::dispatcher::{dispatch_once, AUTO_PAUSE_FAILURES};
+use companyos_integration::dispatcher::{dispatch_once, DispatchOptions, AUTO_PAUSE_FAILURES};
 use companyos_integration::enqueue::enqueue_event;
 use companyos_integration::sign;
 use companyos_integration::ssrf;
@@ -175,9 +175,14 @@ fn sample_event(org: OrgId) -> EventEnvelope {
     )
 }
 
+/// Allow loopback echo servers without racing on process-wide env vars.
+const ALLOW_PRIVATE: DispatchOptions = DispatchOptions {
+    allow_private: true,
+};
+
 fn integration_app(pool: PgPool) -> Router {
     let decryptor = WebhookDecryptor::from_env().expect("decryptor");
-    build_router(AppState::new(pool, decryptor))
+    build_router(AppState::with_dispatch_opts(pool, decryptor, ALLOW_PRIVATE))
 }
 
 #[tokio::test]
@@ -205,7 +210,6 @@ async fn happy_delivery_and_signature() {
         eprintln!("skip: no TEST_DATABASE_URL");
         return;
     };
-    std::env::set_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE", "1");
     let (addr, echo) = start_echo().await;
     let (org, user) = seed_org(&pool).await;
     let secret = "whsec_test_happy_secret_value";
@@ -270,7 +274,6 @@ async fn happy_delivery_and_signature() {
             .unwrap();
     tx.commit().await.unwrap();
     assert_eq!(status, "delivered");
-    std::env::remove_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE");
 }
 
 #[tokio::test]
@@ -279,7 +282,6 @@ async fn ssrf_rejects_loopback_at_dispatch() {
         eprintln!("skip: no TEST_DATABASE_URL");
         return;
     };
-    std::env::remove_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE");
     assert_eq!(
         ssrf::assert_url_safe("http://127.0.0.1/hook"),
         Err(ssrf::SsrfError::BlockedAddress)
@@ -301,10 +303,11 @@ async fn ssrf_rejects_loopback_at_dispatch() {
     enqueue_event(&pool, &envelope).await.expect("enqueue");
 
     let decryptor = WebhookDecryptor::from_env().unwrap();
-    let stats = dispatch_once(&pool, &decryptor, 10)
+    let stats = dispatch_once(&pool, &decryptor, 10, DispatchOptions::strict())
         .await
         .expect("dispatch");
     assert!(stats.failed >= 1 || stats.skipped_ssrf >= 1);
+    assert!(stats.skipped_ssrf >= 1);
 
     let mut tx = pool.begin().await.unwrap();
     set_session_org_id(&mut tx, org).await.unwrap();
@@ -327,7 +330,6 @@ async fn retry_backoff_then_success() {
         eprintln!("skip: no TEST_DATABASE_URL");
         return;
     };
-    std::env::set_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE", "1");
     let (addr, echo) = start_echo().await;
     *echo.fail_next.lock().unwrap() = true;
 
@@ -347,8 +349,11 @@ async fn retry_backoff_then_success() {
     enqueue_event(&pool, &envelope).await.unwrap();
     let decryptor = WebhookDecryptor::from_env().unwrap();
 
-    let stats1 = dispatch_once(&pool, &decryptor, 5).await.unwrap();
+    let stats1 = dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+        .await
+        .unwrap();
     assert_eq!(stats1.failed, 1);
+    assert_eq!(stats1.skipped_ssrf, 0);
 
     let mut tx = pool.begin().await.unwrap();
     set_session_org_id(&mut tx, org).await.unwrap();
@@ -373,10 +378,11 @@ async fn retry_backoff_then_success() {
     assert_eq!(attempt, 1);
     assert!(next_retry.is_some());
 
-    let stats2 = dispatch_once(&pool, &decryptor, 5).await.unwrap();
+    let stats2 = dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+        .await
+        .unwrap();
     assert_eq!(stats2.delivered, 1);
     assert_eq!(echo.hits.lock().unwrap().len(), 2);
-    std::env::remove_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE");
 }
 
 #[tokio::test]
@@ -422,7 +428,6 @@ async fn replay_delivers_again_at_least_once() {
         eprintln!("skip: no TEST_DATABASE_URL");
         return;
     };
-    std::env::set_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE", "1");
     let (addr, echo) = start_echo().await;
     let (org, user) = seed_org(&pool).await;
     let secret = "whsec_replay_secret_value";
@@ -440,7 +445,10 @@ async fn replay_delivers_again_at_least_once() {
     enqueue_event(&pool, &envelope).await.unwrap();
     let decryptor = WebhookDecryptor::from_env().unwrap();
     assert_eq!(
-        dispatch_once(&pool, &decryptor, 5).await.unwrap().delivered,
+        dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+            .await
+            .unwrap()
+            .delivered,
         1
     );
 
@@ -463,7 +471,10 @@ async fn replay_delivers_again_at_least_once() {
     tx.commit().await.unwrap();
 
     assert_eq!(
-        dispatch_once(&pool, &decryptor, 5).await.unwrap().delivered,
+        dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+            .await
+            .unwrap()
+            .delivered,
         1
     );
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -472,7 +483,6 @@ async fn replay_delivers_again_at_least_once() {
         2,
         "at-least-once: receiver sees duplicate"
     );
-    std::env::remove_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE");
 }
 
 #[tokio::test]
@@ -482,7 +492,6 @@ async fn auto_pause_after_consecutive_failures() {
         return;
     };
     // No echo — connection refused counts as failure. Allow private so SSRF doesn't short-circuit.
-    std::env::set_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE", "1");
     let (org, user) = seed_org(&pool).await;
     let (_epid, _pub) = insert_endpoint(
         &pool,
@@ -501,7 +510,9 @@ async fn auto_pause_after_consecutive_failures() {
         env.event_id = new_uuid_v7();
         env.idempotency_key = env.event_id.to_string();
         enqueue_event(&pool, &env).await.unwrap();
-        let _ = dispatch_once(&pool, &decryptor, 5).await.unwrap();
+        let _ = dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+            .await
+            .unwrap();
         // clear backoff on remaining pending so next can run... actually each is new.
         let _ = i;
     }
@@ -517,5 +528,4 @@ async fn auto_pause_after_consecutive_failures() {
     tx.commit().await.unwrap();
     assert_eq!(status, "paused");
     assert!(failure_count >= AUTO_PAUSE_FAILURES);
-    std::env::remove_var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE");
 }

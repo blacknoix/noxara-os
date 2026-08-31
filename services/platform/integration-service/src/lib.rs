@@ -17,7 +17,7 @@ use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetReques
 use tower_http::trace::TraceLayer;
 
 use crate::crypto::WebhookDecryptor;
-use crate::dispatcher::{dispatch_once, DispatchStats};
+use crate::dispatcher::{dispatch_once, DispatchOptions, DispatchStats};
 use crate::enqueue::{enqueue_event, EnqueueResult};
 
 /// Shared application state.
@@ -25,13 +25,24 @@ use crate::enqueue::{enqueue_event, EnqueueResult};
 pub struct AppState {
     pub pool: sqlx::PgPool,
     pub decryptor: Arc<WebhookDecryptor>,
+    /// SSRF policy captured at boot / test setup (not re-read from env per request).
+    pub dispatch_opts: DispatchOptions,
 }
 
 impl AppState {
     pub fn new(pool: sqlx::PgPool, decryptor: WebhookDecryptor) -> Self {
+        Self::with_dispatch_opts(pool, decryptor, DispatchOptions::from_env())
+    }
+
+    pub fn with_dispatch_opts(
+        pool: sqlx::PgPool,
+        decryptor: WebhookDecryptor,
+        dispatch_opts: DispatchOptions,
+    ) -> Self {
         Self {
             pool,
             decryptor: Arc::new(decryptor),
+            dispatch_opts,
         }
     }
 }
@@ -97,7 +108,7 @@ async fn internal_enqueue(
 async fn internal_dispatch_once(
     State(state): State<AppState>,
 ) -> Result<Json<DispatchOnceResponse>, (axum::http::StatusCode, String)> {
-    dispatch_once(&state.pool, &state.decryptor, 25)
+    dispatch_once(&state.pool, &state.decryptor, 25, state.dispatch_opts)
         .await
         .map(|s| Json(DispatchOnceResponse::from(s)))
         .map_err(|e| (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
