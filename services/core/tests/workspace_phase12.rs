@@ -476,6 +476,7 @@ async fn system_role_deny_matrix_unit() {
             // Phase 2.1 People: Manager may write/onboard/offboard and read sensitive.
             // Phase 2.5 Inventory: Manager owns stock/procurement writes.
             // Phase 2.6: Manager may read field-level compensation/ID/bank data.
+            // Phase 3.5: Manager approves timesheets, manages capacity, may publish contracts.
             if *role == Role::Manager
                 && matches!(
                     *perm,
@@ -503,7 +504,17 @@ async fn system_role_deny_matrix_unit() {
                         | "hr.field.compensation_read"
                         | "hr.field.government_id_read"
                         | "hr.field.bank_read"
+                        | "operations.timesheet.approve"
+                        | "operations.capacity.manage"
+                        | "sales.contract.publish"
                 )
+            {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
+            // Phase 3.5 CRM depth: Sales may publish contracts and manage territories.
+            if *role == Role::Sales
+                && matches!(*perm, "sales.contract.publish" | "sales.territory.manage")
             {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
