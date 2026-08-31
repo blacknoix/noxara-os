@@ -463,6 +463,9 @@ impl FromStr for PublicId {
             ("imp_", IdKind::Import),
             ("prj_", IdKind::Project),
             ("tsk_", IdKind::Task),
+            ("tme_", IdKind::TimeEntry),
+            ("tms_", IdKind::Timesheet),
+            ("cap_", IdKind::CapacityAllocation),
             ("apr_", IdKind::Approval),
             ("apl_", IdKind::ApprovalPolicy),
             ("apd_", IdKind::ApprovalDelegation),
@@ -533,6 +536,17 @@ impl FromStr for PublicId {
             ("oac_", IdKind::MarketplaceOauthClient),
             ("mrv_", IdKind::MarketplaceReview),
             ("atk_", IdKind::MarketplaceAppToken),
+            ("ord_", IdKind::SalesOrder),
+            ("orl_", IdKind::SalesOrderLine),
+            ("sct_", IdKind::SalesContract),
+            ("ter_", IdKind::Territory),
+            ("txr_", IdKind::TaxRate),
+            ("txg_", IdKind::TaxGroup),
+            ("txc_", IdKind::TaxComponent),
+            ("dnp_", IdKind::DunningProfile),
+            ("ent_", IdKind::FinanceEntity),
+            ("mts_", IdKind::MeetingSummary),
+            ("ain_", IdKind::AiInsight),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {

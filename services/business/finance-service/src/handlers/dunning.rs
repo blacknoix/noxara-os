@@ -76,6 +76,7 @@ pub fn router() -> Router<AppState> {
 
 #[derive(Debug, sqlx::FromRow)]
 struct ProfileRow {
+    #[allow(dead_code)]
     id: Uuid,
     public_id: String,
     name: String,
