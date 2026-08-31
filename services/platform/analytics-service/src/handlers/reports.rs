@@ -408,6 +408,10 @@ pub async fn run_query(
     auth: AuthCtx,
     Json(definition): Json<ReportDefinition>,
 ) -> Result<Json<RunReportResponse>, AppError> {
+    // Ad-hoc queries must carry an explicit tenant predicate. Saved report
+    // creation may infer the authenticated org, but the raw query API must
+    // fail closed when callers omit the query guard.
+    validate_query(&definition, &auth.ctx.request_id)?;
     let principal = authorize(&state, &auth, perms::analytics_report_run()).await?;
     Ok(Json(
         run_definition(&state, &auth, definition, None, principal.as_ref()).await?,

@@ -1,7 +1,7 @@
 //! Governed semantic metric layer — one definition per metric name.
 //!
-//! The UI and API both consume [`METRIC_CATALOGUE`] / [`list_metrics`] so every
-//! surface that shows a metric agrees on formula, unit, and source fact.
+//! The UI and API both consume [`list_metrics`] so every surface that shows a
+//! metric agrees on formula, unit, and source fact.
 
 use companyos_authz::PermissionId;
 use serde::{Deserialize, Serialize};
@@ -126,9 +126,6 @@ pub struct MetricDefinition {
     /// Flagship metrics appear in benchmark/trend views.
     pub flagship: bool,
 }
-
-/// Single source of truth for governed metrics.
-pub static METRIC_CATALOGUE: &[MetricDefinition] = &[];
 
 fn defs() -> Vec<MetricDefinition> {
     vec![
