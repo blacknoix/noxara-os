@@ -14,11 +14,7 @@ import {
 } from '@companyos/design-system';
 import { authFetch, getAccessToken } from '../../../lib/auth-client';
 import { useCapabilities } from '../../../lib/capabilities';
-import {
-  analyticsPageStyle,
-  responseError,
-  type Dashboard,
-} from '../../../lib/analytics';
+import { analyticsPageStyle, responseError, type Dashboard } from '../../../lib/analytics';
 
 export default function DashboardsPage() {
   const router = useRouter();
@@ -80,10 +76,7 @@ export default function DashboardsPage() {
   if (!canRead) {
     return (
       <main id="main-content" tabIndex={-1} style={analyticsPageStyle}>
-        <PermissionDeniedState
-          title="Dashboards"
-          requiredPermission="analytics.dashboard.read"
-        />
+        <PermissionDeniedState title="Dashboards" requiredPermission="analytics.dashboard.read" />
       </main>
     );
   }

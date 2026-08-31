@@ -108,9 +108,7 @@ export default function InsightsPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, fontFamily: 'var(--cos-font-display)' }}>
-            Benchmarks & trends
-          </h1>
+          <h1 style={{ margin: 0, fontFamily: 'var(--cos-font-display)' }}>Benchmarks & trends</h1>
           <p style={{ margin: '0.35rem 0 0', color: 'var(--cos-color-fg-muted)' }}>
             Flagship company metrics derived from the governed event stream.
           </p>
@@ -131,8 +129,8 @@ export default function InsightsPage() {
       {error ? <ErrorState message={error} /> : null}
       {freshness?.eventually_consistent ? (
         <InlineAlert tone="info" title="Eventually consistent">
-          Analytics facts are built from domain events. Recent operational changes may take a
-          short time to appear.
+          Analytics facts are built from domain events. Recent operational changes may take a short
+          time to appear.
         </InlineAlert>
       ) : null}
       {isStale && freshness?.last_ingest_at ? (

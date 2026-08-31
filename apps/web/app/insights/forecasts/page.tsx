@@ -26,9 +26,7 @@ export default function ForecastsPage() {
   const { caps, can, loading: capsLoading } = useCapabilities();
   const canRun = can('analytics.report.run');
   const [series, setSeries] = useState('revenue');
-  const [method, setMethod] = useState<'trailing_average' | 'linear_trend'>(
-    'trailing_average',
-  );
+  const [method, setMethod] = useState<'trailing_average' | 'linear_trend'>('trailing_average');
   const [historyPeriods, setHistoryPeriods] = useState(6);
   const [horizonPeriods, setHorizonPeriods] = useState(3);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
@@ -72,10 +70,7 @@ export default function ForecastsPage() {
   if (!canRun) {
     return (
       <main id="main-content" tabIndex={-1} style={analyticsPageStyle}>
-        <PermissionDeniedState
-          title="Forecasts"
-          requiredPermission="analytics.report.run"
-        />
+        <PermissionDeniedState title="Forecasts" requiredPermission="analytics.report.run" />
       </main>
     );
   }
@@ -147,10 +142,7 @@ export default function ForecastsPage() {
           onClick={() => void runForecast()}
           loading={busy}
           disabled={
-            historyPeriods < 1 ||
-            historyPeriods > 365 ||
-            horizonPeriods < 1 ||
-            horizonPeriods > 52
+            historyPeriods < 1 || historyPeriods > 365 || horizonPeriods < 1 || horizonPeriods > 52
           }
           style={{ marginTop: '1rem' }}
         >
@@ -216,8 +208,7 @@ export default function ForecastsPage() {
               key: 'value',
               header: 'Forecast value',
               align: 'right',
-              cell: (point) =>
-                formatMetricValue(point.value, forecast?.unit ?? 'count'),
+              cell: (point) => formatMetricValue(point.value, forecast?.unit ?? 'count'),
             },
           ]}
           empty={

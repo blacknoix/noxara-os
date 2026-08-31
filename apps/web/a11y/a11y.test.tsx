@@ -84,7 +84,12 @@ describe('a11y', () => {
         />
         <Widget
           title="Inbox"
-          empty={<EmptyState title="Nothing here yet" description="When activity exists, it will show up here." />}
+          empty={
+            <EmptyState
+              title="Nothing here yet"
+              description="When activity exists, it will show up here."
+            />
+          }
         />
       </main>,
     );
@@ -359,7 +364,11 @@ describe('a11y', () => {
           getRowKey={(r) => r.id}
           columns={[
             { key: 'number', header: 'Number', cell: (r) => r.number },
-            { key: 'status', header: 'Status', cell: (r) => <StatusCell status={r.status} tone="info" /> },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (r) => <StatusCell status={r.status} tone="info" />,
+            },
             {
               key: 'total',
               header: 'Total',
@@ -588,7 +597,10 @@ describe('a11y', () => {
         </section>
         <section aria-labelledby="list-heading">
           <h2 id="list-heading">Definitions</h2>
-          <EmptyState title="No workflows yet" description="Create a definition or start from a fixture." />
+          <EmptyState
+            title="No workflows yet"
+            description="Create a definition or start from a fixture."
+          />
         </section>
         <form>
           <Input label="Name" name="name" />

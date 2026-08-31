@@ -165,10 +165,7 @@ export default function DashboardDesignerPage() {
   if (!canRead) {
     return (
       <main id="main-content" tabIndex={-1} style={analyticsPageStyle}>
-        <PermissionDeniedState
-          title="Dashboard"
-          requiredPermission="analytics.dashboard.read"
-        />
+        <PermissionDeniedState title="Dashboard" requiredPermission="analytics.dashboard.read" />
       </main>
     );
   }
@@ -195,22 +192,14 @@ export default function DashboardDesignerPage() {
             Dashboard settings
           </h2>
           <div style={{ display: 'grid', gap: '0.75rem' }}>
-            <Input
-              label="Name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
+            <Input label="Name" value={name} onChange={(event) => setName(event.target.value)} />
             <Input
               label="Description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
             <div>
-              <Button
-                onClick={() => void saveDashboard()}
-                loading={busy}
-                disabled={!name.trim()}
-              >
+              <Button onClick={() => void saveDashboard()} loading={busy} disabled={!name.trim()}>
                 Save dashboard
               </Button>
             </div>
@@ -256,11 +245,7 @@ export default function DashboardDesignerPage() {
               ]}
             />
             <div>
-              <Button
-                onClick={() => void addWidget()}
-                loading={busy}
-                disabled={!metricName}
-              >
+              <Button onClick={() => void addWidget()} loading={busy} disabled={!metricName}>
                 Add widget
               </Button>
             </div>

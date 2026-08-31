@@ -78,9 +78,7 @@ export default function ReportBuilderPage() {
       setDescription(nextReport.description);
       setMetricName(nextReport.definition.metric);
       setDimensions(nextReport.definition.dimensions);
-      setVisualization(
-        nextReport.definition.visualization === 'bar' ? 'bar' : 'table',
-      );
+      setVisualization(nextReport.definition.visualization === 'bar' ? 'bar' : 'table');
       setMetrics(metricsBody.metrics ?? []);
     } catch {
       setError('Analytics request failed.');
@@ -112,24 +110,21 @@ export default function ReportBuilderPage() {
     setBusy(true);
     setError(null);
     setMessage(null);
-    const response = await authFetch(
-      `/api/v1/analytics/reports/${encodeURIComponent(report.id)}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({
-          name: name.trim(),
-          description,
-          definition: {
-            org_id: caps.org_id,
-            metric: metricName,
-            dimensions,
-            filters: report.definition.filters,
-            group_by: dimensions,
-            visualization,
-          },
-        }),
-      },
-    );
+    const response = await authFetch(`/api/v1/analytics/reports/${encodeURIComponent(report.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        name: name.trim(),
+        description,
+        definition: {
+          org_id: caps.org_id,
+          metric: metricName,
+          dimensions,
+          filters: report.definition.filters,
+          group_by: dimensions,
+          visualization,
+        },
+      }),
+    });
     if (!response.ok) {
       setError(await responseError(response, 'Could not save report.'));
     } else {
@@ -323,7 +318,9 @@ export default function ReportBuilderPage() {
             description="Bars use the returned grouped values."
             height={Math.max(180, rows.length * 44)}
             empty={rows.length === 0}
-            emptyMessage={result ? 'No rows are visible for this report.' : 'Run the report to chart results.'}
+            emptyMessage={
+              result ? 'No rows are visible for this report.' : 'Run the report to chart results.'
+            }
           >
             <div
               role="img"

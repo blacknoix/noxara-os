@@ -128,8 +128,9 @@ export function dimensionLabel(dimensions: Record<string, string>): string {
 }
 
 export async function responseError(response: Response, fallback: string): Promise<string> {
-  const body = (await response.json().catch(() => null)) as
-    | { detail?: string; message?: string }
-    | null;
+  const body = (await response.json().catch(() => null)) as {
+    detail?: string;
+    message?: string;
+  } | null;
   return body?.detail ?? body?.message ?? fallback;
 }
