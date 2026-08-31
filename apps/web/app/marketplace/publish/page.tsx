@@ -93,7 +93,7 @@ export default function MarketplacePublisherPage() {
           slug: form.slug.trim(),
           description: form.description.trim(),
           requested_scopes: requestedScopes,
-          redirect_uri: form.redirectUri.trim(),
+          redirect_uris: [form.redirectUri.trim()],
         }),
       });
       if (!response.ok) {

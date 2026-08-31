@@ -21,7 +21,13 @@ import { useCapabilities } from '../../../lib/capabilities';
 import { itemsFrom, responseMessage, type MarketplaceInstall } from '../../../lib/marketplace';
 
 function installName(install: MarketplaceInstall): string {
-  return install.listing?.name ?? install.app_name ?? install.name ?? 'Marketplace app';
+  return (
+    install.listing?.name ??
+    install.listing_name ??
+    install.app_name ??
+    install.name ??
+    'Marketplace app'
+  );
 }
 
 export default function MarketplaceInstallsPage() {

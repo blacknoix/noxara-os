@@ -124,7 +124,9 @@ export default function IntegrationsSettingsPage() {
         `/api/v1/integrations/${encodeURIComponent(integration.connector_key)}/connect`,
         {
           method: 'POST',
-          body: JSON.stringify({ scopes: selectedScopes[integration.connector_key] ?? [] }),
+          body: JSON.stringify({
+            consented_scopes: selectedScopes[integration.connector_key] ?? [],
+          }),
         },
       );
       if (!response.ok) {

@@ -6,10 +6,11 @@ export type MarketplaceListing = {
   slug: string;
   description: string;
   kind?: string;
+  listing_kind?: string;
   requested_scopes: string[];
   redirect_uri?: string | null;
+  redirect_uris?: string[];
   status?: string;
-  security_checklist?: SecurityCheck[];
 };
 
 export type MarketplaceInstall = {
@@ -18,6 +19,7 @@ export type MarketplaceInstall = {
   app_id?: string;
   name?: string;
   app_name?: string;
+  listing_name?: string;
   listing?: Pick<MarketplaceListing, 'id' | 'name' | 'slug' | 'kind'>;
   consented_scopes?: string[];
   scopes?: string[];
@@ -26,9 +28,24 @@ export type MarketplaceInstall = {
 };
 
 export type SecurityCheck = {
-  key: string;
+  id: string;
   label: string;
-  complete: boolean;
+  required?: boolean;
+  completed: boolean;
+};
+
+export type MarketplaceReview = {
+  id: string;
+  listing_id: string;
+  listing_status: string;
+  checklist: SecurityCheck[];
+  security_review_completed: boolean;
+  status: string;
+  reviewer_notes?: string;
+  listing?: MarketplaceListing;
+  listing_name?: string;
+  requested_scopes?: string[];
+  redirect_uris?: string[];
 };
 
 export type Integration = {

@@ -93,8 +93,9 @@ export default function MarketplaceListingPage() {
         setError(await responseMessage(response, 'Could not install this app.'));
         return;
       }
-      const body = (await response.json()) as MarketplaceInstall;
-      setInstalledScopes(body.consented_scopes ?? body.scopes ?? selectedScopes);
+      const body = (await response.json()) as MarketplaceInstall | { install: MarketplaceInstall };
+      const created = 'install' in body ? body.install : body;
+      setInstalledScopes(created.consented_scopes ?? created.scopes ?? selectedScopes);
     } catch {
       setError('The install request failed.');
     } finally {
@@ -127,7 +128,7 @@ export default function MarketplaceListingPage() {
       {!error && !loading && listing ? (
         <section style={marketplaceStyles.section} aria-labelledby="install-consent-title">
           <div style={marketplaceStyles.row}>
-            <Badge tone="neutral">{listing.kind ?? 'app'}</Badge>
+            <Badge tone="neutral">{listing.listing_kind ?? listing.kind ?? 'app'}</Badge>
             {listing.slug ? <span style={marketplaceStyles.muted}>{listing.slug}</span> : null}
           </div>
 

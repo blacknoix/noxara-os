@@ -96,7 +96,7 @@ export default function MarketplaceCataloguePage() {
               key: 'kind',
               header: 'Kind',
               cell: (listing: MarketplaceListing) => (
-                <Badge tone="neutral">{listing.kind ?? 'app'}</Badge>
+                <Badge tone="neutral">{listing.listing_kind ?? listing.kind ?? 'app'}</Badge>
               ),
             },
             {

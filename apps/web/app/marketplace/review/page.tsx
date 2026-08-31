@@ -22,20 +22,35 @@ import { useCapabilities } from '../../../lib/capabilities';
 import {
   itemsFrom,
   responseMessage,
-  type MarketplaceListing,
+  type MarketplaceReview,
   type SecurityCheck,
 } from '../../../lib/marketplace';
 
 const defaultChecks: SecurityCheck[] = [
-  { key: 'scopes', label: 'Requested scopes are necessary and least-privileged', complete: false },
-  { key: 'redirect_uri', label: 'Redirect URI ownership and HTTPS are verified', complete: false },
-  { key: 'security', label: 'Security review is complete', complete: false },
+  {
+    id: 'security_scopes',
+    label: 'Requested scopes are necessary and least-privileged',
+    required: true,
+    completed: false,
+  },
+  {
+    id: 'security_redirect_uri',
+    label: 'Redirect URI ownership and HTTPS are verified',
+    required: true,
+    completed: false,
+  },
+  {
+    id: 'security_review',
+    label: 'Security review is complete',
+    required: true,
+    completed: false,
+  },
 ];
 
 export default function MarketplaceReviewPage() {
   const { can, loading: capabilitiesLoading } = useCapabilities();
-  const [listings, setListings] = useState<MarketplaceListing[]>([]);
-  const [checksByListing, setChecksByListing] = useState<Record<string, SecurityCheck[]>>({});
+  const [reviews, setReviews] = useState<MarketplaceReview[]>([]);
+  const [checksByReview, setChecksByReview] = useState<Record<string, SecurityCheck[]>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +66,14 @@ export default function MarketplaceReviewPage() {
         return;
       }
       const body = await response.json();
-      const queue = itemsFrom<MarketplaceListing>(body, ['listings', 'queue']);
-      setListings(queue);
-      setChecksByListing(
+      const queue = itemsFrom<MarketplaceReview>(body, ['reviews', 'queue']);
+      setReviews(queue);
+      setChecksByReview(
         Object.fromEntries(
-          queue.map((listing) => [
-            listing.id,
-            listing.security_checklist?.length
-              ? listing.security_checklist
+          queue.map((review) => [
+            review.id,
+            review.checklist?.length
+              ? review.checklist
               : defaultChecks.map((check) => ({ ...check })),
           ]),
         ),
@@ -75,42 +90,45 @@ export default function MarketplaceReviewPage() {
     if (!capabilitiesLoading && !canReview) setLoading(false);
   }, [capabilitiesLoading, canReview, loadQueue]);
 
-  async function setCheck(listingId: string, key: string, complete: boolean) {
-    const previous = checksByListing[listingId] ?? defaultChecks;
-    const next = previous.map((check) => (check.key === key ? { ...check, complete } : check));
-    setChecksByListing((current) => ({ ...current, [listingId]: next }));
-    setBusyId(listingId);
+  async function setCheck(review: MarketplaceReview, checkId: string, completed: boolean) {
+    const previous = checksByReview[review.id] ?? defaultChecks;
+    const next = previous.map((check) => (check.id === checkId ? { ...check, completed } : check));
+    setChecksByReview((current) => ({ ...current, [review.id]: next }));
+    setBusyId(review.id);
     setError(null);
     try {
       const response = await authFetch(
-        `/api/v1/marketplace/listings/${encodeURIComponent(listingId)}/review`,
+        `/api/v1/marketplace/listings/${encodeURIComponent(review.listing_id)}/review`,
         {
           method: 'PATCH',
-          body: JSON.stringify({ security_checklist: next }),
+          body: JSON.stringify({
+            completed_item_ids: next.filter((check) => check.completed).map((check) => check.id),
+          }),
         },
       );
       if (!response.ok) {
-        setChecksByListing((current) => ({ ...current, [listingId]: previous }));
+        setChecksByReview((current) => ({ ...current, [review.id]: previous }));
         setError(await responseMessage(response, 'Could not update the security checklist.'));
       }
     } catch {
-      setChecksByListing((current) => ({ ...current, [listingId]: previous }));
+      setChecksByReview((current) => ({ ...current, [review.id]: previous }));
       setError('The security checklist update failed.');
     } finally {
       setBusyId(null);
     }
   }
 
-  async function publish(listing: MarketplaceListing) {
-    setBusyId(listing.id);
+  async function publish(review: MarketplaceReview) {
+    const name = review.listing?.name ?? review.listing_name ?? review.listing_id;
+    setBusyId(review.id);
     setError(null);
     try {
       const response = await authFetch(
-        `/api/v1/marketplace/listings/${encodeURIComponent(listing.id)}/publish`,
+        `/api/v1/marketplace/listings/${encodeURIComponent(review.listing_id)}/publish`,
         { method: 'POST' },
       );
       if (!response.ok) {
-        setError(await responseMessage(response, `Could not publish ${listing.name}.`));
+        setError(await responseMessage(response, `Could not publish ${name}.`));
         return;
       }
       await loadQueue();
@@ -136,7 +154,7 @@ export default function MarketplaceReviewPage() {
       <MarketplaceNav canWrite={can('admin.marketplace.write')} canReview />
       {error ? <ErrorState message={error} /> : null}
       {loading ? <LoadingState label="Loading review queue" /> : null}
-      {!loading && listings.length === 0 ? (
+      {!loading && reviews.length === 0 ? (
         <EmptyState
           title="Review queue is clear"
           description="Submitted marketplace listings will appear here."
@@ -144,45 +162,52 @@ export default function MarketplaceReviewPage() {
       ) : null}
       {!loading ? (
         <div style={marketplaceStyles.cardGrid}>
-          {listings.map((listing) => {
-            const checks = checksByListing[listing.id] ?? defaultChecks;
-            const securityComplete = checks.length > 0 && checks.every((check) => check.complete);
+          {reviews.map((review) => {
+            const listing = review.listing;
+            const checks = checksByReview[review.id] ?? defaultChecks;
+            const securityChecks = checks.filter((check) => check.id.startsWith('security_'));
+            const securityComplete =
+              review.security_review_completed ||
+              (securityChecks.length > 0 && securityChecks.every((check) => check.completed));
+            const name = listing?.name ?? review.listing_name ?? review.listing_id;
+            const scopes = listing?.requested_scopes ?? review.requested_scopes ?? [];
+            const redirectUris = listing?.redirect_uris ?? review.redirect_uris ?? [];
             return (
-              <Card key={listing.id} as="article" style={marketplaceStyles.section}>
+              <Card key={review.id} as="article" style={marketplaceStyles.section}>
                 <div style={marketplaceStyles.cardHeader}>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{listing.name}</h2>
-                    <p style={marketplaceStyles.muted}>{listing.description}</p>
+                    <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{name}</h2>
+                    <p style={marketplaceStyles.muted}>
+                      {listing?.description ?? `Listing ${review.listing_id}`}
+                    </p>
                   </div>
-                  <StatusBadge status={listing.status ?? 'submitted'} />
+                  <StatusBadge status={review.listing_status ?? review.status} />
                 </div>
                 <div>
                   <strong style={{ fontSize: '0.8125rem' }}>Requested scopes</strong>
                   <div style={{ marginTop: 'var(--cos-space-2)' }}>
-                    <ScopeBadges scopes={listing.requested_scopes ?? []} />
+                    <ScopeBadges scopes={scopes} />
                   </div>
                 </div>
                 <p style={marketplaceStyles.muted}>
-                  Redirect URI: <code>{listing.redirect_uri ?? 'Not provided'}</code>
+                  Redirect URI: <code>{redirectUris.join(', ') || 'Not provided'}</code>
                 </p>
                 <fieldset style={marketplaceStyles.fieldset}>
                   <legend style={marketplaceStyles.legend}>Security checklist</legend>
                   {checks.map((check) => (
                     <Checkbox
-                      key={check.key}
-                      label={check.label}
-                      checked={check.complete}
+                      key={check.id}
+                      label={`${check.label}${check.required ? ' (required)' : ''}`}
+                      checked={check.completed}
                       disabled={busyId !== null}
-                      onChange={(event) =>
-                        void setCheck(listing.id, check.key, event.target.checked)
-                      }
+                      onChange={(event) => void setCheck(review, check.id, event.target.checked)}
                     />
                   ))}
                 </fieldset>
                 <Button
-                  loading={busyId === listing.id}
+                  loading={busyId === review.id}
                   disabled={!securityComplete || busyId !== null}
-                  onClick={() => void publish(listing)}
+                  onClick={() => void publish(review)}
                 >
                   Publish
                 </Button>
