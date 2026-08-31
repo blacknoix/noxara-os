@@ -12,8 +12,8 @@ export default function DevelopersPage() {
       </p>
       <ul>
         <li>
-          <Link href="/docs/developers">In-repo developer docs</Link> (auth, scopes, webhooks,
-          quickstart, sandbox)
+          Docs in-repo under <code>docs/developers/</code> (auth, scopes, webhooks, quickstart,
+          sandbox)
         </li>
         <li>
           Public OpenAPI: <code>/api/v1/openapi.public.json</code>
