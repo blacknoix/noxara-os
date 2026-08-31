@@ -79,6 +79,12 @@ export function StatusBadge({ status }: { status?: string }) {
   return <Badge tone={statusTone(status)}>{humanize(status ?? 'unknown')}</Badge>;
 }
 
+const muted: CSSProperties = {
+  margin: '0.4rem 0 0',
+  color: 'var(--cos-color-fg-muted)',
+  lineHeight: 1.5,
+};
+
 export const marketplaceStyles = {
   section: {
     display: 'grid',
@@ -164,12 +170,6 @@ const titleStyle: CSSProperties = {
   fontFamily: 'var(--cos-font-display)',
   fontSize: '1.75rem',
   fontWeight: 650,
-};
-
-const muted: CSSProperties = {
-  margin: '0.4rem 0 0',
-  color: 'var(--cos-color-fg-muted)',
-  lineHeight: 1.5,
 };
 
 const actionsStyle: CSSProperties = {

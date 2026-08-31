@@ -18,11 +18,7 @@ import {
 } from '../../../components/MarketplacePage';
 import { authFetch, getAccessToken } from '../../../lib/auth-client';
 import { useCapabilities } from '../../../lib/capabilities';
-import {
-  itemsFrom,
-  responseMessage,
-  type MarketplaceInstall,
-} from '../../../lib/marketplace';
+import { itemsFrom, responseMessage, type MarketplaceInstall } from '../../../lib/marketplace';
 
 function installName(install: MarketplaceInstall): string {
   return install.listing?.name ?? install.app_name ?? install.name ?? 'Marketplace app';
@@ -98,7 +94,7 @@ export default function MarketplaceInstallsPage() {
       />
       {error ? <ErrorState message={error} /> : null}
       {!error && loading ? <LoadingState label="Loading installed apps" /> : null}
-      {!loading ? (
+      {!error && !loading ? (
         <Table
           columns={[
             {

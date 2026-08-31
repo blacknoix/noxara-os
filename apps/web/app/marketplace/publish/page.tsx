@@ -20,11 +20,7 @@ import {
 } from '../../../components/MarketplacePage';
 import { authFetch, getAccessToken } from '../../../lib/auth-client';
 import { useCapabilities } from '../../../lib/capabilities';
-import {
-  itemsFrom,
-  responseMessage,
-  type MarketplaceListing,
-} from '../../../lib/marketplace';
+import { itemsFrom, responseMessage, type MarketplaceListing } from '../../../lib/marketplace';
 
 const initialForm = {
   name: '',
@@ -104,9 +100,7 @@ export default function MarketplacePublisherPage() {
         setError(await responseMessage(response, 'Could not create the marketplace listing.'));
         return;
       }
-      const body = (await response.json()) as
-        | MarketplaceListing
-        | { listing: MarketplaceListing };
+      const body = (await response.json()) as MarketplaceListing | { listing: MarketplaceListing };
       const created = 'listing' in body ? body.listing : body;
       if (!created.id) {
         setError('The listing was created, but its identifier was missing from the response.');
@@ -216,7 +210,8 @@ export default function MarketplacePublisherPage() {
                 header: '',
                 align: 'right',
                 cell: (listing: MarketplaceListing) =>
-                  !listing.status || ['draft', 'rejected'].includes(listing.status.toLowerCase()) ? (
+                  !listing.status ||
+                  ['draft', 'rejected'].includes(listing.status.toLowerCase()) ? (
                     <Button
                       size="sm"
                       variant="secondary"

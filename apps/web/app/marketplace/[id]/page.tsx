@@ -51,12 +51,14 @@ export default function MarketplaceListingPage() {
         setError(await responseMessage(response, 'Could not load this marketplace listing.'));
         return;
       }
-      const body = (await response.json()) as
-        | MarketplaceListing
-        | { listing: MarketplaceListing };
+      const body = (await response.json()) as MarketplaceListing | { listing: MarketplaceListing };
       const nextListing = 'listing' in body ? body.listing : body;
-      setListing(nextListing);
-      setSelectedScopes(nextListing.requested_scopes ?? []);
+      const normalized = {
+        ...nextListing,
+        requested_scopes: nextListing.requested_scopes ?? [],
+      };
+      setListing(normalized);
+      setSelectedScopes(normalized.requested_scopes);
     } catch {
       setError('The marketplace listing request failed.');
     } finally {

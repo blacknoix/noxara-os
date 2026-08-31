@@ -11,19 +11,10 @@ import {
   LoadingState,
   PermissionDeniedState,
 } from '@companyos/design-system';
-import {
-  ScopeBadges,
-  StatusBadge,
-  marketplaceStyles,
-} from '../../../components/MarketplacePage';
+import { ScopeBadges, StatusBadge, marketplaceStyles } from '../../../components/MarketplacePage';
 import { authFetch, getAccessToken } from '../../../lib/auth-client';
 import { useCapabilities } from '../../../lib/capabilities';
-import {
-  humanize,
-  itemsFrom,
-  responseMessage,
-  type Integration,
-} from '../../../lib/marketplace';
+import { humanize, itemsFrom, responseMessage, type Integration } from '../../../lib/marketplace';
 
 const primaryConnectors: Integration[] = [
   {
@@ -50,12 +41,7 @@ const primaryConnectors: Integration[] = [
 ];
 
 function availableScopes(integration: Integration): string[] {
-  return (
-    integration.available_scopes ??
-    integration.requested_scopes ??
-    integration.scopes ??
-    []
-  );
+  return integration.available_scopes ?? integration.requested_scopes ?? integration.scopes ?? [];
 }
 
 function connected(integration: Integration): boolean {
@@ -84,12 +70,16 @@ export default function IntegrationsSettingsPage() {
       }
       const body = await response.json();
       const returned = itemsFrom<Integration>(body, ['integrations', 'connectors']);
-      const byKey = new Map(returned.map((integration) => [integration.connector_key, integration]));
+      const byKey = new Map(
+        returned.map((integration) => [integration.connector_key, integration]),
+      );
       const merged = primaryConnectors.map((primary) => ({
         ...primary,
         ...byKey.get(primary.connector_key),
       }));
-      const primaryKeys = new Set(primaryConnectors.map((integration) => integration.connector_key));
+      const primaryKeys = new Set(
+        primaryConnectors.map((integration) => integration.connector_key),
+      );
       merged.push(...returned.filter((integration) => !primaryKeys.has(integration.connector_key)));
       setIntegrations(merged);
       setSelectedScopes((current) => ({
@@ -257,7 +247,9 @@ export default function IntegrationsSettingsPage() {
                         <Checkbox
                           key={scope}
                           label={scope}
-                          checked={(selectedScopes[integration.connector_key] ?? []).includes(scope)}
+                          checked={(selectedScopes[integration.connector_key] ?? []).includes(
+                            scope,
+                          )}
                           disabled={!canConnect || busyKey !== null}
                           onChange={() => toggleScope(integration.connector_key, scope)}
                         />

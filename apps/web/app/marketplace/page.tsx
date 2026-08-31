@@ -10,7 +10,11 @@ import {
   PermissionDeniedState,
   Table,
 } from '@companyos/design-system';
-import { MarketplaceNav, MarketplacePage, marketplaceStyles } from '../../components/MarketplacePage';
+import {
+  MarketplaceNav,
+  MarketplacePage,
+  marketplaceStyles,
+} from '../../components/MarketplacePage';
 import { authFetch, getAccessToken } from '../../lib/auth-client';
 import { useCapabilities } from '../../lib/capabilities';
 import { itemsFrom, responseMessage, type MarketplaceListing } from '../../lib/marketplace';
