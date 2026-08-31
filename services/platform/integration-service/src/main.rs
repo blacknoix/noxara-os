@@ -25,6 +25,7 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     migrate(&pool).await?;
+    companyos_integration::marketplace::seed::bootstrap_from_env(&pool).await?;
 
     let decryptor = WebhookDecryptor::from_env()?;
     let dispatch_opts = DispatchOptions::from_env();

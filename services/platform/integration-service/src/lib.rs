@@ -1,8 +1,12 @@
-//! CompanyOS outbound webhook integration service (library) — Phase 3.3.
+//! CompanyOS integration service (library).
+//!
+//! Phase 3.3 — outbound webhook delivery (crypto, dispatcher, SSRF).
+//! Phase 3.4 — marketplace listings, review, installs, app tokens, OAuth.
 
 pub mod crypto;
 pub mod dispatcher;
 pub mod enqueue;
+pub mod marketplace;
 pub mod sign;
 pub mod ssrf;
 
@@ -11,6 +15,7 @@ use std::sync::Arc;
 use axum::extract::State;
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use companyos_auth_token::KeyRing;
 use companyos_events::EventEnvelope;
 use serde::Serialize;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
@@ -27,6 +32,10 @@ pub struct AppState {
     pub decryptor: Arc<WebhookDecryptor>,
     /// SSRF policy captured at boot / test setup (not re-read from env per request).
     pub dispatch_opts: DispatchOptions,
+    /// Access-token verification keys for session-authenticated marketplace routes.
+    pub keyring: KeyRing,
+    /// Marketplace URL validation escape hatch for loopback fixtures in tests.
+    pub allow_private_urls: bool,
 }
 
 impl AppState {
@@ -43,13 +52,47 @@ impl AppState {
             pool,
             decryptor: Arc::new(decryptor),
             dispatch_opts,
+            keyring: marketplace::auth::build_keyring(),
+            allow_private_urls: dispatch_opts.allow_private,
         }
+    }
+
+    pub fn with_keyring(mut self, keyring: KeyRing) -> Self {
+        self.keyring = keyring;
+        self
+    }
+
+    pub fn with_allow_private_urls(mut self, allow: bool) -> Self {
+        self.allow_private_urls = allow;
+        self
     }
 }
 
-/// Tables live in core (`006_webhooks.sql`); no local schema to apply.
-pub async fn migrate(_pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    Ok(())
+pub fn split_sql(sql: &str) -> Vec<String> {
+    let cleaned: String = sql
+        .lines()
+        .filter(|l| !l.trim_start().starts_with("--"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    cleaned
+        .split(';')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
+}
+
+/// Webhook tables live in core (`006_webhooks.sql`); marketplace schema is local.
+pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+    companyos_tenancy::with_schema_migration_lock(pool, || async {
+        for migration in [include_str!("../migrations/001_marketplace.sql")] {
+            for stmt in split_sql(migration) {
+                companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+            }
+        }
+        Ok(())
+    })
+    .await
 }
 
 #[derive(Debug, Serialize)]
@@ -125,6 +168,7 @@ pub fn build_router(state: AppState) -> Router {
             "/api/v1/internal/webhooks/dispatch-once",
             post(internal_dispatch_once),
         )
+        .merge(marketplace::handlers::router())
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
