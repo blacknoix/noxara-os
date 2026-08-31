@@ -45,6 +45,9 @@ const GROUPS: NavGroup[] = [
       { href: '/sales/leads', label: 'Leads', short: 'L', perm: 'sales.lead.read' },
       { href: '/sales/customers', label: 'Customers', short: 'C', perm: 'sales.customer.read' },
       { href: '/sales/quotes', label: 'Quotes', short: 'Q', perm: 'sales.quote.read' },
+      { href: '/sales/orders', label: 'Orders', short: 'O', perm: 'sales.order.read' },
+      { href: '/sales/contracts', label: 'Contracts', short: 'N', perm: 'sales.contract.read' },
+      { href: '/sales/territories', label: 'Territories', short: 'Y', perm: 'sales.territory.read' },
       { href: '/sales/reports', label: 'Reports', short: 'R', perm: 'sales.report.read' },
     ],
   },
@@ -70,6 +73,13 @@ const GROUPS: NavGroup[] = [
         short: 'X',
         perm: 'finance.expense_policy.manage',
       },
+      {
+        href: '/finance/settings',
+        label: 'Depth settings',
+        short: 'D',
+        perm: 'finance.tax.read',
+        anyPerm: ['finance.tax.read', 'finance.dunning.read', 'finance.entity.read'],
+      },
       { href: '/finance/reports', label: 'Reports', short: 'R', perm: 'finance.report.read' },
     ],
   },
@@ -79,6 +89,18 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: '/ops/projects', label: 'Projects', short: 'P', perm: 'operations.project.read' },
       { href: '/ops/tasks', label: 'Tasks', short: 'T', perm: 'operations.task.read' },
+      {
+        href: '/ops/timesheets',
+        label: 'Timesheets',
+        short: 'H',
+        perm: 'operations.timesheet.read',
+      },
+      {
+        href: '/ops/capacity',
+        label: 'Capacity',
+        short: 'C',
+        perm: 'operations.capacity.read',
+      },
       {
         href: '/workflows',
         label: 'Workflows',
