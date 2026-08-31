@@ -347,7 +347,7 @@ mod tests {
             visualization: "table".into(),
         };
         let err = validate_query(&def, "t").unwrap_err();
-        assert!(err.message.contains("org_id"));
+        assert!(err.detail.contains("org_id"));
     }
 
     #[test]

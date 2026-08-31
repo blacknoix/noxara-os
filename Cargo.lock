@@ -548,6 +548,7 @@ dependencies = [
  "companyos-errors",
  "companyos-events",
  "companyos-ids",
+ "companyos-outbox",
  "companyos-telemetry",
  "companyos-tenancy",
  "companyos-testkit",
