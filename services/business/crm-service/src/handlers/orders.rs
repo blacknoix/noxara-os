@@ -34,10 +34,7 @@ use crate::types::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/v1/sales/orders", get(list_orders).post(create_order))
-        .route(
-            "/api/v1/sales/orders/from-quote",
-            post(order_from_quote),
-        )
+        .route("/api/v1/sales/orders/from-quote", post(order_from_quote))
         .route("/api/v1/sales/orders/from-deal", post(order_from_deal))
         .route(
             "/api/v1/sales/orders/{id}",
@@ -175,7 +172,13 @@ fn compute_lines(
     lines: &[CreateOrderLineRequest],
     currency: Currency,
     request_id: &str,
-) -> Result<(Vec<crate::quotes_math::LineTotals>, crate::quotes_math::DocumentTotals), AppError> {
+) -> Result<
+    (
+        Vec<crate::quotes_math::LineTotals>,
+        crate::quotes_math::DocumentTotals,
+    ),
+    AppError,
+> {
     let inputs: Vec<LineInput> = lines
         .iter()
         .map(|l| LineInput {
@@ -185,9 +188,8 @@ fn compute_lines(
             tax_rate_bps: l.tax_rate_bps as i64,
         })
         .collect();
-    compute_quote_totals(&inputs, currency).map_err(|e| {
-        validation(request_id, format!("money calculation failed: {e}"))
-    })
+    compute_quote_totals(&inputs, currency)
+        .map_err(|e| validation(request_id, format!("money calculation failed: {e}")))
 }
 
 async fn insert_order_lines(
@@ -684,10 +686,9 @@ pub async fn order_from_quote(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "order.from_quote", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "order.from_quote", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -732,14 +733,13 @@ pub async fn order_from_quote(
         ));
     }
 
-    let existing: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM sales_order WHERE org_id = $1 AND quote_id = $2 LIMIT 1",
-    )
-    .bind(org_id)
-    .bind(quote_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(&request_id))?;
+    let existing: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM sales_order WHERE org_id = $1 AND quote_id = $2 LIMIT 1")
+            .bind(org_id)
+            .bind(quote_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?;
     if existing.is_some() {
         return Err(conflict(
             &request_id,
@@ -789,9 +789,8 @@ pub async fn order_from_quote(
             tax_rate_bps: l.tax_rate_bps as i64,
         })
         .collect();
-    let (computed, doc) = compute_quote_totals(&inputs, currency).map_err(|e| {
-        validation(&request_id, format!("money calculation failed: {e}"))
-    })?;
+    let (computed, doc) = compute_quote_totals(&inputs, currency)
+        .map_err(|e| validation(&request_id, format!("money calculation failed: {e}")))?;
 
     // Prefer recomputed totals; they must match stored quote totals for accepted quotes.
     if doc.subtotal_minor != quote.subtotal_minor
@@ -929,10 +928,9 @@ pub async fn order_from_deal(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "order.from_deal", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "order.from_deal", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -969,7 +967,7 @@ pub async fn order_from_deal(
     };
     let currency = Currency::new(&deal.currency)
         .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
-    let (computed, doc) = compute_lines(&[line.clone()], currency, &request_id)?;
+    let (computed, doc) = compute_lines(std::slice::from_ref(&line), currency, &request_id)?;
 
     let order_id = new_uuid_v7();
     let public_id = PublicId::new(IdKind::SalesOrder, order_id);
@@ -999,15 +997,7 @@ pub async fn order_from_deal(
     .await
     .map_err(internal(&request_id))?;
 
-    insert_order_lines(
-        &mut tx,
-        org_id,
-        order_id,
-        &[line],
-        &computed,
-        &request_id,
-    )
-    .await?;
+    insert_order_lines(&mut tx, org_id, order_id, &[line], &computed, &request_id).await?;
 
     let dto = fetch_order_dto(&mut tx, org_id, order_id)
         .await

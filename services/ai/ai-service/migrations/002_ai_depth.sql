@@ -26,8 +26,8 @@ ALTER TABLE ai_insight ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_insight FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY ai_insight_tenant ON ai_insight
-    USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
-    WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
+    USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
+    WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
 CREATE TABLE IF NOT EXISTS ai_meeting_summary (
     id UUID PRIMARY KEY,
@@ -56,5 +56,5 @@ ALTER TABLE ai_meeting_summary ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_meeting_summary FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY ai_meeting_summary_tenant ON ai_meeting_summary
-    USING (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid)
-    WITH CHECK (org_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
+    USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
+    WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

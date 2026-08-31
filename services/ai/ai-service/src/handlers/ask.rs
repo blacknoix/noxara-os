@@ -9,7 +9,9 @@ use serde_json::json;
 
 use crate::auth::AuthCtx;
 use crate::handlers::common::{enforce_perm, extract_bearer, resolve_principal};
-use crate::retrieval::{citation_contexts, fixture_citations_for_query, hybrid_retrieve, RetrievalQuery};
+use crate::retrieval::{
+    citation_contexts, fixture_citations_for_query, hybrid_retrieve, RetrievalQuery,
+};
 use crate::state::AppState;
 use crate::tools::{run_tool, ToolOutcome};
 use crate::types::{AskForm, AskFormField, AskRequest, AskResponse};
@@ -41,10 +43,14 @@ pub async fn ask(
     enforce_perm(&principal, perms::ai_copilot_use(), &request_id)?;
 
     let lower = req.query.to_ascii_lowercase();
-    let is_write = lower.contains("create")
-        || lower.contains("new")
-        || lower.contains("add")
-        || lower.contains("follow up");
+    // Word-ish write intents only — avoid matching substrings like "new" in "renewal".
+    let is_write = lower.split_whitespace().any(|w| {
+        matches!(
+            w.trim_matches(|c: char| !c.is_ascii_alphanumeric()),
+            "create" | "new" | "add" | "update" | "delete" | "remove"
+        )
+    }) || lower.contains("follow up")
+        || lower.contains("follow-up");
 
     if is_write {
         let (action_type, fields) = build_write_form(&lower, &req);

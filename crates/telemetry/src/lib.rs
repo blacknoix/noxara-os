@@ -255,7 +255,13 @@ mod tests {
 
     #[test]
     fn red_timer_finishes_once() {
-        let key = format!("test_timer_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
+        let key = format!(
+            "test_timer_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
         let timer = RedTimer::start(key.clone());
         let _ms = timer.finish();
         let snap = global_red_meter().get(&key).unwrap();

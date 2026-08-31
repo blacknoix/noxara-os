@@ -248,21 +248,21 @@ async fn insight_refresh_is_propose_only() {
     // Snapshot CRM/finance tables that must not be mutated by refresh.
     let mut tx = seeded.pool.begin().await.unwrap();
     set_session_org_id(&mut tx, seeded.org).await.unwrap();
-    let deals_before: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'deal'",
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .unwrap();
+    let deals_before: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'deal'")
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
     let mut deal_count_before = 0i64;
     let mut invoice_count_before = 0i64;
     if deals_before.0 > 0 {
-        deal_count_before = sqlx::query_as::<_, (i64,)>("SELECT COUNT(*) FROM deal WHERE org_id = $1")
-            .bind(seeded.org.as_uuid())
-            .fetch_one(&mut *tx)
-            .await
-            .map(|r| r.0)
-            .unwrap_or(0);
+        deal_count_before =
+            sqlx::query_as::<_, (i64,)>("SELECT COUNT(*) FROM deal WHERE org_id = $1")
+                .bind(seeded.org.as_uuid())
+                .fetch_one(&mut *tx)
+                .await
+                .map(|r| r.0)
+                .unwrap_or(0);
         invoice_count_before =
             sqlx::query_as::<_, (i64,)>("SELECT COUNT(*) FROM invoice WHERE org_id = $1")
                 .bind(seeded.org.as_uuid())
@@ -332,7 +332,10 @@ async fn insight_refresh_is_propose_only() {
             .fetch_one(&mut *tx)
             .await
             .unwrap();
-        assert_eq!(deal_after.0, deal_count_before, "refresh must not mutate deals");
+        assert_eq!(
+            deal_after.0, deal_count_before,
+            "refresh must not mutate deals"
+        );
         assert_eq!(
             inv_after.0, invoice_count_before,
             "refresh must not mutate invoices"
@@ -351,10 +354,7 @@ async fn insight_refresh_is_propose_only() {
     .await;
     assert_eq!(get_status, StatusCode::OK, "{get_body}");
     assert!(
-        !get_body["observations"]
-            .as_array()
-            .unwrap()
-            .is_empty(),
+        !get_body["observations"].as_array().unwrap().is_empty(),
         "{get_body}"
     );
 }
@@ -413,12 +413,11 @@ async fn meeting_summary_mock_calendar_accept_path() {
     // Accept does not auto-create tasks.
     let mut tx = seeded.pool.begin().await.unwrap();
     set_session_org_id(&mut tx, seeded.org).await.unwrap();
-    let task_table: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'task'",
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .unwrap();
+    let task_table: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'task'")
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
     if task_table.0 > 0 {
         let tasks: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM task WHERE org_id = $1")
             .bind(seeded.org.as_uuid())

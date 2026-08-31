@@ -413,7 +413,8 @@ async fn persist_insight(
 
     let mut proposal_id: Option<Uuid> = None;
     if let Some(ref prop) = draft.proposal {
-        let pid = persist_proposal(state, org_id.as_uuid(), user_id, None, prop, request_id).await?;
+        let pid =
+            persist_proposal(state, org_id.as_uuid(), user_id, None, prop, request_id).await?;
         proposal_id = Some(pid);
     }
 
@@ -489,7 +490,7 @@ pub async fn list_persisted_insights(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
-    let rows: Vec<(
+    type InsightRow = (
         Uuid,
         String,
         String,
@@ -498,7 +499,8 @@ pub async fn list_persisted_insights(
         Value,
         Option<Value>,
         String,
-    )> = sqlx::query_as(
+    );
+    let rows: Vec<InsightRow> = sqlx::query_as(
         r#"
         SELECT id, public_id, insight_type, title, body, citations, suggested_action, status
         FROM ai_insight
@@ -520,8 +522,7 @@ pub async fn list_persisted_insights(
         .into_iter()
         .map(
             |(_id, public_id, insight_type, title, body, citations, suggested, status)| {
-                let evidence: Vec<Citation> =
-                    serde_json::from_value(citations).unwrap_or_default();
+                let evidence: Vec<Citation> = serde_json::from_value(citations).unwrap_or_default();
                 let action_type = suggested
                     .as_ref()
                     .and_then(|v| v.get("action_type"))

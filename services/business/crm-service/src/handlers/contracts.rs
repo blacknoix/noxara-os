@@ -24,8 +24,8 @@ use crate::principal::{
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::state::AppState;
 use crate::types::{
-    ContractDto, ContractListQuery, ContractListResponse, CreateContractRequest,
-    RenewalListQuery, RenewalPipelineResponse, UpdateContractRequest,
+    ContractDto, ContractListQuery, ContractListResponse, CreateContractRequest, RenewalListQuery,
+    RenewalPipelineResponse, UpdateContractRequest,
 };
 
 pub fn router() -> Router<AppState> {
@@ -34,10 +34,7 @@ pub fn router() -> Router<AppState> {
             "/api/v1/sales/contracts",
             get(list_contracts).post(create_contract),
         )
-        .route(
-            "/api/v1/sales/contracts/renewals",
-            get(list_renewals),
-        )
+        .route("/api/v1/sales/contracts/renewals", get(list_renewals))
         .route(
             "/api/v1/sales/contracts/{id}",
             get(get_contract).patch(update_contract),
@@ -271,10 +268,9 @@ pub async fn create_contract(
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     if let Some(key) = idem_key.as_deref() {
-        if let Some((status, stored)) =
-            idempotency::get(&mut *tx, org_id, "contract.create", key)
-                .await
-                .map_err(internal(&request_id))?
+        if let Some((status, stored)) = idempotency::get(&mut *tx, org_id, "contract.create", key)
+            .await
+            .map_err(internal(&request_id))?
         {
             tx.commit().await.map_err(internal(&request_id))?;
             let code = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::CREATED);
@@ -285,11 +281,8 @@ pub async fn create_contract(
     let customer_id = parse_public_id(IdKind::Customer, &body.customer_id, &request_id)?;
     let deal_id =
         super::parse_optional_public_id(IdKind::Deal, body.deal_id.as_deref(), &request_id)?;
-    let order_id = super::parse_optional_public_id(
-        IdKind::SalesOrder,
-        body.order_id.as_deref(),
-        &request_id,
-    )?;
+    let order_id =
+        super::parse_optional_public_id(IdKind::SalesOrder, body.order_id.as_deref(), &request_id)?;
     let owner_user_id = match body.owner_user_id.as_deref() {
         Some(s) => parse_public_id(IdKind::User, s, &request_id)?,
         None => auth.ctx.actor.user_id,
@@ -479,9 +472,7 @@ pub async fn update_contract(
     let value_minor = body.value_minor.unwrap_or(row.value_minor);
     let currency = body.currency.unwrap_or(row.currency);
     let auto_renew = body.auto_renew.unwrap_or(row.auto_renew);
-    let renewal_notice_days = body
-        .renewal_notice_days
-        .unwrap_or(row.renewal_notice_days);
+    let renewal_notice_days = body.renewal_notice_days.unwrap_or(row.renewal_notice_days);
     let owner_user_id = match body.owner_user_id.as_deref() {
         Some(s) => Some(parse_public_id(IdKind::User, s, &request_id)?),
         None => row.owner_user_id,
@@ -744,8 +735,5 @@ pub async fn list_renewals(
     }
 
     tx.commit().await.map_err(internal(&request_id))?;
-    Ok(Json(RenewalPipelineResponse {
-        items,
-        within_days,
-    }))
+    Ok(Json(RenewalPipelineResponse { items, within_days }))
 }

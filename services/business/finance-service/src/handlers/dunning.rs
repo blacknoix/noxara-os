@@ -13,17 +13,15 @@ use companyos_tenancy::set_session_org_id;
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
-use super::{
-    conflict, if_match_version, internal, not_found, parse_public_id, validation,
-};
+use super::{conflict, if_match_version, internal, not_found, parse_public_id, validation};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::principal::{enforce_any_scope, load_membership_scope};
 use crate::state::AppState;
 use crate::types::{
     CreateDunningProfileRequest, DunningProfileDto, DunningProfileListResponse,
-    DunningScheduleQuery, DunningScheduleResponse, DunningStepDto, SetCustomerDunningProfileRequest,
-    UpdateDunningProfileRequest,
+    DunningScheduleQuery, DunningScheduleResponse, DunningStepDto,
+    SetCustomerDunningProfileRequest, UpdateDunningProfileRequest,
 };
 
 /// Classic ladder matching the pre-Phase-3.5 hardcoded InvoiceDunning offsets.
@@ -71,7 +69,10 @@ pub fn router() -> Router<AppState> {
             "/api/v1/finance/customers/{id}/dunning-profile",
             post(set_customer_dunning_profile),
         )
-        .route("/api/v1/finance/dunning/schedule", get(get_dunning_schedule))
+        .route(
+            "/api/v1/finance/dunning/schedule",
+            get(get_dunning_schedule),
+        )
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -599,14 +600,13 @@ pub async fn get_dunning_schedule(
 
     let customer_id = if let Some(ref inv) = q.invoice_id {
         let invoice_uuid = parse_public_id(IdKind::Invoice, inv, &request_id)?;
-        let row: Option<(Uuid,)> = sqlx::query_as(
-            "SELECT customer_id FROM finance_invoice WHERE org_id = $1 AND id = $2",
-        )
-        .bind(org_id)
-        .bind(invoice_uuid)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?;
+        let row: Option<(Uuid,)> =
+            sqlx::query_as("SELECT customer_id FROM finance_invoice WHERE org_id = $1 AND id = $2")
+                .bind(org_id)
+                .bind(invoice_uuid)
+                .fetch_optional(&mut *tx)
+                .await
+                .map_err(internal(&request_id))?;
         row.map(|r| r.0)
             .ok_or_else(|| not_found(&request_id, "invoice"))?
     } else if let Some(ref cus) = q.customer_id {

@@ -7,9 +7,9 @@ use axum::http::{Request, StatusCode};
 use axum::Router;
 use companyos_auth_token::KeyRing;
 use companyos_core::auth::password;
+use companyos_events::{Context, EventEnvelope};
 use companyos_finance::state::AppState as FinanceAppState;
 use companyos_ids::{new_uuid_v7, IdKind, PublicId};
-use companyos_events::{Context, EventEnvelope};
 use companyos_tenancy::{set_session_org_id, Actor, OrgId};
 use companyos_testkit::test_database_url;
 use companyos_workflow_host::catalogue::invoice_dunning::{self, Status as DunningStatus};
@@ -261,9 +261,8 @@ async fn call(
     let val = if bytes.is_empty() {
         Value::Null
     } else {
-        serde_json::from_slice(&bytes).unwrap_or(Value::String(
-            String::from_utf8_lossy(&bytes).into_owned(),
-        ))
+        serde_json::from_slice(&bytes)
+            .unwrap_or(Value::String(String::from_utf8_lossy(&bytes).into_owned()))
     };
     (status, val)
 }
@@ -677,7 +676,10 @@ async fn list_invoices_batch_lines_totals_match() {
     assert!(items.len() >= 3);
 
     for (id, total, line_count) in &expected_totals {
-        let found = items.iter().find(|i| i["id"] == *id).expect("invoice in list");
+        let found = items
+            .iter()
+            .find(|i| i["id"] == *id)
+            .expect("invoice in list");
         assert_eq!(found["total_minor"].as_i64().unwrap(), *total);
         assert_eq!(found["lines"].as_array().unwrap().len(), *line_count);
     }

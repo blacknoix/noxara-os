@@ -14,9 +14,7 @@ use uuid::Uuid;
 
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
-use crate::calendar::{
-    fetch_meeting_material, resolve_calendar_connector, CALENDAR_MICROSOFT,
-};
+use crate::calendar::{fetch_meeting_material, resolve_calendar_connector, CALENDAR_MICROSOFT};
 use crate::handlers::common::{enforce_perm, extract_bearer, resolve_principal};
 use crate::state::AppState;
 use crate::types::{
@@ -25,10 +23,7 @@ use crate::types::{
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route(
-            "/api/v1/ai/meeting-summaries",
-            get(list_meeting_summaries),
-        )
+        .route("/api/v1/ai/meeting-summaries", get(list_meeting_summaries))
         .route(
             "/api/v1/ai/meeting-summaries/from-calendar",
             post(create_from_calendar),
@@ -72,7 +67,7 @@ pub async fn list_meeting_summaries(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    let rows: Vec<(
+    type MeetingRow = (
         Uuid,
         String,
         String,
@@ -84,7 +79,8 @@ pub async fn list_meeting_summaries(
         Option<chrono::DateTime<Utc>>,
         Option<Uuid>,
         chrono::DateTime<Utc>,
-    )> = sqlx::query_as(
+    );
+    let rows: Vec<MeetingRow> = sqlx::query_as(
         r#"
         SELECT id, public_id, calendar_event_id, calendar_connector, transcript,
                summary_markdown, action_items, status, accepted_at, accepted_by, created_at
@@ -103,10 +99,7 @@ pub async fn list_meeting_summaries(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
-    let items = rows
-        .into_iter()
-        .map(|r| row_to_view(r))
-        .collect();
+    let items = rows.into_iter().map(row_to_view).collect();
 
     Ok(Json(MeetingSummariesListResponse { items }))
 }
@@ -381,14 +374,12 @@ pub async fn reject_meeting_summary(
         ));
     }
 
-    sqlx::query(
-        "UPDATE ai_meeting_summary SET status = 'rejected' WHERE id = $1 AND org_id = $2",
-    )
-    .bind(uuid)
-    .bind(org_id.as_uuid())
-    .execute(&mut *tx)
-    .await
-    .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
+    sqlx::query("UPDATE ai_meeting_summary SET status = 'rejected' WHERE id = $1 AND org_id = $2")
+        .bind(uuid)
+        .bind(org_id.as_uuid())
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, &request_id, e.to_string()))?;
 
     insert_audit(
         &mut *tx,
@@ -508,7 +499,6 @@ async fn load_summary(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
 
-    row.map(row_to_view).ok_or_else(|| {
-        AppError::new(ErrorCode::NotFound, request_id, "meeting summary not found")
-    })
+    row.map(row_to_view)
+        .ok_or_else(|| AppError::new(ErrorCode::NotFound, request_id, "meeting summary not found"))
 }

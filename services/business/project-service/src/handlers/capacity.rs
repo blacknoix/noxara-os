@@ -31,10 +31,7 @@ pub fn router() -> Router<AppState> {
             "/api/v1/operations/capacity/allocations",
             get(list_allocations).post(create_allocation),
         )
-        .route(
-            "/api/v1/operations/capacity/overload",
-            get(overload_view),
-        )
+        .route("/api/v1/operations/capacity/overload", get(overload_view))
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -110,11 +107,10 @@ pub async fn list_allocations(
         .as_deref()
         .map(|s| parse_date(s, "from", &request_id))
         .transpose()?;
-    let to = q
-        .to
-        .as_deref()
-        .map(|s| parse_date(s, "to", &request_id))
-        .transpose()?;
+    let to =
+        q.to.as_deref()
+            .map(|s| parse_date(s, "to", &request_id))
+            .transpose()?;
     let (limit, offset) = normalize_paging(q.limit, q.offset);
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;

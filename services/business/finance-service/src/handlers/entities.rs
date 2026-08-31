@@ -350,7 +350,8 @@ pub async fn update_entity(
     let row = row.ok_or_else(|| not_found(&request_id, "entity"))?;
 
     if let Some(ref c) = body.currency {
-        let _ = Currency::new(c).map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
+        let _ = Currency::new(c)
+            .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
     }
 
     if body.is_default == Some(true) {

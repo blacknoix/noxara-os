@@ -72,7 +72,8 @@ pub async fn resolve_rate_bps(
     as_of: NaiveDate,
 ) -> Result<Option<(Uuid, i64, Option<Uuid>)>, sqlx::Error> {
     if let Some(rate_id) = tax_rate_id {
-        let row: Option<(Uuid, i64, Option<Uuid>, NaiveDate, Option<NaiveDate>)> = sqlx::query_as(
+        type TaxRateRow = (Uuid, i64, Option<Uuid>, NaiveDate, Option<NaiveDate>);
+        let row: Option<TaxRateRow> = sqlx::query_as(
             r#"
             SELECT id, rate_bps, tax_group_id, valid_from, valid_to
             FROM finance_tax_rate
@@ -83,15 +84,8 @@ pub async fn resolve_rate_bps(
         .bind(rate_id)
         .fetch_optional(&mut **tx)
         .await?;
-        return Ok(row.and_then(|(id, bps, gid, from, to)| {
-            if from <= as_of && to.map(|t| t >= as_of).unwrap_or(true) {
-                Some((id, bps, gid))
-            } else {
-                // Still return the rate if explicitly referenced (snapshot intent),
-                // but prefer validity window when present.
-                Some((id, bps, gid))
-            }
-        }));
+        // Explicit rate id always resolves (snapshot intent); validity is advisory.
+        return Ok(row.map(|(id, bps, gid, _from, _to)| (id, bps, gid)));
     }
     let Some(group_id) = tax_group_id else {
         return Ok(None);
@@ -313,13 +307,14 @@ pub async fn create_tax_rate(
 
     let mut resolved_group = group_uuid;
     if let Some(prev) = supersedes_uuid {
-        let prev_row: Option<(Option<Uuid>,)> =
-            sqlx::query_as("SELECT tax_group_id FROM finance_tax_rate WHERE org_id = $1 AND id = $2")
-                .bind(org_id)
-                .bind(prev)
-                .fetch_optional(&mut *tx)
-                .await
-                .map_err(internal(&request_id))?;
+        let prev_row: Option<(Option<Uuid>,)> = sqlx::query_as(
+            "SELECT tax_group_id FROM finance_tax_rate WHERE org_id = $1 AND id = $2",
+        )
+        .bind(org_id)
+        .bind(prev)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal(&request_id))?;
         let Some((prev_group,)) = prev_row else {
             return Err(not_found(&request_id, "superseded tax rate"));
         };
@@ -327,9 +322,7 @@ pub async fn create_tax_rate(
             resolved_group = prev_group;
         }
         // Close the previous version the day before the new valid_from.
-        let close_to = valid_from
-            .pred_opt()
-            .unwrap_or(valid_from);
+        let close_to = valid_from.pred_opt().unwrap_or(valid_from);
         sqlx::query(
             r#"
             UPDATE finance_tax_rate
@@ -622,10 +615,7 @@ pub async fn resolve_tax(
         parse_optional_public_id(IdKind::TaxGroup, q.group_id.as_deref(), &request_id)?;
     let rate_uuid = parse_optional_public_id(IdKind::TaxRate, q.rate_id.as_deref(), &request_id)?;
     if group_uuid.is_none() && rate_uuid.is_none() {
-        return Err(validation(
-            &request_id,
-            "group_id or rate_id is required",
-        ));
+        return Err(validation(&request_id, "group_id or rate_id is required"));
     }
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;

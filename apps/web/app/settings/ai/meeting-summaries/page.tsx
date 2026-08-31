@@ -14,10 +14,10 @@ import {
   acceptMeetingSummary,
   fetchMeetingSummaries,
   rejectMeetingSummary,
-} from '../../../lib/ai-api';
-import type { MeetingSummaryView } from '../../../lib/ai-types';
-import { getAccessToken } from '../../../lib/auth-client';
-import { useCapabilities } from '../../../lib/capabilities';
+} from '../../../../lib/ai-api';
+import type { MeetingSummaryView } from '../../../../lib/ai-types';
+import { getAccessToken } from '../../../../lib/auth-client';
+import { useCapabilities } from '../../../../lib/capabilities';
 
 export default function MeetingSummariesPage() {
   const { can, loading: capsLoading } = useCapabilities();
@@ -88,7 +88,11 @@ export default function MeetingSummariesPage() {
         Accepting does not auto-create tasks.
       </p>
 
-      {error ? <InlineAlert tone="danger" title={error} /> : null}
+      {error ? (
+        <InlineAlert tone="danger" title="Action failed">
+          {error}
+        </InlineAlert>
+      ) : null}
 
       {items.length === 0 ? (
         <EmptyState

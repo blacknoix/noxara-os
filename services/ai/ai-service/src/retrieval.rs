@@ -159,17 +159,13 @@ pub fn fixture_citations_for_query(query: &str) -> Vec<Citation> {
         })
         .filter(|(s, _)| *s > 0)
         .collect();
-    scored.sort_by(|a, b| b.0.cmp(&a.0));
+    scored.sort_by_key(|a| std::cmp::Reverse(a.0));
 
     if scored.is_empty() {
         return vec![corpus[0].clone(), corpus[1].clone(), corpus[3].clone()];
     }
 
-    scored
-        .into_iter()
-        .take(6)
-        .map(|(_, c)| c.clone())
-        .collect()
+    scored.into_iter().take(6).map(|(_, c)| c.clone()).collect()
 }
 
 fn fixture_corpus() -> Vec<Citation> {
@@ -237,7 +233,11 @@ pub fn citation_contexts(citations: &[Citation]) -> Vec<String> {
 }
 
 /// Score an ask answer for golden tests: contexts ≥2 and key entities present.
-pub fn score_qa_answer(answer: &str, citations: &[Citation], required_entities: &[&str]) -> QaScore {
+pub fn score_qa_answer(
+    answer: &str,
+    citations: &[Citation],
+    required_entities: &[&str],
+) -> QaScore {
     let contexts = citation_contexts(citations);
     let lower = answer.to_ascii_lowercase();
     let entities_hit: Vec<String> = required_entities

@@ -363,8 +363,7 @@ async fn order_from_accepted_quote_money_exact_and_rls() {
     assert_eq!(order["total_minor"].as_i64().unwrap(), quote_total);
     assert_eq!(
         order["total_minor"].as_i64().unwrap(),
-        order["subtotal_minor"].as_i64().unwrap()
-            - order["discount_minor"].as_i64().unwrap()
+        order["subtotal_minor"].as_i64().unwrap() - order["discount_minor"].as_i64().unwrap()
             + order["tax_minor"].as_i64().unwrap()
     );
 

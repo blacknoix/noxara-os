@@ -12,9 +12,7 @@ use crate::handlers::common::{enforce_perm, extract_bearer, load_settings, resol
 use crate::handlers::insights_agents::{list_persisted_insights, run_insight_agents};
 use crate::retrieval::{hybrid_retrieve, RetrievalQuery};
 use crate::state::AppState;
-use crate::types::{
-    Citation, InsightObservation, InsightsRefreshResponse, InsightsResponse,
-};
+use crate::types::{Citation, InsightObservation, InsightsRefreshResponse, InsightsResponse};
 use companyos_errors::AppError;
 
 pub fn router() -> Router<AppState> {

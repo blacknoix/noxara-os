@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 backend skeleton landed; Phase 3.5 not started.
+Status: **Active** outline. Phase 0–3.4 implemented; Phase 3.5 (this PR) depth and polish.
 
 ## Completed
 
@@ -26,6 +26,7 @@ Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 backend skeleto
 | 3.2   | Governed event-derived analytics, reports, dashboards, forecasts, exports, and scheduled delivery                               |
 | 3.3   | Public API, generated SDKs (TS + Python), outbound webhooks, developer docs + sandbox                                           |
 | 3.4   | Marketplace skeleton: listings, review gate, scoped-consent installs, app tokens, mock OAuth, integrations alias                |
+| 3.5   | Depth / polish: CRM orders/contracts/territories; finance tax/dunning/entities; ops timesheets/capacity; AI insights/meetings; list_invoices N+1 fix + RED meters |
 
 ## Phase 3.3 — Public API, SDKs & webhooks (done)
 
@@ -68,11 +69,10 @@ only), cross-org publisher review staffing, and marketplace billing.
 
 | Phase          | Notes                   |
 | -------------- | ----------------------- |
-| 3.5            | Depth / polish          |
-| InvoiceDunning | Temporal dunning polish |
+| InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
 | Mobile         | Flutter / Tauri         |
-| 4.x            | SCIM                    |
+| 4.x            | Multi-region, CMEK, SCIM, consolidation |
 
 ## Cut order if needed
 

@@ -34,10 +34,7 @@ pub fn router() -> Router<AppState> {
             "/api/v1/operations/timesheets",
             get(list_timesheets).post(create_timesheet),
         )
-        .route(
-            "/api/v1/operations/timesheets/{id}",
-            get(get_timesheet),
-        )
+        .route("/api/v1/operations/timesheets/{id}", get(get_timesheet))
         .route(
             "/api/v1/operations/timesheets/{id}/entries",
             post(upsert_entry),
@@ -170,14 +167,17 @@ fn timesheet_to_dto(row: TimesheetRow, entries: Vec<TimeEntryDto>) -> TimesheetD
 }
 
 fn can_manage_others(membership: &MembershipScope) -> bool {
-    membership.principal.roles.iter().any(|r| {
-        matches!(r, Role::Owner | Role::Admin | Role::Manager)
-    }) || companyos_authz::decide(
-        &membership.principal,
-        &perms::operations_timesheet_approve(),
-    )
-    .decision
-        == companyos_authz::Decision::Allow
+    membership
+        .principal
+        .roles
+        .iter()
+        .any(|r| matches!(r, Role::Owner | Role::Admin | Role::Manager))
+        || companyos_authz::decide(
+            &membership.principal,
+            &perms::operations_timesheet_approve(),
+        )
+        .decision
+            == companyos_authz::Decision::Allow
 }
 
 fn can_self_approve(membership: &MembershipScope) -> bool {
@@ -289,7 +289,10 @@ fn assert_can_edit_draft(
     if is_owner {
         return Err(conflict(
             request_id,
-            format!("timesheet is {} and cannot be edited by owner", sheet.status),
+            format!(
+                "timesheet is {} and cannot be edited by owner",
+                sheet.status
+            ),
         ));
     }
     enforce_any_scope(
@@ -409,11 +412,10 @@ pub async fn list_timesheets(
         .as_deref()
         .map(|s| parse_date(s, "from", &request_id))
         .transpose()?;
-    let to = q
-        .to
-        .as_deref()
-        .map(|s| parse_date(s, "to", &request_id))
-        .transpose()?;
+    let to =
+        q.to.as_deref()
+            .map(|s| parse_date(s, "to", &request_id))
+            .transpose()?;
     let (limit, offset) = normalize_paging(q.limit, q.offset);
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -554,10 +556,7 @@ pub async fn create_timesheet(
         let entries = fetch_entries_for_timesheet(&mut tx, org_id, existing.id)
             .await
             .map_err(internal(&request_id))?;
-        let dto = timesheet_to_dto(
-            existing,
-            entries.into_iter().map(entry_to_dto).collect(),
-        );
+        let dto = timesheet_to_dto(existing, entries.into_iter().map(entry_to_dto).collect());
         let body = serde_json::to_value(&dto).unwrap_or_default();
         if let Some(key) = idem_key.as_deref() {
             let _ = idempotency::put(&mut *tx, org_id, "timesheet.create", key, 200, body.clone())
@@ -712,8 +711,14 @@ pub async fn upsert_entry(
     date_in_week(entry_date, sheet.week_start, &request_id)?;
 
     let project_id = resolve_project(&mut tx, org_id, &body.project_id, &request_id).await?;
-    let task_id =
-        resolve_task(&mut tx, org_id, project_id, body.task_id.as_deref(), &request_id).await?;
+    let task_id = resolve_task(
+        &mut tx,
+        org_id,
+        project_id,
+        body.task_id.as_deref(),
+        &request_id,
+    )
+    .await?;
     let billable = body.billable.unwrap_or(true);
 
     let (status_code, entry) = if let Some(raw_id) = body.id.as_deref() {

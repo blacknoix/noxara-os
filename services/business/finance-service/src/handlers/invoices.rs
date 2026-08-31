@@ -408,29 +408,28 @@ async fn snapshot_taxes_at_issue(
         let mut rate_bps = line.tax_rate_bps;
         let mut resolved_rate_id = line.tax_rate_id;
         if line.tax_group_id.is_some() || line.tax_rate_id.is_some() {
-            if let Some((rid, bps, _)) = resolve_rate_bps(
-                tx,
-                org_id,
-                line.tax_group_id,
-                line.tax_rate_id,
-                issue_date,
-            )
-            .await
-            .map_err(internal(request_id))?
+            if let Some((rid, bps, _)) =
+                resolve_rate_bps(tx, org_id, line.tax_group_id, line.tax_rate_id, issue_date)
+                    .await
+                    .map_err(internal(request_id))?
             {
                 rate_bps = bps;
                 resolved_rate_id = Some(rid);
             }
         }
-        inputs.push((line.id, resolved_rate_id, LineInput {
-            quantity: line.quantity,
-            unit_price_minor: line.unit_price_minor,
-            discount_minor: line.discount_minor,
-            tax_rate_bps: rate_bps,
-        }));
+        inputs.push((
+            line.id,
+            resolved_rate_id,
+            LineInput {
+                quantity: line.quantity,
+                unit_price_minor: line.unit_price_minor,
+                discount_minor: line.discount_minor,
+                tax_rate_bps: rate_bps,
+            },
+        ));
     }
 
-    let line_inputs_only: Vec<LineInput> = inputs.iter().map(|(_, _, i)| i.clone()).collect();
+    let line_inputs_only: Vec<LineInput> = inputs.iter().map(|(_, _, i)| *i).collect();
     let currency = Currency::new(&row.currency)
         .map_err(|e| validation(request_id, format!("invalid currency: {e}")))?;
     let (computed, doc) = compute_document_totals(&line_inputs_only, currency)
