@@ -18,6 +18,9 @@ pub struct CustomerCreatedPayload {
     pub email: Option<String>,
     #[serde(default)]
     pub currency: Option<String>,
+    /// Optional dunning profile public id (`dnp_…`) from CRM payload.
+    #[serde(default)]
+    pub dunning_profile_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -81,6 +84,31 @@ pub async fn upsert_customer_projection(
         return Err(sqlx::Error::Protocol("expected cus_ public id".into()));
     }
 
+    let dunning_uuid = if let Some(ref raw) = payload.dunning_profile_id {
+        if raw.trim().is_empty() {
+            None
+        } else {
+            let pid: PublicId = raw
+                .parse()
+                .map_err(|e| sqlx::Error::Protocol(format!("bad dunning_profile_id: {e}")))?;
+            if pid.kind() != IdKind::DunningProfile {
+                return Err(sqlx::Error::Protocol(
+                    "dunning_profile_id must be dnp_ public id".into(),
+                ));
+            }
+            let found: Option<(Uuid,)> = sqlx::query_as(
+                "SELECT id FROM finance_dunning_profile WHERE org_id = $1 AND id = $2",
+            )
+            .bind(org_id.as_uuid())
+            .bind(pid.uuid())
+            .fetch_optional(&mut **tx)
+            .await?;
+            found.map(|r| r.0)
+        }
+    } else {
+        None
+    };
+
     // Idempotent: same sales customer → same finance projection row.
     let existing: Option<(Uuid,)> = sqlx::query_as(
         r#"
@@ -97,13 +125,17 @@ pub async fn upsert_customer_projection(
         sqlx::query(
             r#"
             UPDATE finance_customer
-            SET name = $2, email = COALESCE($3, email), updated_at = now()
+            SET name = $2,
+                email = COALESCE($3, email),
+                dunning_profile_id = COALESCE($4, dunning_profile_id),
+                updated_at = now()
             WHERE id = $1
             "#,
         )
         .bind(id)
         .bind(&payload.name)
         .bind(payload.email.as_deref())
+        .bind(dunning_uuid)
         .execute(&mut **tx)
         .await?;
         return Ok(id);
@@ -119,8 +151,9 @@ pub async fn upsert_customer_projection(
     sqlx::query(
         r#"
         INSERT INTO finance_customer (
-            id, org_id, public_id, sales_customer_public_id, name, email, currency
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+            id, org_id, public_id, sales_customer_public_id, name, email, currency,
+            dunning_profile_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         "#,
     )
     .bind(id)
@@ -130,6 +163,7 @@ pub async fn upsert_customer_projection(
     .bind(&payload.name)
     .bind(payload.email.as_deref())
     .bind(&currency)
+    .bind(dunning_uuid)
     .execute(&mut **tx)
     .await?;
     Ok(id)
@@ -150,6 +184,7 @@ pub async fn ensure_customer_from_snapshot(
         name: name.to_string(),
         email: None,
         currency: Some(currency.to_string()),
+        dunning_profile_id: None,
     };
     upsert_customer_projection(tx, org_id, &payload).await
 }

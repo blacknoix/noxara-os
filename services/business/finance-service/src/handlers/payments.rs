@@ -705,6 +705,7 @@ pub async fn allocate_payment(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: None,
+        entity_id: None,
         lines: vec![
             crate::journal::LedgerLine {
                 account_code: crate::journal::codes::CUSTOMER_CREDITS.into(),

@@ -6,6 +6,8 @@ pub mod accounts;
 pub mod bank;
 pub mod credit_notes;
 pub mod customers;
+pub mod dunning;
+pub mod entities;
 pub mod events;
 pub mod expenses;
 pub mod invoices;
@@ -15,6 +17,7 @@ pub mod periods;
 pub mod policy;
 pub mod recurring;
 pub mod reports;
+pub mod tax;
 pub mod vendor_bills;
 pub mod webhooks;
 
@@ -43,6 +46,9 @@ pub fn router() -> Router<AppState> {
         .merge(bank::router())
         .merge(policy::router())
         .merge(vendor_bills::router())
+        .merge(tax::router())
+        .merge(dunning::router())
+        .merge(entities::router())
 }
 
 /// Map a `sqlx::Error` to an internal `AppError`, capturing `request_id`.

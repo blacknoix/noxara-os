@@ -8,8 +8,9 @@ use companyos_workflow_host::temporal_namespace;
 
 #[test]
 fn invoice_dunning_happy_path() {
-    let mut s = invoice_dunning::State::start("inv_abc");
+    let mut s = invoice_dunning::State::start_default("inv_abc");
     assert_eq!(s.status, DunningStatus::Active);
+    assert_eq!(s.schedule_offsets_days, vec![3, 7, 14]);
     assert!(s.signal_timer());
     assert_eq!(s.status, DunningStatus::Reminder1Sent);
     assert!(s.signal_timer());
@@ -20,6 +21,16 @@ fn invoice_dunning_happy_path() {
     assert!(s.signal_paid());
     assert_eq!(s.status, DunningStatus::Paid);
     assert_eq!(s.query().reminders_sent, 3);
+}
+
+#[test]
+fn invoice_dunning_custom_profile_two_steps() {
+    let mut s = invoice_dunning::State::start("inv_short", vec![1, 2]);
+    assert!(s.signal_timer());
+    assert!(s.signal_timer());
+    assert!(!s.signal_timer());
+    assert_eq!(s.reminders_sent, 2);
+    assert_eq!(s.status, DunningStatus::FinalNoticeSent);
 }
 
 #[test]

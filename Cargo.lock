@@ -749,6 +749,7 @@ dependencies = [
  "companyos-telemetry",
  "companyos-tenancy",
  "companyos-testkit",
+ "companyos-workflow-host",
  "http",
  "http-body-util",
  "jsonwebtoken",

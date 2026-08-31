@@ -5,8 +5,8 @@ use axum::{Json, Router};
 use utoipa::OpenApi;
 
 use crate::handlers::{
-    accounts, bank, credit_notes, customers, events, expenses, invoices, journals, payments,
-    periods, policy, recurring, reports, vendor_bills, webhooks,
+    accounts, bank, credit_notes, customers, dunning, entities, events, expenses, invoices,
+    journals, payments, periods, policy, recurring, reports, tax, vendor_bills, webhooks,
 };
 use crate::state::AppState;
 use crate::types::*;
@@ -67,6 +67,21 @@ use crate::types::*;
         vendor_bills::get_vendor_bill,
         vendor_bills::create_vendor_bill,
         vendor_bills::pay_vendor_bill,
+        tax::list_tax_groups,
+        tax::create_tax_group,
+        tax::list_tax_rates,
+        tax::create_tax_rate,
+        tax::resolve_tax,
+        dunning::list_profiles,
+        dunning::create_profile,
+        dunning::get_profile,
+        dunning::update_profile,
+        dunning::set_customer_dunning_profile,
+        dunning::get_dunning_schedule,
+        entities::list_entities,
+        entities::create_entity,
+        entities::get_entity,
+        entities::update_entity,
     ),
     components(schemas(
         FinanceCustomerDto,
@@ -155,6 +170,26 @@ use crate::types::*;
         VendorBillListResponse,
         CreateVendorBillRequest,
         PayVendorBillRequest,
+        TaxGroupDto,
+        TaxGroupListResponse,
+        CreateTaxGroupRequest,
+        TaxRateDto,
+        TaxRateListResponse,
+        CreateTaxRateRequest,
+        TaxResolveQuery,
+        TaxResolveResponse,
+        DunningStepDto,
+        DunningProfileDto,
+        DunningProfileListResponse,
+        CreateDunningProfileRequest,
+        UpdateDunningProfileRequest,
+        SetCustomerDunningProfileRequest,
+        DunningScheduleQuery,
+        DunningScheduleResponse,
+        FinanceEntityDto,
+        FinanceEntityListResponse,
+        CreateFinanceEntityRequest,
+        UpdateFinanceEntityRequest,
     )),
     tags(
         (name = "finance-customers", description = "Projected finance customers"),
@@ -172,11 +207,14 @@ use crate::types::*;
         (name = "finance-bank", description = "Bank accounts, statements, reconciliation"),
         (name = "finance-policy", description = "Expense policy, cards, reimbursements"),
         (name = "finance-vendor-bills", description = "Procure-to-pay vendor bills (inventory-service)"),
+        (name = "finance-tax", description = "Tax groups and versioned rates"),
+        (name = "finance-dunning", description = "Dunning profiles and schedules"),
+        (name = "finance-entities", description = "Multi-entity foundations"),
     ),
     info(
         title = "CompanyOS Finance API",
         version = "0.1.0",
-        description = "Phase 1.5–2.4 — Finance: invoices, payments, expenses, payroll journals, CoA, periods, bank recon, expense policy."
+        description = "Phase 1.5–3.5 — Finance: invoices, tax, dunning, entities, payments, journals."
     )
 )]
 pub struct ApiDoc;
