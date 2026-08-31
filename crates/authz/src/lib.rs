@@ -428,6 +428,7 @@ impl Role {
                 perms::inventory_stock_read(),
                 perms::inventory_purchase_request_read(),
                 perms::inventory_purchase_request_write(),
+                perms::admin_marketplace_read(),
             ]),
             Self::ReadOnly => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -474,6 +475,7 @@ impl Role {
                 perms::inventory_purchase_order_read(),
                 perms::inventory_goods_receipt_read(),
                 perms::inventory_asset_read(),
+                perms::admin_marketplace_read(),
             ]),
         }
     }
@@ -1103,6 +1105,24 @@ mod tests {
             ("analytics.schedule.write", Role::Sales),
             ("analytics.schedule.write", Role::Finance),
             ("analytics.schedule.write", Role::Manager),
+            ("admin.marketplace.write", Role::Member),
+            ("admin.marketplace.write", Role::ReadOnly),
+            ("admin.marketplace.write", Role::Sales),
+            ("admin.marketplace.write", Role::Finance),
+            ("admin.marketplace.write", Role::Manager),
+            ("admin.marketplace.review", Role::Member),
+            ("admin.marketplace.review", Role::ReadOnly),
+            ("admin.marketplace.review", Role::Sales),
+            ("admin.marketplace.review", Role::Finance),
+            ("admin.marketplace.review", Role::Manager),
+            ("admin.marketplace.install", Role::Member),
+            ("admin.marketplace.install", Role::ReadOnly),
+            ("admin.marketplace.install", Role::Sales),
+            ("admin.marketplace.install", Role::Finance),
+            ("admin.marketplace.uninstall", Role::Member),
+            ("admin.marketplace.uninstall", Role::ReadOnly),
+            ("admin.marketplace.uninstall", Role::Sales),
+            ("admin.marketplace.uninstall", Role::Finance),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);

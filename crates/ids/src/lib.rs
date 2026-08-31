@@ -142,6 +142,16 @@ pub enum IdKind {
     WebhookEndpoint,
     /// Outbound webhook delivery (`whd_`).
     WebhookDelivery,
+    /// Marketplace app listing (`app_`).
+    MarketplaceApp,
+    /// Marketplace install (`ins_`).
+    MarketplaceInstall,
+    /// Marketplace OAuth client (`oac_`).
+    MarketplaceOauthClient,
+    /// Marketplace listing review (`mrv_`).
+    MarketplaceReview,
+    /// Marketplace app access/refresh token (`atk_`).
+    MarketplaceAppToken,
 }
 
 impl IdKind {
@@ -228,6 +238,11 @@ impl IdKind {
             Self::AnalyticsRun => "arun_",
             Self::WebhookEndpoint => "whk_",
             Self::WebhookDelivery => "whd_",
+            Self::MarketplaceApp => "app_",
+            Self::MarketplaceInstall => "ins_",
+            Self::MarketplaceOauthClient => "oac_",
+            Self::MarketplaceReview => "mrv_",
+            Self::MarketplaceAppToken => "atk_",
         }
     }
 
@@ -314,6 +329,11 @@ impl IdKind {
             "arun_" => Some(Self::AnalyticsRun),
             "whk_" => Some(Self::WebhookEndpoint),
             "whd_" => Some(Self::WebhookDelivery),
+            "app_" => Some(Self::MarketplaceApp),
+            "ins_" => Some(Self::MarketplaceInstall),
+            "oac_" => Some(Self::MarketplaceOauthClient),
+            "mrv_" => Some(Self::MarketplaceReview),
+            "atk_" => Some(Self::MarketplaceAppToken),
             _ => None,
         }
     }
@@ -452,6 +472,11 @@ impl FromStr for PublicId {
             ("wdg_", IdKind::AnalyticsWidget),
             ("whk_", IdKind::WebhookEndpoint),
             ("whd_", IdKind::WebhookDelivery),
+            ("app_", IdKind::MarketplaceApp),
+            ("ins_", IdKind::MarketplaceInstall),
+            ("oac_", IdKind::MarketplaceOauthClient),
+            ("mrv_", IdKind::MarketplaceReview),
+            ("atk_", IdKind::MarketplaceAppToken),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {
@@ -609,6 +634,11 @@ mod tests {
             IdKind::AnalyticsRun,
             IdKind::WebhookEndpoint,
             IdKind::WebhookDelivery,
+            IdKind::MarketplaceApp,
+            IdKind::MarketplaceInstall,
+            IdKind::MarketplaceOauthClient,
+            IdKind::MarketplaceReview,
+            IdKind::MarketplaceAppToken,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

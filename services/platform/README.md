@@ -11,7 +11,7 @@ ingestion, and the outbox → NATS JetStream relay live here.
 | `companyos-analytics` | `:8087` | ADR-011 facts from events only → ClickHouse or Postgres mirror `analytics_fact_invoice_issued` |
 | `companyos-file` | `:8089` | Presigned upload (MinIO or local stub); allowlist pdf/png/jpeg/webp ≤10MB |
 | `companyos-workflow-host` | `:8091` | Temporal catalogue host (`TEMPORAL_NAMESPACE`, default `companyos-local`) |
-| `companyos-integration` | `:8095` | Outbound org webhooks — enqueue from events, SSRF-safe dispatch, HMAC sign |
+| `companyos-integration` | `:8095` | Outbound org webhooks + Phase 3.4 marketplace (listings, review, installs, app OAuth) |
 
 ## Env
 

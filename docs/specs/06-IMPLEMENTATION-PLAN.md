@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 is next.
+Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 backend skeleton landed; Phase 3.5 not started.
 
 ## Completed
 
@@ -25,6 +25,7 @@ Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 is next.
 | 3.1   | Configurable workflow definitions, immutable versions, permission-checked actions, simulation, bounds, and monitoring           |
 | 3.2   | Governed event-derived analytics, reports, dashboards, forecasts, exports, and scheduled delivery                               |
 | 3.3   | Public API, generated SDKs (TS + Python), outbound webhooks, developer docs + sandbox                                           |
+| 3.4   | Marketplace skeleton: listings, review gate, scoped-consent installs, app tokens, mock OAuth, integrations alias                |
 
 ## Phase 3.3 — Public API, SDKs & webhooks (done)
 
@@ -34,11 +35,39 @@ Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 is next.
 - Per-key rate limits + usage analytics events; 180-day deprecation dual-publish exercise
 - Developer docs under `docs/developers/` + `/developers` portal route; sandbox seed script
 
+## Phase 3.4 — Marketplace (backend skeleton done)
+
+Implemented in `companyos-integration` (`src/marketplace/`, `migrations/001_marketplace.sql`):
+
+- Listings (`app_`), OAuth clients (`oac_`), reviews (`mrv_`), installs (`ins_`) and app
+  tokens (`atk_`), all org-scoped under FORCE RLS. Published listings are readable across
+  orgs; installs and tokens stay strictly tenant-isolated.
+- Consent is the only authority: issued token scopes equal the install's consented scopes,
+  which must be a subset of the listing's requested scopes intersected with the installing
+  principal's own permissions. Widening consent revokes and re-issues.
+- No first-party special case. `listing_kind` / `connector_key` are data; the
+  `/api/v1/integrations/{connector_key}/{connect,disconnect}` routes are an alias over the
+  same `create_install` / `issue_tokens` / `revoke_install` path used by third-party apps.
+- Publication is blocked until every required checklist item is complete and the derived
+  `security_review_completed` flag is true (three `security_*` items).
+- Uninstall revokes the install, every access and refresh token, and both traffic
+  directions; subsequent token authorization returns 401.
+- Mock PKCE OAuth: authorize → single-use code → token exchange → refresh rotation, plus
+  `POST /api/v1/marketplace/oauth/authorize-permission` for resource-server checks.
+- Session JWT / local auth only — marketplace routes are not on the public API-key allowlist.
+- Gateway proxies `/api/v1/marketplace/*` and `/api/v1/integrations/*` to integration-service;
+  OAuth token + authorize-permission endpoints are unauthenticated at the gateway (client
+  credentials / opaque app tokens).
+- Web UI: catalogue, listing consent, installs, publisher, reviewer, and Settings →
+  Integrations (first-party connectors via the same install APIs).
+
+Not yet done: a real connector runtime (the five seeded connectors are catalogue entries
+only), cross-org publisher review staffing, and marketplace billing.
+
 ## Later phases
 
 | Phase          | Notes                   |
 | -------------- | ----------------------- |
-| 3.4            | Marketplace             |
 | 3.5            | Depth / polish          |
 | InvoiceDunning | Temporal dunning polish |
 | PDF / email    | Nice-to-have            |

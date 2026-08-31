@@ -1041,6 +1041,46 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         sensitive: true,
     },
     PermissionDef {
+        id: "admin.marketplace.read",
+        context: "admin",
+        resource: "marketplace",
+        action: "read",
+        description: "Browse marketplace catalogue, listing detail, and org installs",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "admin.marketplace.write",
+        context: "admin",
+        resource: "marketplace",
+        action: "write",
+        description: "Create and submit marketplace app listings (publisher)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.marketplace.review",
+        context: "admin",
+        resource: "marketplace",
+        action: "review",
+        description: "Complete review checklist and approve/reject/publish listings",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.marketplace.install",
+        context: "admin",
+        resource: "marketplace",
+        action: "install",
+        description: "Install marketplace apps into the organization with scoped consent",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.marketplace.uninstall",
+        context: "admin",
+        resource: "marketplace",
+        action: "uninstall",
+        description: "Uninstall apps and revoke all tokens and access paths",
+        sensitive: true,
+    },
+    PermissionDef {
         id: "hr.employee.write",
         context: "hr",
         resource: "employee",
@@ -1324,6 +1364,10 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "admin.api_key.manage",
     "admin.webhook.write",
     "admin.webhook.replay",
+    "admin.marketplace.write",
+    "admin.marketplace.review",
+    "admin.marketplace.install",
+    "admin.marketplace.uninstall",
     "hr.employee.write",
     "hr.employee.onboard",
     "hr.employee.offboard",
@@ -1522,6 +1566,21 @@ pub mod perms {
     }
     pub fn admin_webhook_replay() -> PermissionId {
         PermissionId::from("admin.webhook.replay")
+    }
+    pub fn admin_marketplace_read() -> PermissionId {
+        PermissionId::from("admin.marketplace.read")
+    }
+    pub fn admin_marketplace_write() -> PermissionId {
+        PermissionId::from("admin.marketplace.write")
+    }
+    pub fn admin_marketplace_review() -> PermissionId {
+        PermissionId::from("admin.marketplace.review")
+    }
+    pub fn admin_marketplace_install() -> PermissionId {
+        PermissionId::from("admin.marketplace.install")
+    }
+    pub fn admin_marketplace_uninstall() -> PermissionId {
+        PermissionId::from("admin.marketplace.uninstall")
     }
     pub fn hr_field_compensation_read() -> PermissionId {
         PermissionId::from("hr.field.compensation_read")

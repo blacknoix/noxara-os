@@ -49,6 +49,7 @@ struct GatewayState {
     hr_url: String,
     inventory_url: String,
     workflow_url: String,
+    integration_url: String,
     redis_url: Option<String>,
     client: reqwest::Client,
     keyring: KeyRing,
@@ -96,6 +97,8 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("INVENTORY_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8093".into());
     let workflow_url =
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8094".into());
+    let integration_url =
+        std::env::var("INTEGRATION_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8095".into());
     let redis_url = std::env::var("REDIS_URL").ok().filter(|s| !s.is_empty());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
@@ -117,6 +120,7 @@ async fn main() -> anyhow::Result<()> {
         hr_url,
         inventory_url,
         workflow_url,
+        integration_url,
         redis_url,
         client: reqwest::Client::new(),
         keyring,
@@ -152,7 +156,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary + API keys (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "3.3"
+                    "phase": "3.4"
                 }))
             }),
         )
@@ -182,6 +186,18 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/files/{*rest}", any(proxy_files))
         // AI (Phase 1.9)
         .route("/api/v1/ai/{*rest}", any(proxy_ai))
+        // Marketplace (Phase 3.4) — session JWT; OAuth token endpoints are unauthenticated.
+        .route(
+            "/api/v1/marketplace/oauth/token",
+            any(proxy_marketplace_oauth_public),
+        )
+        .route(
+            "/api/v1/marketplace/oauth/authorize-permission",
+            any(proxy_marketplace_oauth_public),
+        )
+        .route("/api/v1/marketplace/{*rest}", any(proxy_marketplace))
+        .route("/api/v1/integrations", any(proxy_integrations))
+        .route("/api/v1/integrations/{*rest}", any(proxy_integrations))
         .layer(TraceLayer::new_for_http())
         .layer(PropagateRequestIdLayer::new(x_request_id.clone()))
         .layer(SetRequestIdLayer::new(x_request_id, MakeRequestUuid))
@@ -730,6 +746,52 @@ async fn proxy_ai(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     proxy_to(&state, req, &upstream, &state.ai_url, true, "ai").await
+}
+
+async fn proxy_marketplace(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.integration_url,
+        true,
+        "integration",
+    )
+    .await
+}
+
+/// App OAuth token + permission probe — client credentials / opaque app tokens, no session JWT.
+async fn proxy_marketplace_oauth_public(
+    State(state): State<GatewayState>,
+    req: Request,
+) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.integration_url,
+        false,
+        "integration",
+    )
+    .await
+}
+
+async fn proxy_integrations(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(
+        &state,
+        req,
+        &upstream,
+        &state.integration_url,
+        true,
+        "integration",
+    )
+    .await
 }
 
 async fn proxy_openapi(State(state): State<GatewayState>, req: Request) -> Response {

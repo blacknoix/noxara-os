@@ -118,6 +118,22 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
             "method": "GET",
             "status_code": 200
         }),
+        (
+            "marketplace",
+            "listing_created" | "listing_submitted" | "listing_published" | "listing_rejected",
+        ) => {
+            serde_json::json!({ "listing_id": "app_test" })
+        }
+        ("marketplace", "oauth_client_created") => serde_json::json!({
+            "listing_id": "app_test",
+            "oauth_client_id": "oac_test"
+        }),
+        ("marketplace", "install_created" | "install_revoked" | "oauth_token_issued") => {
+            serde_json::json!({
+                "install_id": "ins_test",
+                "listing_id": "app_test"
+            })
+        }
         ("definition", "published") => serde_json::json!({
             "id": "wfd_test",
             "version_id": "wfv_test",
