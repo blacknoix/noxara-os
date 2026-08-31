@@ -4,14 +4,17 @@
 
 pub mod activities;
 pub mod contacts;
+pub mod contracts;
 pub mod customers;
 pub mod deals;
 pub mod imports;
 pub mod leads;
+pub mod orders;
 pub mod pipelines;
 pub mod products;
 pub mod quotes;
 pub mod reports;
+pub mod territories;
 
 use axum::http::HeaderMap;
 use axum::Router;
@@ -31,6 +34,9 @@ pub fn router() -> Router<AppState> {
         .merge(activities::router())
         .merge(products::router())
         .merge(quotes::router())
+        .merge(orders::router())
+        .merge(contracts::router())
+        .merge(territories::router())
         .merge(imports::router())
         .merge(reports::router())
 }

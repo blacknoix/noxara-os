@@ -5,7 +5,8 @@ use axum::{Json, Router};
 use utoipa::OpenApi;
 
 use crate::handlers::{
-    activities, contacts, customers, deals, imports, leads, pipelines, products, quotes, reports,
+    activities, contacts, contracts, customers, deals, imports, leads, orders, pipelines, products,
+    quotes, reports, territories,
 };
 use crate::state::AppState;
 use crate::types::*;
@@ -49,6 +50,23 @@ use crate::types::*;
         quotes::accept_quote,
         quotes::reject_quote,
         quotes::invoice_action,
+        orders::list_orders,
+        orders::create_order,
+        orders::get_order,
+        orders::update_order_status,
+        orders::order_from_quote,
+        orders::order_from_deal,
+        contracts::list_contracts,
+        contracts::create_contract,
+        contracts::get_contract,
+        contracts::update_contract,
+        contracts::publish_contract,
+        contracts::list_renewals,
+        territories::list_territories,
+        territories::create_territory,
+        territories::get_territory,
+        territories::update_territory,
+        territories::assign_territory,
         imports::preview_customers,
         imports::confirm_customers,
         reports::report_summary,
@@ -98,6 +116,25 @@ use crate::types::*;
         UpdateQuoteRequest,
         RejectQuoteRequest,
         InvoiceActionResponse,
+        OrderLineDto,
+        OrderDto,
+        OrderListResponse,
+        CreateOrderLineRequest,
+        CreateOrderRequest,
+        UpdateOrderStatusRequest,
+        OrderFromQuoteRequest,
+        OrderFromDealRequest,
+        ContractDto,
+        ContractListResponse,
+        CreateContractRequest,
+        UpdateContractRequest,
+        RenewalPipelineResponse,
+        TerritoryDto,
+        TerritoryListResponse,
+        CreateTerritoryRequest,
+        UpdateTerritoryRequest,
+        AssignTerritoryRequest,
+        TerritoryAssignmentDto,
         ImportPreviewRequest,
         ImportRowPreview,
         ImportPreviewResponse,
@@ -120,13 +157,16 @@ use crate::types::*;
         (name = "sales-activities", description = "Calls, meetings, emails, and notes"),
         (name = "sales-products", description = "Quotable product catalogue"),
         (name = "sales-quotes", description = "Quote drafting, versioning, and acceptance"),
+        (name = "sales-orders", description = "Sales orders from quotes and won deals"),
+        (name = "sales-contracts", description = "Customer contracts, publish, and renewals"),
+        (name = "sales-territories", description = "Sales territories and assignments"),
         (name = "sales-imports", description = "CSV customer import"),
         (name = "sales-reports", description = "Pipeline / win-rate / forecast reports"),
     ),
     info(
         title = "CompanyOS CRM API",
         version = "0.1.0",
-        description = "Phase 1.4 — Sales bounded context: customers, leads, deals, quotes, and reporting."
+        description = "Phase 1.4 + 3.5 — Sales bounded context: customers, leads, deals, quotes, orders, contracts, territories, and reporting."
     )
 )]
 pub struct ApiDoc;

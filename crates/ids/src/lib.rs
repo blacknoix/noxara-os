@@ -152,6 +152,34 @@ pub enum IdKind {
     MarketplaceReview,
     /// Marketplace app access/refresh token (`atk_`).
     MarketplaceAppToken,
+    /// Sales order (`ord_`).
+    SalesOrder,
+    /// Sales order line (`orl_`).
+    SalesOrderLine,
+    /// Sales customer contract (`sct_`).
+    SalesContract,
+    /// Sales territory (`ter_`).
+    Territory,
+    /// Finance tax rate version (`txr_`).
+    TaxRate,
+    /// Finance tax group (`txg_`).
+    TaxGroup,
+    /// Finance tax component (`txc_`).
+    TaxComponent,
+    /// Finance dunning profile (`dnp_`).
+    DunningProfile,
+    /// Finance legal entity within an org (`ent_`).
+    FinanceEntity,
+    /// Operations time entry (`tme_`).
+    TimeEntry,
+    /// Operations timesheet week (`tms_`).
+    Timesheet,
+    /// Operations capacity allocation (`cap_`).
+    CapacityAllocation,
+    /// AI meeting summary suggestion (`mts_`).
+    MeetingSummary,
+    /// AI proactive insight card (`ain_`).
+    AiInsight,
 }
 
 impl IdKind {
@@ -243,6 +271,20 @@ impl IdKind {
             Self::MarketplaceOauthClient => "oac_",
             Self::MarketplaceReview => "mrv_",
             Self::MarketplaceAppToken => "atk_",
+            Self::SalesOrder => "ord_",
+            Self::SalesOrderLine => "orl_",
+            Self::SalesContract => "sct_",
+            Self::Territory => "ter_",
+            Self::TaxRate => "txr_",
+            Self::TaxGroup => "txg_",
+            Self::TaxComponent => "txc_",
+            Self::DunningProfile => "dnp_",
+            Self::FinanceEntity => "ent_",
+            Self::TimeEntry => "tme_",
+            Self::Timesheet => "tms_",
+            Self::CapacityAllocation => "cap_",
+            Self::MeetingSummary => "mts_",
+            Self::AiInsight => "ain_",
         }
     }
 
@@ -334,6 +376,20 @@ impl IdKind {
             "oac_" => Some(Self::MarketplaceOauthClient),
             "mrv_" => Some(Self::MarketplaceReview),
             "atk_" => Some(Self::MarketplaceAppToken),
+            "ord_" => Some(Self::SalesOrder),
+            "orl_" => Some(Self::SalesOrderLine),
+            "sct_" => Some(Self::SalesContract),
+            "ter_" => Some(Self::Territory),
+            "txr_" => Some(Self::TaxRate),
+            "txg_" => Some(Self::TaxGroup),
+            "txc_" => Some(Self::TaxComponent),
+            "dnp_" => Some(Self::DunningProfile),
+            "ent_" => Some(Self::FinanceEntity),
+            "tme_" => Some(Self::TimeEntry),
+            "tms_" => Some(Self::Timesheet),
+            "cap_" => Some(Self::CapacityAllocation),
+            "mts_" => Some(Self::MeetingSummary),
+            "ain_" => Some(Self::AiInsight),
             _ => None,
         }
     }

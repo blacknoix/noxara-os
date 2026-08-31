@@ -185,6 +185,8 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::ai_meeting_summary_read(),
+                perms::ai_meeting_summary_accept(),
                 perms::hr_employee_read(),
                 perms::hr_employee_read_sensitive(),
                 perms::hr_field_compensation_read(),
@@ -214,6 +216,12 @@ impl Role {
                 perms::inventory_purchase_order_read(),
                 perms::inventory_goods_receipt_read(),
                 perms::inventory_asset_read(),
+                perms::finance_tax_read(),
+                perms::finance_tax_manage(),
+                perms::finance_dunning_read(),
+                perms::finance_dunning_manage(),
+                perms::finance_entity_read(),
+                perms::finance_entity_manage(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -249,6 +257,15 @@ impl Role {
                 perms::sales_activity_create(),
                 perms::sales_import_create(),
                 perms::sales_report_read(),
+                perms::sales_order_read(),
+                perms::sales_order_create(),
+                perms::sales_order_update(),
+                perms::sales_contract_read(),
+                perms::sales_contract_create(),
+                perms::sales_contract_update(),
+                perms::sales_contract_publish(),
+                perms::sales_territory_read(),
+                perms::sales_territory_manage(),
                 perms::finance_customer_read(),
                 perms::finance_invoice_read(),
                 perms::finance_invoice_create(),
@@ -276,6 +293,12 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_document_extract(),
+                perms::ai_meeting_summary_read(),
+                perms::ai_meeting_summary_accept(),
+                perms::operations_timesheet_read(),
+                perms::operations_timesheet_write(),
+                perms::operations_timesheet_submit(),
+                perms::operations_capacity_read(),
                 perms::hr_employee_read(),
                 perms::hr_attendance_read(),
                 perms::hr_leave_read(),
@@ -320,6 +343,18 @@ impl Role {
                 perms::operations_workflow_read(),
                 perms::operations_workflow_write(),
                 perms::operations_workflow_run(),
+                perms::operations_timesheet_read(),
+                perms::operations_timesheet_write(),
+                perms::operations_timesheet_submit(),
+                perms::operations_timesheet_approve(),
+                perms::operations_capacity_read(),
+                perms::operations_capacity_manage(),
+                perms::sales_order_read(),
+                perms::sales_contract_read(),
+                perms::sales_contract_publish(),
+                perms::sales_territory_read(),
+                perms::ai_meeting_summary_read(),
+                perms::ai_meeting_summary_accept(),
                 perms::platform_notification_read(),
                 perms::platform_search_read(),
                 perms::platform_search_reindex(),
@@ -394,8 +429,14 @@ impl Role {
                 perms::sales_product_read(),
                 perms::sales_activity_read(),
                 perms::sales_report_read(),
+                perms::sales_order_read(),
+                perms::sales_contract_read(),
+                perms::sales_territory_read(),
                 perms::finance_expense_read(),
                 perms::finance_expense_create(),
+                perms::finance_tax_read(),
+                perms::finance_dunning_read(),
+                perms::finance_entity_read(),
                 perms::operations_project_read(),
                 perms::operations_task_read(),
                 perms::operations_task_create(),
@@ -404,6 +445,12 @@ impl Role {
                 perms::operations_workflow_read(),
                 perms::operations_workflow_write(),
                 perms::operations_workflow_run(),
+                perms::operations_timesheet_read(),
+                perms::operations_timesheet_write(),
+                perms::operations_timesheet_submit(),
+                perms::operations_capacity_read(),
+                perms::ai_meeting_summary_read(),
+                perms::ai_meeting_summary_accept(),
                 perms::platform_notification_read(),
                 perms::platform_search_read(),
                 perms::platform_file_read(),
@@ -1123,6 +1170,32 @@ mod tests {
             ("admin.marketplace.uninstall", Role::ReadOnly),
             ("admin.marketplace.uninstall", Role::Sales),
             ("admin.marketplace.uninstall", Role::Finance),
+            // Phase 3.5 — Member cannot configure dunning, publish contracts, or approve timesheets
+            ("finance.dunning.manage", Role::Member),
+            ("finance.dunning.manage", Role::ReadOnly),
+            ("finance.dunning.manage", Role::Sales),
+            ("finance.dunning.manage", Role::Manager),
+            ("finance.tax.manage", Role::Member),
+            ("finance.tax.manage", Role::ReadOnly),
+            ("finance.tax.manage", Role::Sales),
+            ("finance.tax.manage", Role::Manager),
+            ("finance.entity.manage", Role::Member),
+            ("finance.entity.manage", Role::ReadOnly),
+            ("finance.entity.manage", Role::Sales),
+            ("finance.entity.manage", Role::Manager),
+            ("sales.contract.publish", Role::Member),
+            ("sales.contract.publish", Role::ReadOnly),
+            ("sales.territory.manage", Role::Member),
+            ("sales.territory.manage", Role::ReadOnly),
+            ("sales.territory.manage", Role::Manager),
+            ("operations.timesheet.approve", Role::Member),
+            ("operations.timesheet.approve", Role::ReadOnly),
+            ("operations.timesheet.approve", Role::Sales),
+            ("operations.timesheet.approve", Role::Finance),
+            ("operations.capacity.manage", Role::Member),
+            ("operations.capacity.manage", Role::ReadOnly),
+            ("operations.capacity.manage", Role::Sales),
+            ("operations.capacity.manage", Role::Finance),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);
@@ -1177,6 +1250,16 @@ mod tests {
         let member = Principal::with_roles(vec![Role::Member]);
         assert!(!is_allowed(&member, &perms::finance_invoice_issue()));
         assert!(!is_allowed(&member, &perms::hr_employee_read_sensitive()));
+        // Phase 3.5
+        assert!(!is_allowed(&member, &perms::finance_dunning_manage()));
+        assert!(!is_allowed(&member, &perms::sales_contract_publish()));
+        assert!(!is_allowed(&member, &perms::operations_timesheet_approve()));
+        assert!(is_allowed(&manager, &perms::operations_timesheet_approve()));
+        assert!(is_allowed(&finance, &perms::finance_dunning_manage()));
+        assert!(is_allowed(
+            &Principal::with_roles(vec![Role::Sales]),
+            &perms::sales_contract_publish()
+        ));
         assert!(!is_allowed(&member, &perms::hr_employee_write()));
         assert!(is_allowed(&member, &perms::hr_leave_write()));
         assert!(is_allowed(&member, &perms::hr_attendance_write()));

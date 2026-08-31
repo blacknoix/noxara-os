@@ -1331,6 +1331,194 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Create/update fixed assets, assign/return, depreciate, schedule maintenance",
         sensitive: true,
     },
+    // Phase 3.5 — CRM depth
+    PermissionDef {
+        id: "sales.order.read",
+        context: "sales",
+        resource: "order",
+        action: "read",
+        description: "View sales orders",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.order.create",
+        context: "sales",
+        resource: "order",
+        action: "create",
+        description: "Create sales orders from won deals or accepted quotes",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.order.update",
+        context: "sales",
+        resource: "order",
+        action: "update",
+        description: "Update draft sales order status and lines",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.contract.read",
+        context: "sales",
+        resource: "contract",
+        action: "read",
+        description: "View customer contracts and renewal pipeline",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.contract.create",
+        context: "sales",
+        resource: "contract",
+        action: "create",
+        description: "Create customer contracts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.contract.update",
+        context: "sales",
+        resource: "contract",
+        action: "update",
+        description: "Update draft customer contracts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.contract.publish",
+        context: "sales",
+        resource: "contract",
+        action: "publish",
+        description: "Publish a customer contract as final (immutable term)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "sales.territory.read",
+        context: "sales",
+        resource: "territory",
+        action: "read",
+        description: "View sales territories and assignments",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "sales.territory.manage",
+        context: "sales",
+        resource: "territory",
+        action: "manage",
+        description: "Create/update territories and assign customers/deals",
+        sensitive: true,
+    },
+    // Phase 3.5 — Finance depth
+    PermissionDef {
+        id: "finance.tax.read",
+        context: "finance",
+        resource: "tax",
+        action: "read",
+        description: "View tax groups and versioned tax rates",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.tax.manage",
+        context: "finance",
+        resource: "tax",
+        action: "manage",
+        description: "Create tax groups and append new tax rate versions (never edit in place)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.dunning.read",
+        context: "finance",
+        resource: "dunning",
+        action: "read",
+        description: "View dunning profiles and schedules",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.dunning.manage",
+        context: "finance",
+        resource: "dunning",
+        action: "manage",
+        description: "Configure org and customer dunning profiles driving InvoiceDunning",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.entity.read",
+        context: "finance",
+        resource: "entity",
+        action: "read",
+        description: "View legal entities within the organization",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.entity.manage",
+        context: "finance",
+        resource: "entity",
+        action: "manage",
+        description: "Create and update legal entities (multi-entity foundations)",
+        sensitive: true,
+    },
+    // Phase 3.5 — Operations depth
+    PermissionDef {
+        id: "operations.timesheet.read",
+        context: "operations",
+        resource: "timesheet",
+        action: "read",
+        description: "View timesheets and time entries",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.timesheet.write",
+        context: "operations",
+        resource: "timesheet",
+        action: "write",
+        description: "Create and edit own draft timesheets and time entries",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.timesheet.submit",
+        context: "operations",
+        resource: "timesheet",
+        action: "submit",
+        description: "Submit own timesheet for approval",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.timesheet.approve",
+        context: "operations",
+        resource: "timesheet",
+        action: "approve",
+        description: "Approve or reject others' submitted timesheets",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "operations.capacity.read",
+        context: "operations",
+        resource: "capacity",
+        action: "read",
+        description: "View resource capacity and overload",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "operations.capacity.manage",
+        context: "operations",
+        resource: "capacity",
+        action: "manage",
+        description: "Set member/project capacity allocations",
+        sensitive: true,
+    },
+    // Phase 3.5 — AI depth
+    PermissionDef {
+        id: "ai.meeting_summary.read",
+        context: "ai",
+        resource: "meeting_summary",
+        action: "read",
+        description: "View meeting summary suggestions",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "ai.meeting_summary.accept",
+        context: "ai",
+        resource: "meeting_summary",
+        action: "accept",
+        description: "Accept a meeting summary suggestion (human commit)",
+        sensitive: false,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -1395,6 +1583,13 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "inventory.goods_receipt.write",
     "inventory.asset.write",
     "analytics.schedule.write",
+    "sales.contract.publish",
+    "sales.territory.manage",
+    "finance.tax.manage",
+    "finance.dunning.manage",
+    "finance.entity.manage",
+    "operations.timesheet.approve",
+    "operations.capacity.manage",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1893,6 +2088,75 @@ pub mod perms {
     }
     pub fn inventory_asset_write() -> PermissionId {
         PermissionId::from("inventory.asset.write")
+    }
+    pub fn sales_order_read() -> PermissionId {
+        PermissionId::from("sales.order.read")
+    }
+    pub fn sales_order_create() -> PermissionId {
+        PermissionId::from("sales.order.create")
+    }
+    pub fn sales_order_update() -> PermissionId {
+        PermissionId::from("sales.order.update")
+    }
+    pub fn sales_contract_read() -> PermissionId {
+        PermissionId::from("sales.contract.read")
+    }
+    pub fn sales_contract_create() -> PermissionId {
+        PermissionId::from("sales.contract.create")
+    }
+    pub fn sales_contract_update() -> PermissionId {
+        PermissionId::from("sales.contract.update")
+    }
+    pub fn sales_contract_publish() -> PermissionId {
+        PermissionId::from("sales.contract.publish")
+    }
+    pub fn sales_territory_read() -> PermissionId {
+        PermissionId::from("sales.territory.read")
+    }
+    pub fn sales_territory_manage() -> PermissionId {
+        PermissionId::from("sales.territory.manage")
+    }
+    pub fn finance_tax_read() -> PermissionId {
+        PermissionId::from("finance.tax.read")
+    }
+    pub fn finance_tax_manage() -> PermissionId {
+        PermissionId::from("finance.tax.manage")
+    }
+    pub fn finance_dunning_read() -> PermissionId {
+        PermissionId::from("finance.dunning.read")
+    }
+    pub fn finance_dunning_manage() -> PermissionId {
+        PermissionId::from("finance.dunning.manage")
+    }
+    pub fn finance_entity_read() -> PermissionId {
+        PermissionId::from("finance.entity.read")
+    }
+    pub fn finance_entity_manage() -> PermissionId {
+        PermissionId::from("finance.entity.manage")
+    }
+    pub fn operations_timesheet_read() -> PermissionId {
+        PermissionId::from("operations.timesheet.read")
+    }
+    pub fn operations_timesheet_write() -> PermissionId {
+        PermissionId::from("operations.timesheet.write")
+    }
+    pub fn operations_timesheet_submit() -> PermissionId {
+        PermissionId::from("operations.timesheet.submit")
+    }
+    pub fn operations_timesheet_approve() -> PermissionId {
+        PermissionId::from("operations.timesheet.approve")
+    }
+    pub fn operations_capacity_read() -> PermissionId {
+        PermissionId::from("operations.capacity.read")
+    }
+    pub fn operations_capacity_manage() -> PermissionId {
+        PermissionId::from("operations.capacity.manage")
+    }
+    pub fn ai_meeting_summary_read() -> PermissionId {
+        PermissionId::from("ai.meeting_summary.read")
+    }
+    pub fn ai_meeting_summary_accept() -> PermissionId {
+        PermissionId::from("ai.meeting_summary.accept")
     }
 }
 
