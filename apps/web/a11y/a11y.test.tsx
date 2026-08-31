@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import axe from 'axe-core';
 import {
+  Chart,
   EmptyState,
   Input,
+  InlineAlert,
   KanbanBoard,
   MoneyCell,
   StatusCell,
@@ -600,6 +602,40 @@ describe('a11y', () => {
           </label>
           <button type="submit">Save draft</button>
         </form>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
+  it('insights analytics landmarks have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <header>
+          <h1>Benchmarks & trends</h1>
+          <p>Flagship company metrics derived from the governed event stream.</p>
+        </header>
+        <InlineAlert tone="info" title="Eventually consistent">
+          Recent operational changes may take a short time to appear.
+        </InlineAlert>
+        <section aria-labelledby="flagship-metrics-test-heading">
+          <h2 id="flagship-metrics-test-heading">Flagship metrics</h2>
+          <Chart title="Issued revenue" description="Current seven-day window">
+            <div role="img" aria-label="Issued revenue bar chart">
+              <div style={{ width: '75%', height: 12, background: 'currentColor' }} />
+            </div>
+          </Chart>
+        </section>
+        <section aria-labelledby="report-results-test-heading">
+          <h2 id="report-results-test-heading">Report results</h2>
+          <Table
+            getRowKey={(row) => row.id}
+            rows={[{ id: 'row_1', dimension: 'USD', value: 2500 }]}
+            columns={[
+              { key: 'dimension', header: 'Currency', cell: (row) => row.dimension },
+              { key: 'value', header: 'Value', cell: (row) => String(row.value) },
+            ]}
+          />
+        </section>
       </main>,
     );
     await expectNoSeriousAxeViolations(container);

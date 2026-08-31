@@ -9,6 +9,7 @@ type NavItem = {
   label: string;
   short: string;
   perm: string | null;
+  anyPerm?: string[];
   counter?: number;
 };
 
@@ -144,7 +145,33 @@ const GROUPS: NavGroup[] = [
   {
     id: 'insights',
     label: 'Insights',
-    items: [{ href: '/insights', label: 'Insights', short: 'N', perm: null }],
+    items: [
+      {
+        href: '/insights',
+        label: 'Benchmarks & trends',
+        short: 'B',
+        perm: null,
+        anyPerm: ['analytics.dashboard.read', 'analytics.report.read'],
+      },
+      {
+        href: '/insights/reports',
+        label: 'Reports',
+        short: 'R',
+        perm: 'analytics.report.read',
+      },
+      {
+        href: '/insights/dashboards',
+        label: 'Dashboards',
+        short: 'D',
+        perm: 'analytics.dashboard.read',
+      },
+      {
+        href: '/insights/forecasts',
+        label: 'Forecasts',
+        short: 'F',
+        perm: 'analytics.report.run',
+      },
+    ],
   },
   {
     id: 'settings',
@@ -175,6 +202,9 @@ export function Sidebar({
   const visibleGroups = GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
+      if (item.anyPerm) {
+        return !loading && item.anyPerm.some((permission) => can(permission));
+      }
       if (!item.perm) return true;
       if (loading) {
         return (
