@@ -10,6 +10,7 @@ pub mod leave_carry_forward;
 pub mod org_provisioning;
 pub mod payroll_run;
 pub mod quote_to_invoice;
+pub mod scheduled_report_delivery;
 pub mod tenant_deletion;
 pub mod user_offboarding;
 pub mod user_workflow;
@@ -33,6 +34,8 @@ pub enum WorkflowType {
     PayrollRun,
     /// Configurable org-scoped workflow (Phase 3.1).
     UserWorkflow,
+    /// Scheduled analytics report generation and delivery (Phase 3.2).
+    ScheduledReportDelivery,
 }
 
 impl WorkflowType {
@@ -51,6 +54,7 @@ impl WorkflowType {
             Self::LeaveCarryForward => "LeaveCarryForward",
             Self::PayrollRun => "PayrollRun",
             Self::UserWorkflow => "UserWorkflow",
+            Self::ScheduledReportDelivery => "ScheduledReportDelivery",
         }
     }
 
@@ -69,6 +73,7 @@ impl WorkflowType {
             Self::LeaveCarryForward,
             Self::PayrollRun,
             Self::UserWorkflow,
+            Self::ScheduledReportDelivery,
         ]
     }
 }

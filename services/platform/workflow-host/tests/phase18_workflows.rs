@@ -76,5 +76,5 @@ fn workflow_id_and_namespace_defaults() {
     // Default when env unset in unit test process — may already be set in CI.
     let ns = temporal_namespace();
     assert!(ns == "companyos-local" || ns == "companyos-ci" || !ns.is_empty());
-    assert_eq!(WorkflowType::all().len(), 13);
+    assert_eq!(WorkflowType::all().len(), 14);
 }
