@@ -145,7 +145,7 @@ fn record_id_column(fact: FactSource) -> &'static str {
 
 fn amount_expr(metric: &MetricDefinition) -> String {
     match metric.measure {
-        MeasureKind::Sum => format!("COALESCE(SUM({}), 0)", metric.measure_field),
+        MeasureKind::Sum => format!("COALESCE(SUM({}), 0)::bigint", metric.measure_field),
         MeasureKind::Count => "COUNT(*)::bigint".into(),
         MeasureKind::Avg => format!("COALESCE(AVG({}), 0)::bigint", metric.measure_field),
     }
