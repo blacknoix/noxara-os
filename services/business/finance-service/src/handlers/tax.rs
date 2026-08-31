@@ -12,7 +12,7 @@ use companyos_ids::{IdKind, PublicId};
 use companyos_tenancy::set_session_org_id;
 use uuid::Uuid;
 
-use super::{internal, not_found, parse_optional_public_id, parse_public_id, validation};
+use super::{internal, not_found, parse_optional_public_id, validation};
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::principal::{enforce_any_scope, load_membership_scope};
