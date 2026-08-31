@@ -268,6 +268,7 @@ fn extract_api_key_header(headers: &HeaderMap) -> Option<&str> {
         .filter(|s| !s.is_empty())
 }
 
+#[allow(clippy::result_large_err)]
 async fn authenticate_api_key(
     state: &GatewayState,
     raw_key: &str,
@@ -310,6 +311,7 @@ async fn authenticate_api_key(
     })
 }
 
+#[allow(clippy::result_large_err)]
 async fn authenticate(
     state: &GatewayState,
     headers: &HeaderMap,
@@ -370,10 +372,9 @@ async fn authenticate(
                             api_key_id: Some(api_key_id),
                         });
                     }
-                    coarse_authz(&claims, path)
-                        .map_err(|d| {
-                            AppError::new(ErrorCode::Forbidden, request_id, d).into_response()
-                        })?;
+                    coarse_authz(&claims, path).map_err(|d| {
+                        AppError::new(ErrorCode::Forbidden, request_id, d).into_response()
+                    })?;
                     return Ok(AuthOutcome {
                         claims: Some(claims),
                         minted_bearer: None,

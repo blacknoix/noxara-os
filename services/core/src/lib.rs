@@ -5,6 +5,7 @@ pub mod dashboard;
 pub mod governance;
 pub mod hello;
 pub mod openapi;
+pub mod public_openapi;
 pub mod public_scopes;
 pub mod state;
 pub mod webhook_crypto;

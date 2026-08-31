@@ -25,7 +25,7 @@ use crate::invoice_math::{compute_document_totals, convert_to_base, LineInput};
 use crate::journal::{ensure_ledger_accounts, invoice_issue_entry, post_journal};
 use crate::numbering::next_invoice_number;
 use crate::principal::{
-    enforce_any_scope, enforce_scoped, load_membership_scope, required_scope_for_owner_row,
+    enforce_any_scope, enforce_scoped, load_membership_scope_for, required_scope_for_owner_row,
     MembershipScope,
 };
 use crate::projection::ensure_customer_from_snapshot;
@@ -327,8 +327,7 @@ pub async fn list_invoices(
     let org_id = auth.ctx.org_id.as_uuid();
     let actor = auth.ctx.actor.user_id;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_read(),
@@ -448,13 +447,7 @@ pub async fn create_invoice(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_create(),
@@ -603,13 +596,7 @@ pub async fn get_invoice(
     let org_id = auth.ctx.org_id.as_uuid();
     let invoice_id = parse_public_id(IdKind::Invoice, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_read(),
@@ -661,13 +648,7 @@ pub async fn update_invoice(
     let expected = if_match_version(&headers)
         .ok_or_else(|| validation(&request_id, "If-Match version required"))?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_update(),
@@ -828,13 +809,7 @@ pub async fn issue_invoice(
     let idem_key = idempotency::header_key(&headers);
     let idem_scope = format!("invoice.issue.{id}");
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_issue(),
@@ -1011,13 +986,7 @@ pub async fn send_invoice(
     let org_id = auth.ctx.org_id.as_uuid();
     let invoice_id = parse_public_id(IdKind::Invoice, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_send(),
@@ -1118,13 +1087,7 @@ pub async fn void_invoice(
     let org_id = auth.ctx.org_id.as_uuid();
     let invoice_id = parse_public_id(IdKind::Invoice, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_void(),
@@ -1231,13 +1194,7 @@ pub async fn create_from_quote(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_invoice_create(),

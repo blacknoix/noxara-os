@@ -109,10 +109,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/healthz", get(healthz))
         .route("/livez", get(healthz))
         .route("/readyz", get(healthz))
-        .route(
-            "/api/v1/internal/webhooks/enqueue",
-            post(internal_enqueue),
-        )
+        .route("/api/v1/internal/webhooks/enqueue", post(internal_enqueue))
         .route(
             "/api/v1/internal/webhooks/dispatch-once",
             post(internal_dispatch_once),

@@ -19,7 +19,7 @@ use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
 use crate::principal::{
-    enforce_any_scope, load_membership_scope, required_scope_for_owner_row, MembershipScope,
+    enforce_any_scope, load_membership_scope_for, required_scope_for_owner_row, MembershipScope,
 };
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::seed;
@@ -136,8 +136,7 @@ pub async fn list_deals(
     let org_id = auth.ctx.org_id.as_uuid();
     let actor = auth.ctx.actor.user_id;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_read(), &request_id)?;
     let scope = scope_for_permission(&membership.principal, &perms::sales_deal_read());
     let (limit, offset) = super::normalize_paging(q.limit, q.offset);
@@ -224,13 +223,7 @@ pub async fn create_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_deal_create(),
@@ -411,13 +404,7 @@ pub async fn get_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_read(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -458,13 +445,7 @@ pub async fn update_deal(
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
     let expected_version = if_match_version(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_deal_update(),
@@ -600,13 +581,7 @@ pub async fn win_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_win(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -726,13 +701,7 @@ pub async fn lose_deal(
     let org_id = auth.ctx.org_id.as_uuid();
     let deal_id = parse_public_id(IdKind::Deal, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(&membership.principal, perms::sales_deal_lose(), &request_id)?;
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;

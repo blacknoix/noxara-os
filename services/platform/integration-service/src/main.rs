@@ -38,12 +38,7 @@ async fn main() -> anyhow::Result<()> {
     let poll_pool = pool.clone();
     let poll_decryptor = decryptor.clone();
     tokio::spawn(async move {
-        run_poll_loop(
-            poll_pool,
-            poll_decryptor,
-            Duration::from_millis(poll_ms),
-        )
-        .await;
+        run_poll_loop(poll_pool, poll_decryptor, Duration::from_millis(poll_ms)).await;
     });
 
     if let Ok(nats_url) = std::env::var("NATS_URL") {

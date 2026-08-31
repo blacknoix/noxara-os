@@ -158,6 +158,21 @@ for (const name of ['TokenResponse', 'access_token', 'SwitchOrgRequest']) {
   }
 }
 
+
+if (!doc.paths['/api/v1/governance/webhooks'] && !Object.keys(doc.paths).some((p) => p.startsWith('/api/v1/governance/webhooks'))) {
+  // Internal merged spec may lag until export; require schema at least after Phase 3.3 export.
+  if (!doc.components.schemas.WebhookEndpointView) {
+    console.error('OpenAPI drift: missing WebhookEndpointView schema (run scripts/export-openapi.sh)');
+    process.exit(1);
+  }
+}
+for (const name of ['WebhookEndpointView', 'ApiKeyExchangeResponse']) {
+  if (!doc.components.schemas[name]) {
+    console.error(`OpenAPI drift: missing schema ${name}`);
+    process.exit(1);
+  }
+}
+
 console.log(`openapi drift check ok (sha256 ${hash.slice(0, 12)}…)`);
 
 const liveUrl = process.env.CORE_OPENAPI_URL;

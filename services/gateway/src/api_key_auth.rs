@@ -94,7 +94,11 @@ impl ApiKeyRateLimiter {
     }
 
     /// Check and increment. Returns Ok(info) when allowed, Err(info) when exceeded.
-    pub fn check_and_hit(&self, api_key_id: &str, limit: u32) -> Result<RateLimitInfo, RateLimitInfo> {
+    pub fn check_and_hit(
+        &self,
+        api_key_id: &str,
+        limit: u32,
+    ) -> Result<RateLimitInfo, RateLimitInfo> {
         let limit = limit.max(1);
         let now = Self::now_epoch();
         let minute = now / 60;
@@ -105,10 +109,9 @@ impl ApiKeyRateLimiter {
         if g.len() > 10_000 {
             g.retain(|_, w| w.minute >= minute.saturating_sub(1));
         }
-        let entry = g.entry(api_key_id.to_string()).or_insert(Window {
-            minute,
-            count: 0,
-        });
+        let entry = g
+            .entry(api_key_id.to_string())
+            .or_insert(Window { minute, count: 0 });
         if entry.minute != minute {
             entry.minute = minute;
             entry.count = 0;
@@ -223,8 +226,7 @@ pub fn rate_limited_response(request_id: &str, info: RateLimitInfo) -> Response 
         HeaderValue::from_static("application/problem+json"),
     );
     if let Ok(v) = HeaderValue::from_str(&retry_after.to_string()) {
-        res.headers_mut()
-            .insert(axum::http::header::RETRY_AFTER, v);
+        res.headers_mut().insert(axum::http::header::RETRY_AFTER, v);
     }
     info.apply_headers(res.headers_mut());
     apply_deprecation_headers(res.headers_mut());
@@ -335,6 +337,7 @@ pub fn enforce_api_key_route(
 }
 
 /// Fire-and-forget usage log (core internal usage endpoint is optional).
+#[allow(clippy::too_many_arguments)]
 pub fn log_api_key_usage(
     client: reqwest::Client,
     core_url: String,

@@ -23,7 +23,7 @@ use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::idempotency;
 use crate::journal::{ensure_ledger_accounts, payment_entry, post_journal};
-use crate::principal::{enforce_any_scope, load_membership_scope};
+use crate::principal::{enforce_any_scope, load_membership_scope_for};
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::state::AppState;
 use crate::types::{
@@ -241,8 +241,7 @@ pub async fn list_payments(
     let org_id = auth.ctx.org_id.as_uuid();
     let actor = auth.ctx.actor.user_id;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_payment_read(),
@@ -379,13 +378,7 @@ pub async fn record_payment(
     let org_id = auth.ctx.org_id.as_uuid();
     let idem_key = idempotency::header_key(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_payment_create(),
@@ -649,13 +642,7 @@ pub async fn allocate_payment(
     let idem_key = idempotency::header_key(&headers);
     let idem_scope = format!("payment.allocate.{id}");
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::finance_payment_allocate(),

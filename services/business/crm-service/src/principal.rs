@@ -133,6 +133,21 @@ pub async fn load_membership_scope(
     })
 }
 
+/// Load membership scope and, for API-key callers, restrict the principal to
+/// the key's effective scopes (already intersected with the owner role).
+pub async fn load_membership_scope_for(
+    pool: &sqlx::PgPool,
+    auth: &crate::auth::AuthCtx,
+    request_id: &str,
+) -> Result<MembershipScope, AppError> {
+    let mut scope =
+        load_membership_scope(pool, auth.ctx.org_id, auth.ctx.actor.user_id, request_id).await?;
+    if let Some(ref scopes) = auth.api_key_scopes {
+        scope.principal = Principal::from_permission_ids(scopes.iter().map(|s| s.as_str()));
+    }
+    Ok(scope)
+}
+
 /// Enforce an organization-scoped permission (no resource-level scope check).
 pub fn enforce(
     principal: &Principal,

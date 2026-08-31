@@ -37,6 +37,9 @@ pub struct AuthCtx {
     pub policy_version: i64,
     /// True when a LOCAL-ONLY bypass was used (never in production).
     pub local_bypass: bool,
+    /// Effective API-key scopes (intersected); None for session JWTs.
+    pub api_key_scopes: Option<Vec<String>>,
+    pub api_key_id: Option<String>,
 }
 
 /// Build the verifier keyring from `AUTH_JWT_SECRET` (falls back to an
@@ -148,6 +151,62 @@ async fn from_jwt(
         }
     }
 
+    // Organization API key tokens: membership check only (no session).
+    if claims.is_api_key() {
+        let row: Option<(Option<chrono::DateTime<chrono::Utc>>, i64, String, String)> = {
+            let mut tx = state
+                .pool
+                .begin()
+                .await
+                .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            companyos_tenancy::set_session_org_id(&mut tx, OrgId::new(claims.org_uuid))
+                .await
+                .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            let row = sqlx::query_as(
+                r#"
+                SELECT revoked_at, policy_version, role, status
+                FROM membership
+                WHERE id = $1 AND user_id = $2 AND org_id = $3
+                "#,
+            )
+            .bind(claims.membership_id)
+            .bind(claims.user_id)
+            .bind(claims.org_uuid)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            tx.commit()
+                .await
+                .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e.to_string()))?;
+            row
+        };
+        let Some((mem_revoked, policy_version, _role, status)) = row else {
+            return Err(AppError::new(
+                ErrorCode::Unauthorized,
+                request_id,
+                "membership not found",
+            ));
+        };
+        if mem_revoked.is_some() || status != "active" {
+            return Err(AppError::new(
+                ErrorCode::Unauthorized,
+                request_id,
+                "membership not active",
+            ));
+        }
+        let org_id = OrgId::new(claims.org_uuid);
+        let ctx = RequestContext::new(org_id, Actor::human(claims.user_id), request_id.to_string());
+        return Ok(AuthCtx {
+            ctx,
+            roles: vec![],
+            membership_id: claims.membership_id,
+            policy_version,
+            local_bypass: false,
+            api_key_scopes: claims.scopes.clone(),
+            api_key_id: claims.api_key_id.clone(),
+        });
+    }
+
     #[allow(clippy::type_complexity)]
     let row: Option<(
         Option<chrono::DateTime<chrono::Utc>>,
@@ -231,6 +290,8 @@ async fn from_jwt(
         membership_id: claims.membership_id,
         policy_version,
         local_bypass: false,
+        api_key_scopes: None,
+        api_key_id: None,
     })
 }
 
@@ -285,6 +346,8 @@ fn from_local_headers(headers: &HeaderMap, request_id: &str) -> Result<Option<Au
             membership_id: Uuid::nil(),
             policy_version: 0,
             local_bypass: true,
+            api_key_scopes: None,
+            api_key_id: None,
         }));
     }
     Ok(None)

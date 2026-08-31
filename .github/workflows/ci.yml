@@ -93,5 +93,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm check:openapi-drift
+      - run: pnpm check:public-compat
+      - run: pnpm fixture:third-party
       - run: pnpm test:a11y
       - run: pnpm test:unit

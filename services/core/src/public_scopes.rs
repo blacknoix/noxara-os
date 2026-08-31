@@ -222,7 +222,8 @@ pub fn is_public_path(path: &str) -> bool {
     PUBLIC_ROUTES.iter().any(|r| {
         path == r.path_prefix
             || path.starts_with(r.path_prefix)
-            || (r.path_prefix.ends_with('/') && path.starts_with(r.path_prefix.trim_end_matches('/')))
+            || (r.path_prefix.ends_with('/')
+                && path.starts_with(r.path_prefix.trim_end_matches('/')))
     })
 }
 

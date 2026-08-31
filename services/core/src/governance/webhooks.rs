@@ -124,13 +124,20 @@ pub async fn create_endpoint(
 ) -> Result<(WebhookEndpointView, String), AppError> {
     validate_url_shape(url, request_id)?;
     if event_types.is_empty() {
-        return Err(validation(request_id, "at least one event_type is required"));
+        return Err(validation(
+            request_id,
+            "at least one event_type is required",
+        ));
     }
 
     let secret = format!("whsec_{}", generate_opaque_token());
-    let ciphertext = encryptor
-        .encrypt(secret.as_bytes())
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id, e.to_string()))?;
+    let ciphertext = encryptor.encrypt(secret.as_bytes()).map_err(|e| {
+        AppError::new(
+            companyos_errors::ErrorCode::Internal,
+            request_id,
+            e.to_string(),
+        )
+    })?;
     let secret_prefix: String = secret.chars().take(SECRET_PREFIX_LEN).collect();
     let id = new_uuid_v7();
     let public_id = PublicId::new(IdKind::WebhookEndpoint, id);
@@ -197,16 +204,28 @@ pub async fn rotate_secret(
         .await
         .map_err(internal(request_id))?;
 
-    let Some((id, url, description, event_types, status, failure_count, last_delivery_at, created_at)) =
-        existing
+    let Some((
+        id,
+        url,
+        description,
+        event_types,
+        status,
+        failure_count,
+        last_delivery_at,
+        created_at,
+    )) = existing
     else {
         return Err(not_found(request_id, "webhook endpoint"));
     };
 
     let secret = format!("whsec_{}", generate_opaque_token());
-    let ciphertext = encryptor
-        .encrypt(secret.as_bytes())
-        .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, request_id, e.to_string()))?;
+    let ciphertext = encryptor.encrypt(secret.as_bytes()).map_err(|e| {
+        AppError::new(
+            companyos_errors::ErrorCode::Internal,
+            request_id,
+            e.to_string(),
+        )
+    })?;
     let secret_prefix: String = secret.chars().take(SECRET_PREFIX_LEN).collect();
 
     sqlx::query(
@@ -286,14 +305,13 @@ pub async fn list_deliveries(
         .await
         .map_err(tenancy_internal(request_id))?;
 
-    let endpoint_id: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM webhook_endpoint WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id.as_uuid())
-    .bind(endpoint_public_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(request_id))?;
+    let endpoint_id: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM webhook_endpoint WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id.as_uuid())
+            .bind(endpoint_public_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(request_id))?;
     let Some((endpoint_id,)) = endpoint_id else {
         return Err(not_found(request_id, "webhook endpoint"));
     };
@@ -367,18 +385,18 @@ pub async fn replay_delivery(
     .await
     .map_err(internal(request_id))?;
 
-    let Some((_old_id, endpoint_id, event_id, event_subject, event_type, payload)) = existing else {
+    let Some((_old_id, endpoint_id, event_id, event_subject, event_type, payload)) = existing
+    else {
         return Err(not_found(request_id, "webhook delivery"));
     };
 
-    let endpoint_pub: Option<(String,)> = sqlx::query_as(
-        "SELECT public_id FROM webhook_endpoint WHERE id = $1 AND org_id = $2",
-    )
-    .bind(endpoint_id)
-    .bind(org_id.as_uuid())
-    .fetch_optional(&mut **tx)
-    .await
-    .map_err(internal(request_id))?;
+    let endpoint_pub: Option<(String,)> =
+        sqlx::query_as("SELECT public_id FROM webhook_endpoint WHERE id = $1 AND org_id = $2")
+            .bind(endpoint_id)
+            .bind(org_id.as_uuid())
+            .fetch_optional(&mut **tx)
+            .await
+            .map_err(internal(request_id))?;
     let endpoint_public = endpoint_pub
         .map(|(p,)| p)
         .ok_or_else(|| not_found(request_id, "webhook endpoint"))?;

@@ -1,12 +1,21 @@
 # API
 
+Public third-party catalogue (Phase 3.3): see `docs/developers/` and
+`GET /api/v1/openapi.public.json`. Authenticate with an organization API key
+(`Authorization: Bearer` or `X-Api-Key`). Outbound webhooks:
+`/api/v1/governance/webhooks`.
+
 ## Core (`companyos-core`)
 
 - `GET /healthz`, `/livez`, `/readyz`
 - `GET|POST /api/v1/hello` (tenant-scoped; LOCAL-ONLY auth)
 - `GET /api/v1/dashboard` — dashboard BFF widget snapshot (CRM + Finance + Ops aggregates)
 - `GET /api/v1/openapi.json` — core OpenAPI (merged export includes CRM + Finance + Operations)
+- `GET /api/v1/openapi.public.json` — filtered public contract
 - `GET /api/v1/workspace/...` — orgs, members, roles, teams, capabilities
+- `GET|POST /api/v1/governance/api-keys` — organization API keys (hashed; shown once)
+- `GET|POST /api/v1/governance/webhooks` — outbound webhook endpoints; rotate / disable / deliveries / replay
+- `POST /api/v1/internal/api-keys/exchange` — gateway key → short-lived access JWT (not public)
 
 ## CRM (`companyos-crm`)
 

@@ -10194,6 +10194,108 @@
           }
         }
       }
+    },
+    "/api/v1/governance/webhooks": {
+      "get": {
+        "operationId": "list_webhooks",
+        "tags": [
+          "governance"
+        ],
+        "x-companyos-public": true,
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "post": {
+        "operationId": "create_webhook",
+        "tags": [
+          "governance"
+        ],
+        "x-companyos-public": true,
+        "responses": {
+          "201": {
+            "description": "created"
+          }
+        }
+      }
+    },
+    "/api/v1/governance/webhooks/{id}/rotate": {
+      "post": {
+        "operationId": "rotate_webhook",
+        "tags": [
+          "governance"
+        ],
+        "x-companyos-public": true,
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/api/v1/governance/webhooks/{id}/disable": {
+      "post": {
+        "operationId": "disable_webhook",
+        "tags": [
+          "governance"
+        ],
+        "x-companyos-public": true,
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/api/v1/governance/webhooks/{id}/deliveries": {
+      "get": {
+        "operationId": "list_webhook_deliveries",
+        "tags": [
+          "governance"
+        ],
+        "x-companyos-public": true,
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/api/v1/governance/webhooks/deliveries/{id}/replay": {
+      "post": {
+        "operationId": "replay_webhook_delivery",
+        "tags": [
+          "governance"
+        ],
+        "x-companyos-public": true,
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/api/v1/internal/api-keys/exchange": {
+      "post": {
+        "operationId": "exchange_api_key",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyExchangeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -25103,6 +25205,256 @@
           },
           "visualization": {
             "type": "string"
+          }
+        }
+      },
+      "WebhookEndpointView": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "description",
+          "event_types",
+          "secret_prefix",
+          "status",
+          "failure_count",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "secret_prefix": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "failure_count": {
+            "type": "integer"
+          },
+          "last_delivery_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "disabled_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "disabled_reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "WebhookEndpointListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEndpointView"
+            }
+          }
+        }
+      },
+      "CreateWebhookEndpointRequest": {
+        "type": "object",
+        "required": [
+          "url",
+          "event_types"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateWebhookEndpointResponse": {
+        "type": "object",
+        "required": [
+          "endpoint",
+          "secret"
+        ],
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/WebhookEndpointView"
+          },
+          "secret": {
+            "type": "string"
+          }
+        }
+      },
+      "RotateWebhookSecretResponse": {
+        "type": "object",
+        "required": [
+          "endpoint",
+          "secret"
+        ],
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/WebhookEndpointView"
+          },
+          "secret": {
+            "type": "string"
+          }
+        }
+      },
+      "DisableWebhookRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "WebhookDeliveryView": {
+        "type": "object",
+        "required": [
+          "id",
+          "endpoint_id",
+          "event_subject",
+          "event_type",
+          "attempt",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "endpoint_id": {
+            "type": "string"
+          },
+          "event_subject": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "status_code": {
+            "type": "integer",
+            "nullable": true
+          },
+          "response_body": {
+            "type": "string",
+            "nullable": true
+          },
+          "delivered_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "next_retry_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string"
+          }
+        }
+      },
+      "WebhookDeliveryListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryView"
+            }
+          }
+        }
+      },
+      "ReplayWebhookResponse": {
+        "type": "object",
+        "required": [
+          "delivery"
+        ],
+        "properties": {
+          "delivery": {
+            "$ref": "#/components/schemas/WebhookDeliveryView"
+          }
+        }
+      },
+      "ApiKeyExchangeRequest": {
+        "type": "object",
+        "required": [
+          "key_hash"
+        ],
+        "properties": {
+          "key_hash": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiKeyExchangeResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "api_key_id",
+          "org_id",
+          "scopes",
+          "rate_limit_per_minute"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "api_key_id": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rate_limit_per_minute": {
+            "type": "integer",
+            "description": "Per-key rate limit (requests per minute). Prefer this over deprecated rate_limit_rpm."
+          },
+          "rate_limit_rpm": {
+            "type": "integer",
+            "deprecated": true,
+            "description": "Deprecated alias of rate_limit_per_minute. Dual-published for 180 days."
           }
         }
       }

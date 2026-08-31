@@ -46,12 +46,7 @@ fn sign_v1(secret: &[u8], body: &[u8], timestamp: i64) -> Result<String, SignErr
 /// Parse and verify an `X-CompanyOS-Signature` header against `body` + `secret`.
 ///
 /// Rejects timestamps outside ±[`MAX_SKEW_SECS`] of `now`.
-pub fn verify(
-    secret: &[u8],
-    body: &[u8],
-    header: &str,
-    now: i64,
-) -> Result<(), SignError> {
+pub fn verify(secret: &[u8], body: &[u8], header: &str, now: i64) -> Result<(), SignError> {
     let (t, v1) = parse_header(header)?;
     if (now - t).abs() > MAX_SKEW_SECS {
         return Err(SignError::Stale);

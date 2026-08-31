@@ -78,9 +78,10 @@ pub fn router() -> Router<AppState> {
             "/api/v1/governance/webhooks/deliveries/{id}/replay",
             post(replay_webhook_delivery),
         )
+        .route("/api/v1/internal/api-keys/exchange", post(exchange_api_key))
         .route(
-            "/api/v1/internal/api-keys/exchange",
-            post(exchange_api_key),
+            "/api/v1/internal/api-keys/usage",
+            post(record_api_key_usage),
         )
 }
 
@@ -707,8 +708,7 @@ pub async fn list_webhook_deliveries(
 ) -> Result<Json<WebhookDeliveryListResponse>, AppError> {
     let request_id = user.ctx.request_id.clone();
     authorize(&state, &user, &perms::admin_webhook_read()).await?;
-    let items =
-        webhooks::list_deliveries(&state.pool, user.ctx.org_id, &id, &request_id).await?;
+    let items = webhooks::list_deliveries(&state.pool, user.ctx.org_id, &id, &request_id).await?;
     Ok(Json(WebhookDeliveryListResponse { items }))
 }
 
@@ -773,4 +773,47 @@ fn url_host(url: &str) -> String {
         .ok()
         .and_then(|u| u.host_str().map(|h| h.to_string()))
         .unwrap_or_else(|| "unknown".into())
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApiKeyUsageRequest {
+    pub api_key_id: String,
+    pub org_id: String,
+    pub route: String,
+    pub method: String,
+    pub status_code: i32,
+    #[serde(default)]
+    pub duration_ms: i32,
+}
+
+pub async fn record_api_key_usage(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<ApiKeyUsageRequest>,
+) -> Result<Json<MessageResponse>, AppError> {
+    let request_id = headers
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string();
+    let org_id = body
+        .org_id
+        .parse::<companyos_ids::PublicId>()
+        .ok()
+        .and_then(|p| companyos_tenancy::OrgId::from_public(&p).ok())
+        .ok_or_else(|| validation(&request_id, "invalid org_id"))?;
+    api_key_exchange::record_usage(
+        &state.pool,
+        org_id,
+        &body.api_key_id,
+        &body.route,
+        &body.method,
+        body.status_code,
+        body.duration_ms,
+        &request_id,
+    )
+    .await?;
+    Ok(Json(MessageResponse {
+        message: "recorded".into(),
+    }))
 }

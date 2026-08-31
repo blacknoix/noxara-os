@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–3.2 implemented; Phase 3.3 is next.
+Status: **Active** outline. Phase 0–3.3 implemented; Phase 3.4 is next.
 
 ## Completed
 
@@ -24,27 +24,20 @@ Status: **Active** outline. Phase 0–3.2 implemented; Phase 3.3 is next.
 | 2.6   | Security & governance hardening (ABAC, field-level, access review, SSO, retention, API keys)                                    |
 | 3.1   | Configurable workflow definitions, immutable versions, permission-checked actions, simulation, bounds, and monitoring           |
 | 3.2   | Governed event-derived analytics, reports, dashboards, forecasts, exports, and scheduled delivery                               |
+| 3.3   | Public API, generated SDKs (TS + Python), outbound webhooks, developer docs + sandbox                                           |
 
-## Phase 3.2 — Analytics & reporting (done)
+## Phase 3.3 — Public API, SDKs & webhooks (done)
 
-`companyos-analytics` (`/api/v1/analytics/...`) + Temporal catalogue
-`ScheduledReportDelivery`.
-
-- Governed metric catalogue shared by API, generated SDK, reports, dashboards, and UI
-- Event-only typed facts for finance, sales, operations, and AI usage; no OLTP warehouse scans
-- Mandatory `org_id` query guard, PostgreSQL RLS, and permission-filtered fact rows
-- Saved reports with table/bar views, drill-through links, CSV export, and dry-run simulation
-- Dashboards whose widgets bind only to governed metric names
-- Explainable trailing-average and linear-trend forecasts exposing method and inputs
-- Scheduled report generation/export/notification with an org-prefixed workflow ID
-- Benchmarks, freshness/eventual-consistency labelling, and permission-aware Insights pages
-- PostgreSQL mirror fixtures in CI; optional ClickHouse event sink and DDL in the full profile
+- Documented public subset of `/api/v1/...` with API-key auth (scopes ∩ owner role)
+- OpenAPI public contract + TS (`packages/sdk`) and Python (`packages/sdk-python`) SDKs; CI drift
+- Outbound org webhooks (`whk_` / `whd_`) with HMAC signing, SSRF fail-closed, retries, replay
+- Per-key rate limits + usage analytics events; 180-day deprecation dual-publish exercise
+- Developer docs under `docs/developers/` + `/developers` portal route; sandbox seed script
 
 ## Later phases
 
 | Phase          | Notes                   |
 | -------------- | ----------------------- |
-| 3.3            | Public API / webhooks   |
 | 3.4            | Marketplace             |
 | 3.5            | Depth / polish          |
 | InvoiceDunning | Temporal dunning polish |

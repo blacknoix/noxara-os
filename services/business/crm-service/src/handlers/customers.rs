@@ -20,7 +20,7 @@ use super::{
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
 use crate::dupes::find_customer_duplicates;
-use crate::principal::{enforce_any_scope, load_membership_scope};
+use crate::principal::{enforce_any_scope, load_membership_scope_for};
 use crate::scope::{push_owner_predicate, scope_for_permission};
 use crate::state::AppState;
 use crate::types::{
@@ -110,8 +110,7 @@ pub async fn list_customers(
     let org_id = auth.ctx.org_id.as_uuid();
     let actor = auth.ctx.actor.user_id;
 
-    let membership =
-        load_membership_scope(&state.pool, auth.ctx.org_id, actor, &request_id).await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_customer_read(),
@@ -202,13 +201,7 @@ pub async fn create_customer(
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_customer_create(),
@@ -370,13 +363,7 @@ pub async fn get_customer(
     let org_id = auth.ctx.org_id.as_uuid();
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_customer_read(),
@@ -435,13 +422,7 @@ pub async fn update_customer(
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
     let expected_version = if_match_version(&headers);
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_customer_update(),
@@ -555,13 +536,7 @@ pub async fn delete_customer(
     let org_id = auth.ctx.org_id.as_uuid();
     let customer_id = parse_public_id(IdKind::Customer, &id, &request_id)?;
 
-    let membership = load_membership_scope(
-        &state.pool,
-        auth.ctx.org_id,
-        auth.ctx.actor.user_id,
-        &request_id,
-    )
-    .await?;
+    let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
     enforce_any_scope(
         &membership.principal,
         perms::sales_customer_delete(),

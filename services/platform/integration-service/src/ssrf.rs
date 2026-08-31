@@ -189,7 +189,11 @@ mod tests {
             "http://172.16.0.1/h",
             "http://172.31.255.1/h",
         ] {
-            assert_eq!(assert_url_safe(url), Err(SsrfError::BlockedAddress), "{url}");
+            assert_eq!(
+                assert_url_safe(url),
+                Err(SsrfError::BlockedAddress),
+                "{url}"
+            );
         }
         // 172.32 is not RFC1918
         assert!(!is_blocked_ip(IpAddr::V4(Ipv4Addr::new(172, 32, 0, 1))));
@@ -208,9 +212,7 @@ mod tests {
             assert_url_safe("http://169.254.1.1/x"),
             Err(SsrfError::BlockedAddress)
         );
-        assert!(is_blocked_ip(IpAddr::V6(
-            "fe80::1".parse().expect("ip")
-        )));
+        assert!(is_blocked_ip(IpAddr::V6("fe80::1".parse().expect("ip"))));
     }
 
     #[test]

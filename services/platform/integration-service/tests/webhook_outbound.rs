@@ -54,10 +54,11 @@ async fn echo_handler(
         .await
         .map(|c| c.to_bytes().to_vec())
         .unwrap_or_default();
-    state.hits.lock().expect("hits").push(EchoHit {
-        signature,
-        body,
-    });
+    state
+        .hits
+        .lock()
+        .expect("hits")
+        .push(EchoHit { signature, body });
     let fail = {
         let mut f = state.fail_next.lock().expect("fail");
         let v = *f;
@@ -65,7 +66,10 @@ async fn echo_handler(
         v
     };
     if fail {
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"ok": false})))
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"ok": false})),
+        )
     } else {
         (StatusCode::OK, Json(json!({"ok": true})))
     }
@@ -206,15 +210,7 @@ async fn happy_delivery_and_signature() {
     let (org, user) = seed_org(&pool).await;
     let secret = "whsec_test_happy_secret_value";
     let hook_url = format!("http://{addr}/hook");
-    insert_endpoint(
-        &pool,
-        org,
-        user,
-        &hook_url,
-        &["sales.deal.won.v1"],
-        secret,
-    )
-    .await;
+    insert_endpoint(&pool, org, user, &hook_url, &["sales.deal.won.v1"], secret).await;
 
     let envelope = sample_event(org);
     let app = integration_app(pool.clone());
@@ -232,10 +228,8 @@ async fn happy_delivery_and_signature() {
         .await
         .unwrap();
     assert_eq!(enq.status(), StatusCode::OK);
-    let enq_body: Value = serde_json::from_slice(
-        &enq.into_body().collect().await.unwrap().to_bytes(),
-    )
-    .unwrap();
+    let enq_body: Value =
+        serde_json::from_slice(&enq.into_body().collect().await.unwrap().to_bytes()).unwrap();
     assert_eq!(enq_body["inserted"], 1);
 
     let disp = app
@@ -249,10 +243,8 @@ async fn happy_delivery_and_signature() {
         .await
         .unwrap();
     assert_eq!(disp.status(), StatusCode::OK);
-    let disp_body: Value = serde_json::from_slice(
-        &disp.into_body().collect().await.unwrap().to_bytes(),
-    )
-    .unwrap();
+    let disp_body: Value =
+        serde_json::from_slice(&disp.into_body().collect().await.unwrap().to_bytes()).unwrap();
     assert_eq!(disp_body["delivered"], 1);
 
     // Allow echo to record.
@@ -309,7 +301,9 @@ async fn ssrf_rejects_loopback_at_dispatch() {
     enqueue_event(&pool, &envelope).await.expect("enqueue");
 
     let decryptor = WebhookDecryptor::from_env().unwrap();
-    let stats = dispatch_once(&pool, &decryptor, 10).await.expect("dispatch");
+    let stats = dispatch_once(&pool, &decryptor, 10)
+        .await
+        .expect("dispatch");
     assert!(stats.failed >= 1 || stats.skipped_ssrf >= 1);
 
     let mut tx = pool.begin().await.unwrap();
@@ -322,10 +316,7 @@ async fn ssrf_rejects_loopback_at_dispatch() {
     .await
     .unwrap();
     tx.commit().await.unwrap();
-    assert!(
-        status == "dead" || status == "failed",
-        "status={status}"
-    );
+    assert!(status == "dead" || status == "failed", "status={status}");
     let err = last_error.unwrap_or_default();
     assert!(err.contains("ssrf"), "error={err}");
 }

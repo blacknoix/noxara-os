@@ -253,8 +253,8 @@ async fn process_one(
         }
     }
 
-    let signature = sign::sign_now(&secret, &body)
-        .map_err(|e| DispatchError::Http(e.to_string()))?;
+    let signature =
+        sign::sign_now(&secret, &body).map_err(|e| DispatchError::Http(e.to_string()))?;
 
     let response = client
         .post(&d.endpoint_url)
@@ -479,10 +479,7 @@ pub async fn run_poll_loop(pool: PgPool, decryptor: WebhookDecryptor, interval: 
 }
 
 /// Optional NATS JetStream consumer `integration--outbound-webhooks`.
-pub async fn run_nats_consumer(
-    pool: PgPool,
-    nats_url: &str,
-) -> Result<(), anyhow::Error> {
+pub async fn run_nats_consumer(pool: PgPool, nats_url: &str) -> Result<(), anyhow::Error> {
     use futures::StreamExt;
 
     let client = async_nats::connect(nats_url).await?;

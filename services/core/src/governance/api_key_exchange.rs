@@ -181,14 +181,13 @@ pub async fn record_usage(
         .await
         .map_err(tenancy_internal(request_id))?;
 
-    let key_id: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM org_api_key WHERE org_id = $1 AND public_id = $2",
-    )
-    .bind(org_id.as_uuid())
-    .bind(api_key_public_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal(request_id))?;
+    let key_id: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM org_api_key WHERE org_id = $1 AND public_id = $2")
+            .bind(org_id.as_uuid())
+            .bind(api_key_public_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(internal(request_id))?;
     let Some((key_id,)) = key_id else {
         return Ok(());
     };

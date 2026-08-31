@@ -152,8 +152,7 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
             ));
         }
         let org_id = OrgId::new(claims.org_uuid);
-        let ctx =
-            RequestContext::new(org_id, Actor::human(claims.user_id), request_id.to_string());
+        let ctx = RequestContext::new(org_id, Actor::human(claims.user_id), request_id.to_string());
         return Ok(AuthUser {
             ctx,
             roles: vec![],
@@ -251,9 +250,9 @@ async fn from_jwt(state: &AppState, token: &str, request_id: &str) -> Result<Aut
         session_id: claims.sid,
         family_id: claims.family_id,
         local_bypass: false,
-            api_key_scopes: None,
-            api_key_id: None,
-        })
+        api_key_scopes: None,
+        api_key_id: None,
+    })
 }
 
 fn from_local_headers(parts: &Parts, request_id: &str) -> Result<Option<AuthUser>, AppError> {
@@ -284,7 +283,7 @@ fn from_local_headers(parts: &Parts, request_id: &str) -> Result<Option<AuthUser
             session_id: Uuid::nil(),
             family_id: Uuid::nil(),
             local_bypass: true,
-                api_key_scopes: None,
+            api_key_scopes: None,
             api_key_id: None,
         }));
     }
@@ -329,9 +328,9 @@ fn from_unsigned_bearer(token: &str, request_id: &str) -> Result<Option<AuthUser
         session_id: Uuid::nil(),
         family_id: Uuid::nil(),
         local_bypass: true,
-            api_key_scopes: None,
-            api_key_id: None,
-        }))
+        api_key_scopes: None,
+        api_key_id: None,
+    }))
 }
 
 fn decode_unsigned(token: &str) -> Result<UnsignedClaims, String> {

@@ -16,10 +16,14 @@ use crate::auth::sessions::SessionView;
 use crate::auth::sso::{SsoConfigView, UpsertSsoRequest};
 use crate::dashboard::{DashboardResponse, DashboardWidget};
 use crate::governance::types::{
-    AccessReviewKickoffRequest, AccessReviewQuery, AccessReviewRunView, ApiKeyListResponse,
-    ApiKeyView, AuditReadRow, AuditVerifyRequest, AuditVerifyResponse, CreateApiKeyRequest,
-    CreateApiKeyResponse, EntitlementRow, RetentionConfigView, RetentionDryRunResponse,
-    RotateApiKeyResponse, UpdateRetentionRequest, WhoCouldSeeResponse, WhoDidSeeResponse,
+    AccessReviewKickoffRequest, AccessReviewQuery, AccessReviewRunView, ApiKeyExchangeRequest,
+    ApiKeyExchangeResponse, ApiKeyListResponse, ApiKeyView, AuditReadRow, AuditVerifyRequest,
+    AuditVerifyResponse, CreateApiKeyRequest, CreateApiKeyResponse, CreateWebhookEndpointRequest,
+    CreateWebhookEndpointResponse, DisableWebhookRequest, EntitlementRow, ReplayWebhookResponse,
+    RetentionConfigView, RetentionDryRunResponse, RotateApiKeyResponse,
+    RotateWebhookSecretResponse, UpdateRetentionRequest, WebhookDeliveryListResponse,
+    WebhookDeliveryView, WebhookEndpointListResponse, WebhookEndpointView, WhoCouldSeeResponse,
+    WhoDidSeeResponse,
 };
 use crate::hello::{CreateHelloRequest, Hello, HelloListResponse};
 use crate::state::AppState;
@@ -77,6 +81,13 @@ use crate::workspace::types::{
         crate::governance::handlers::create_api_key,
         crate::governance::handlers::rotate_api_key,
         crate::governance::handlers::revoke_api_key,
+        crate::governance::handlers::list_webhooks,
+        crate::governance::handlers::create_webhook,
+        crate::governance::handlers::rotate_webhook,
+        crate::governance::handlers::disable_webhook,
+        crate::governance::handlers::list_webhook_deliveries,
+        crate::governance::handlers::replay_webhook_delivery,
+        crate::governance::handlers::exchange_api_key,
     ),
     components(schemas(
         Hello,
@@ -152,27 +163,44 @@ use crate::workspace::types::{
         CreateApiKeyRequest,
         CreateApiKeyResponse,
         RotateApiKeyResponse,
+        WebhookEndpointView,
+        WebhookEndpointListResponse,
+        CreateWebhookEndpointRequest,
+        CreateWebhookEndpointResponse,
+        RotateWebhookSecretResponse,
+        DisableWebhookRequest,
+        WebhookDeliveryView,
+        WebhookDeliveryListResponse,
+        ReplayWebhookResponse,
+        ApiKeyExchangeRequest,
+        ApiKeyExchangeResponse,
     )),
     tags(
         (name = "hello", description = "Phase 0 hello vertical slice"),
         (name = "auth", description = "Phase 1.1 identity & authentication"),
         (name = "workspace", description = "Phase 1.2 organizations, members, roles, teams"),
         (name = "dashboard", description = "Phase 1.3 dashboard BFF widget descriptors"),
-        (name = "governance", description = "Phase 2.6 access review, audit verification, retention, and API keys"),
+        (name = "governance", description = "Phase 2.6–3.3 access review, audit, retention, API keys, outbound webhooks"),
+        (name = "internal", description = "Internal service-to-service endpoints (not public)"),
     ),
     info(
         title = "CompanyOS Core API",
-        version = "0.5.0",
-        description = "Phase 2.6 — governance (access review, audit verify, retention, API keys) + dashboard BFF + workspace + auth + hello."
+        version = "0.6.0",
+        description = "Phase 3.3 — public API keys, outbound webhooks, governance + dashboard BFF + workspace + auth + hello."
     )
 )]
 pub struct ApiDoc;
 
 pub fn router() -> Router<AppState> {
-    Router::new().route(
-        "/api/v1/openapi.json",
-        get(|| async { Json(ApiDoc::openapi()) }),
-    )
+    Router::new()
+        .route(
+            "/api/v1/openapi.json",
+            get(|| async { Json(ApiDoc::openapi()) }),
+        )
+        .route(
+            "/api/v1/openapi.public.json",
+            get(|| async { Json(crate::public_openapi::public_openapi()) }),
+        )
 }
 
 /// Write the OpenAPI document as pretty JSON (used by the codegen script).

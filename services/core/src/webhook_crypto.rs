@@ -58,7 +58,8 @@ impl WebhookEncryptor {
             return Err(WebhookCryptoError::MissingKey);
         }
         Ok(Self {
-            cipher: Aes256Gcm::new_from_slice(&bytes).map_err(|_| WebhookCryptoError::MissingKey)?,
+            cipher: Aes256Gcm::new_from_slice(&bytes)
+                .map_err(|_| WebhookCryptoError::MissingKey)?,
         })
     }
 
