@@ -43,6 +43,13 @@ function propsToTs(schema) {
     .join('\n');
 }
 
+function schemaToTs(name, schema) {
+  if (Array.isArray(schema?.enum)) {
+    return `export type ${name} = ${schema.enum.map((value) => JSON.stringify(value)).join(' | ')};`;
+  }
+  return `export type ${name} = {\n${propsToTs(schema)}\n};`;
+}
+
 const schemas = openapi.components.schemas;
 const emit = [
   'Hello',
@@ -353,6 +360,51 @@ const emit = [
   'MonitorSummaryDto',
   'MonitorResponse',
   'MigrateInstanceRequest',
+  // Phase 3.2 — governed analytics and reporting.
+  'InvoiceIssuedFact',
+  'FactsResponse',
+  'AnalyticsIngestResponse',
+  'AnalyticsReconcileResponse',
+  'FactSource',
+  'MeasureKind',
+  'MetricUnit',
+  'MetricDefinition',
+  'MetricListResponse',
+  'QueryFilter',
+  'QueryRow',
+  'QueryResult',
+  'ReportDefinition',
+  'ReportDto',
+  'CreateReportRequest',
+  'UpdateReportRequest',
+  'ReportListResponse',
+  'RunReportRequest',
+  'RunReportResponse',
+  'SimulateQueryRequest',
+  'DashboardDto',
+  'CreateDashboardRequest',
+  'UpdateDashboardRequest',
+  'DashboardListResponse',
+  'WidgetDto',
+  'UpsertWidgetRequest',
+  'ForecastMethod',
+  'ForecastRequest',
+  'ForecastPoint',
+  'ForecastInputs',
+  'ForecastResponse',
+  'ExportRequest',
+  'ExportResponse',
+  'ScheduleDto',
+  'CreateScheduleRequest',
+  'UpdateScheduleRequest',
+  'FireScheduleRequest',
+  'FireScheduleResponse',
+  'FreshnessResponse',
+  'BenchmarkMetric',
+  'BenchmarkResponse',
+  'DrillRequest',
+  'DrillRecord',
+  'DrillResponse',
 ];
 
 const seen = new Set();
@@ -366,7 +418,7 @@ const banner = `/** AUTO-GENERATED from openapi.json — do not edit by hand. Ru
 const types = `${banner}
 ${uniqueEmit
   .filter((name) => schemas[name])
-  .map((name) => `export type ${name} = {\n${propsToTs(schemas[name])}\n};`)
+  .map((name) => schemaToTs(name, schemas[name]))
   .join('\n\n')}
 `;
 

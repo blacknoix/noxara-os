@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Export OpenAPI from core + CRM + Finance + Operations + platform services
-# (offline cargo examples) and merge into packages/sdk.
+# Export OpenAPI from core + CRM + Finance + Operations + platform services,
+# including analytics (offline cargo examples), and merge into packages/sdk.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/packages/sdk/openapi.json"
@@ -15,6 +15,7 @@ FILE_TMP="/tmp/companyos-file-openapi.json"
 AI_TMP="/tmp/companyos-ai-openapi.json"
 INV_TMP="/tmp/companyos-inventory-openapi.json"
 WF_TMP="/tmp/companyos-workflow-openapi.json"
+ANALYTICS_TMP="/tmp/companyos-analytics-openapi.json"
 
 cd "$ROOT"
 
@@ -51,6 +52,9 @@ cargo run -p companyos-inventory --example export_openapi >"$INV_TMP"
 echo "==> Exporting Workflow OpenAPI (offline)..."
 cargo run -p companyos-workflow --example export_openapi >"$WF_TMP"
 
+echo "==> Exporting Analytics OpenAPI (offline)..."
+cargo run -p companyos-analytics --example export_openapi >"$ANALYTICS_TMP"
+
 export ROOT_OVERRIDE="$ROOT"
 python3 <<'PY'
 import json
@@ -70,6 +74,7 @@ docs = [
     json.loads(Path("/tmp/companyos-ai-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-inventory-openapi.json").read_text()),
     json.loads(Path("/tmp/companyos-workflow-openapi.json").read_text()),
+    json.loads(Path("/tmp/companyos-analytics-openapi.json").read_text()),
 ]
 
 merged = dict(docs[0])

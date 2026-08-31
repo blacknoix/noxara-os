@@ -61,6 +61,123 @@
         }
       }
     },
+    "/api/v1/auth/sso/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "sso_callback",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sso/configs": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "list_sso",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "create_sso",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSsoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoConfigView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sso/{id}/start": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "sso_start",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "307": {
+            "description": "Redirect to the IdP authorization endpoint"
+          }
+        }
+      }
+    },
     "/api/v1/dashboard": {
       "get": {
         "tags": [
@@ -9202,6 +9319,875 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SimulateResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/benchmarks": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "operationId": "benchmarks",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboards": {
+      "get": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "list_dashboards",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "create_dashboard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboards/{id}": {
+      "get": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "get_dashboard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "delete_dashboard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "update_dashboard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboards/{id}/widgets": {
+      "post": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "upsert_widget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertWidgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboards/{id}/widgets/{widget_id}": {
+      "delete": {
+        "tags": [
+          "analytics-dashboards"
+        ],
+        "operationId": "delete_widget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "widget_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/facts/invoice-issued": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "operationId": "invoice_issued",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "description": "tenant org public id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/forecasts": {
+      "post": {
+        "tags": [
+          "analytics-forecasts"
+        ],
+        "operationId": "forecast",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForecastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/freshness": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "operationId": "freshness",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreshnessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/internal/ingest": {
+      "post": {
+        "tags": [
+          "analytics-internal"
+        ],
+        "operationId": "ingest",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsIngestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/metrics": {
+      "get": {
+        "tags": [
+          "analytics-metrics"
+        ],
+        "operationId": "metrics",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/metrics/golden": {
+      "get": {
+        "tags": [
+          "analytics-metrics"
+        ],
+        "operationId": "golden",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MetricDefinition"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/query/run": {
+      "post": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "run_query",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportDefinition"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/reconcile/nightly": {
+      "post": {
+        "tags": [
+          "analytics"
+        ],
+        "operationId": "nightly",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsReconcileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/reports": {
+      "get": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "list_reports",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "create_report",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/reports/simulate": {
+      "post": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "simulate_query",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/reports/{id}": {
+      "get": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "get_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "delete_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "update_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/reports/{id}/export": {
+      "post": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "export_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/reports/{id}/run": {
+      "post": {
+        "tags": [
+          "analytics-reports"
+        ],
+        "operationId": "run_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/schedules": {
+      "get": {
+        "tags": [
+          "analytics-schedules"
+        ],
+        "operationId": "list_schedules",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "analytics-schedules"
+        ],
+        "operationId": "create_schedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/schedules/{id}": {
+      "get": {
+        "tags": [
+          "analytics-schedules"
+        ],
+        "operationId": "get_schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "analytics-schedules"
+        ],
+        "operationId": "delete_schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "analytics-schedules"
+        ],
+        "operationId": "update_schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/schedules/{id}/fire": {
+      "post": {
+        "tags": [
+          "analytics-schedules"
+        ],
+        "operationId": "fire_schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FireScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FireScheduleResponse"
                 }
               }
             }
@@ -22950,6 +23936,1175 @@
             }
           }
         }
+      },
+      "AnalyticsIngestResponse": {
+        "type": "object",
+        "required": [
+          "accepted",
+          "duplicate"
+        ],
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "fact": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AnalyticsReconcileResponse": {
+        "type": "object",
+        "required": [
+          "mirror_count",
+          "expected_count",
+          "matched"
+        ],
+        "properties": {
+          "expected_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "mirror_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "BenchmarkMetric": {
+        "type": "object",
+        "required": [
+          "metric",
+          "display_name",
+          "unit",
+          "current_value",
+          "previous_value"
+        ],
+        "properties": {
+          "current_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "previous_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "trend_percent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/MetricUnit"
+          }
+        }
+      },
+      "BenchmarkResponse": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "window_days",
+          "benchmarks"
+        ],
+        "properties": {
+          "benchmarks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkMetric"
+            }
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "window_days": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "CreateDashboardRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "layout": {},
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateReportRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "definition"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/ReportDefinition"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateScheduleRequest": {
+        "type": "object",
+        "required": [
+          "report_id",
+          "cron"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "cron": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "export_format": {
+            "type": "string"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "report_id": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "name",
+          "description",
+          "layout",
+          "widgets",
+          "created_by",
+          "updated_by",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "layout": {},
+          "name": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_by": {
+            "type": "string"
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WidgetDto"
+            }
+          }
+        }
+      },
+      "DashboardListResponse": {
+        "type": "object",
+        "required": [
+          "dashboards"
+        ],
+        "properties": {
+          "dashboards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDto"
+            }
+          }
+        }
+      },
+      "DrillRecord": {
+        "type": "object",
+        "required": [
+          "record_id",
+          "link"
+        ],
+        "properties": {
+          "link": {
+            "type": "string"
+          },
+          "record_id": {
+            "type": "string"
+          }
+        }
+      },
+      "DrillRequest": {
+        "type": "object",
+        "required": [
+          "definition"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/ReportDefinition"
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "DrillResponse": {
+        "type": "object",
+        "required": [
+          "metric",
+          "records",
+          "filtered_by_permission"
+        ],
+        "properties": {
+          "filtered_by_permission": {
+            "type": "boolean"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DrillRecord"
+            }
+          }
+        }
+      },
+      "ExportRequest": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string"
+          }
+        }
+      },
+      "ExportResponse": {
+        "type": "object",
+        "required": [
+          "run_id",
+          "report_id",
+          "format",
+          "content_type",
+          "file_id",
+          "content",
+          "row_count"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "content_type": {
+            "type": "string"
+          },
+          "file_id": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "report_id": {
+            "type": "string"
+          },
+          "row_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "run_id": {
+            "type": "string"
+          }
+        }
+      },
+      "FactSource": {
+        "type": "string",
+        "description": "Fact table backing a metric (maps to Postgres `analytics_fact_*` / ClickHouse).",
+        "enum": [
+          "deal_stage_change",
+          "invoice_lifecycle",
+          "payment",
+          "expense",
+          "task_lifecycle",
+          "ai_usage",
+          "api_request",
+          "invoice_issued"
+        ]
+      },
+      "FactsResponse": {
+        "type": "object",
+        "required": [
+          "facts"
+        ],
+        "properties": {
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceIssuedFact"
+            }
+          }
+        }
+      },
+      "FireScheduleRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "export_format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "FireScheduleResponse": {
+        "type": "object",
+        "required": [
+          "schedule_id",
+          "run_id",
+          "workflow_id",
+          "workflow_type",
+          "state",
+          "export"
+        ],
+        "properties": {
+          "export": {
+            "$ref": "#/components/schemas/ExportResponse"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "schedule_id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "workflow_id": {
+            "type": "string"
+          },
+          "workflow_type": {
+            "type": "string"
+          }
+        }
+      },
+      "ForecastInputs": {
+        "type": "object",
+        "required": [
+          "history_values",
+          "history_periods",
+          "horizon_periods",
+          "method_params"
+        ],
+        "properties": {
+          "history_periods": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "history_values": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "horizon_periods": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "method_params": {}
+        }
+      },
+      "ForecastMethod": {
+        "type": "string",
+        "enum": [
+          "trailing_average",
+          "linear_trend"
+        ]
+      },
+      "ForecastPoint": {
+        "type": "object",
+        "required": [
+          "period_index",
+          "period_label",
+          "value"
+        ],
+        "properties": {
+          "period_index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "period_label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ForecastRequest": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "series"
+        ],
+        "properties": {
+          "history_periods": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "horizon_periods": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "method": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ForecastMethod"
+              }
+            ]
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "series": {
+            "type": "string",
+            "description": "One of: revenue, cash_flow, pipeline, headcount (maps to governed metrics)."
+          }
+        }
+      },
+      "ForecastResponse": {
+        "type": "object",
+        "required": [
+          "series",
+          "metric",
+          "method",
+          "inputs",
+          "history",
+          "forecast",
+          "unit",
+          "explainability"
+        ],
+        "properties": {
+          "explainability": {
+            "type": "string"
+          },
+          "forecast": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            }
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/ForecastInputs",
+            "description": "Explicit inputs used \u2014 DoD: every forecast exposes inputs + method."
+          },
+          "method": {
+            "$ref": "#/components/schemas/ForecastMethod"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "series": {
+            "type": "string"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/MetricUnit"
+          }
+        }
+      },
+      "FreshnessResponse": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "lag_seconds",
+          "eventually_consistent"
+        ],
+        "properties": {
+          "eventually_consistent": {
+            "type": "boolean"
+          },
+          "lag_seconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_event_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "last_ingest_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "InvoiceIssuedFact": {
+        "type": "object",
+        "required": [
+          "event_id",
+          "org_id",
+          "invoice_id",
+          "issued_at"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": "string"
+          },
+          "issued_at": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "MeasureKind": {
+        "type": "string",
+        "description": "How a measure is aggregated.",
+        "enum": [
+          "sum",
+          "count",
+          "avg"
+        ]
+      },
+      "MetricDefinition": {
+        "type": "object",
+        "required": [
+          "name",
+          "display_name",
+          "description",
+          "fact",
+          "measure",
+          "measure_field",
+          "dimensions",
+          "unit",
+          "required_permission",
+          "drill_route",
+          "flagship"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "drill_route": {
+            "type": "string"
+          },
+          "fact": {
+            "$ref": "#/components/schemas/FactSource"
+          },
+          "flagship": {
+            "type": "boolean",
+            "description": "Flagship metrics appear in benchmark/trend views."
+          },
+          "measure": {
+            "$ref": "#/components/schemas/MeasureKind"
+          },
+          "measure_field": {
+            "type": "string",
+            "description": "Column used for sum/avg (ignored for count)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Stable machine name \u2014 unique across the catalogue."
+          },
+          "required_permission": {
+            "type": "string",
+            "description": "Permission required to see this metric's values (same as fact source)."
+          },
+          "unit": {
+            "$ref": "#/components/schemas/MetricUnit"
+          }
+        }
+      },
+      "MetricListResponse": {
+        "type": "object",
+        "required": [
+          "metrics"
+        ],
+        "properties": {
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricDefinition"
+            }
+          }
+        }
+      },
+      "MetricUnit": {
+        "type": "string",
+        "description": "Unit of a metric value.",
+        "enum": [
+          "money_minor",
+          "count",
+          "tokens"
+        ]
+      },
+      "QueryFilter": {
+        "type": "object",
+        "required": [
+          "field",
+          "op",
+          "value"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "value": {}
+        }
+      },
+      "QueryResult": {
+        "type": "object",
+        "required": [
+          "metric",
+          "rows",
+          "filtered_by_permission",
+          "permission_denied_empty",
+          "dry_run",
+          "elapsed_ms",
+          "eventually_consistent"
+        ],
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          },
+          "elapsed_ms": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "eventually_consistent": {
+            "type": "boolean"
+          },
+          "filtered_by_permission": {
+            "type": "boolean"
+          },
+          "freshness_as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metric": {
+            "type": "string"
+          },
+          "permission_denied_empty": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryRow"
+            }
+          }
+        }
+      },
+      "QueryRow": {
+        "type": "object",
+        "required": [
+          "dimensions",
+          "value",
+          "record_ids",
+          "drill_links"
+        ],
+        "properties": {
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "drill_links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "record_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ReportDefinition": {
+        "type": "object",
+        "required": [
+          "metric"
+        ],
+        "properties": {
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryFilter"
+            }
+          },
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metric": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Must be present \u2014 query guard rejects missing org_id."
+          },
+          "visualization": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "name",
+          "description",
+          "definition",
+          "visualization",
+          "created_by",
+          "updated_by",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/ReportDefinition"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_by": {
+            "type": "string"
+          },
+          "visualization": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportListResponse": {
+        "type": "object",
+        "required": [
+          "reports"
+        ],
+        "properties": {
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportDto"
+            }
+          }
+        }
+      },
+      "RunReportRequest": {
+        "type": "object",
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RunReportResponse": {
+        "type": "object",
+        "required": [
+          "run_id",
+          "result"
+        ],
+        "properties": {
+          "report_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/QueryResult"
+          },
+          "run_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ScheduleDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "report_id",
+          "cron",
+          "timezone",
+          "channel",
+          "recipients",
+          "export_format",
+          "enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cron": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "export_format": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_run_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "next_run_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "report_id": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SimulateQueryRequest": {
+        "type": "object",
+        "required": [
+          "definition"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/ReportDefinition"
+          }
+        }
+      },
+      "UpdateDashboardRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "layout": {},
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateReportRequest": {
+        "type": "object",
+        "properties": {
+          "definition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReportDefinition"
+              }
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateScheduleRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cron": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "export_format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipients": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpsertWidgetRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "metric_name"
+        ],
+        "properties": {
+          "config": {},
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metric_name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "visualization": {
+            "type": "string"
+          }
+        }
+      },
+      "WidgetDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "dashboard_id",
+          "title",
+          "metric_name",
+          "visualization",
+          "config",
+          "position",
+          "created_at"
+        ],
+        "properties": {
+          "config": {},
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dashboard_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "metric_name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "visualization": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -23245,6 +25400,34 @@
     {
       "name": "workflows-monitor",
       "description": "Monitor running/waiting/failed/SLA + bounds"
+    },
+    {
+      "name": "analytics",
+      "description": "Event-derived analytics and freshness"
+    },
+    {
+      "name": "analytics-internal",
+      "description": "Event ingest"
+    },
+    {
+      "name": "analytics-metrics",
+      "description": "Governed semantic metrics"
+    },
+    {
+      "name": "analytics-reports",
+      "description": "Saved and ad-hoc reports"
+    },
+    {
+      "name": "analytics-dashboards",
+      "description": "Dashboards and governed widgets"
+    },
+    {
+      "name": "analytics-forecasts",
+      "description": "Explainable forecasts"
+    },
+    {
+      "name": "analytics-schedules",
+      "description": "Scheduled report delivery"
     }
   ]
 }
