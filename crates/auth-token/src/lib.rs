@@ -70,11 +70,24 @@ pub struct AccessClaims {
     pub iat: i64,
     /// Expiry (seconds).
     pub exp: i64,
+    /// When set, this access token was minted for an organization API key.
+    /// Session checks are skipped; permission evaluation uses [`scopes`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_key_id: Option<String>,
+    /// Effective permission IDs after intersecting key scopes with the key
+    /// owner's role permissions (narrower wins). Present only for API-key tokens.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scopes: Option<Vec<String>>,
 }
 
 impl AccessClaims {
     pub fn is_expired_at(&self, now: DateTime<Utc>) -> bool {
         now.timestamp() >= self.exp
+    }
+
+    /// True when this token represents an organization API key (not a user session).
+    pub fn is_api_key(&self) -> bool {
+        self.api_key_id.is_some()
     }
 }
 
@@ -293,6 +306,8 @@ mod tests {
             iss: "companyos".into(),
             iat: 0,
             exp: 0,
+            api_key_id: None,
+            scopes: None,
         }
     }
 
