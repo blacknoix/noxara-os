@@ -29,6 +29,8 @@ pub enum Context {
     Inventory,
     /// Configurable workflow engine (Phase 3.1) lifecycle events.
     Workflow,
+    /// Analytics & reporting (Phase 3.2) lifecycle events.
+    Analytics,
 }
 
 impl Context {
@@ -45,6 +47,7 @@ impl Context {
             Self::Auth => "auth",
             Self::Inventory => "inventory",
             Self::Workflow => "workflow",
+            Self::Analytics => "analytics",
         }
     }
 }

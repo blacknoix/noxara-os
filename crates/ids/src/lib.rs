@@ -126,6 +126,18 @@ pub enum IdKind {
     WorkflowVersion,
     /// Workflow instance run (`wfi_`).
     WorkflowInstance,
+    /// Governed analytics metric definition snapshot (`met_`).
+    AnalyticsMetric,
+    /// Saved analytics report (`rpt_`).
+    AnalyticsReport,
+    /// Analytics dashboard (`adb_`).
+    AnalyticsDashboard,
+    /// Dashboard widget (`wdg_`).
+    AnalyticsWidget,
+    /// Report delivery schedule (`asch_`).
+    AnalyticsSchedule,
+    /// Report / export run (`arun_`).
+    AnalyticsRun,
 }
 
 impl IdKind {
@@ -204,6 +216,12 @@ impl IdKind {
             Self::WorkflowDefinition => "wfd_",
             Self::WorkflowVersion => "wfv_",
             Self::WorkflowInstance => "wfi_",
+            Self::AnalyticsMetric => "met_",
+            Self::AnalyticsReport => "rpt_",
+            Self::AnalyticsDashboard => "adb_",
+            Self::AnalyticsWidget => "wdg_",
+            Self::AnalyticsSchedule => "asch_",
+            Self::AnalyticsRun => "arun_",
         }
     }
 
@@ -282,6 +300,12 @@ impl IdKind {
             "wfd_" => Some(Self::WorkflowDefinition),
             "wfv_" => Some(Self::WorkflowVersion),
             "wfi_" => Some(Self::WorkflowInstance),
+            "met_" => Some(Self::AnalyticsMetric),
+            "rpt_" => Some(Self::AnalyticsReport),
+            "adb_" => Some(Self::AnalyticsDashboard),
+            "wdg_" => Some(Self::AnalyticsWidget),
+            "asch_" => Some(Self::AnalyticsSchedule),
+            "arun_" => Some(Self::AnalyticsRun),
             _ => None,
         }
     }
@@ -409,9 +433,15 @@ impl FromStr for PublicId {
             ("apk_", IdKind::ApiKey),
             ("arv_", IdKind::AccessReview),
             ("sec_", IdKind::OrgSecret),
+            ("asch_", IdKind::AnalyticsSchedule),
+            ("arun_", IdKind::AnalyticsRun),
             ("wfd_", IdKind::WorkflowDefinition),
             ("wfv_", IdKind::WorkflowVersion),
             ("wfi_", IdKind::WorkflowInstance),
+            ("met_", IdKind::AnalyticsMetric),
+            ("rpt_", IdKind::AnalyticsReport),
+            ("adb_", IdKind::AnalyticsDashboard),
+            ("wdg_", IdKind::AnalyticsWidget),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {
@@ -554,6 +584,19 @@ mod tests {
             IdKind::AssetAssignment,
             IdKind::MaintenanceSchedule,
             IdKind::VendorBill,
+            IdKind::SsoConfig,
+            IdKind::ApiKey,
+            IdKind::AccessReview,
+            IdKind::OrgSecret,
+            IdKind::WorkflowDefinition,
+            IdKind::WorkflowVersion,
+            IdKind::WorkflowInstance,
+            IdKind::AnalyticsMetric,
+            IdKind::AnalyticsReport,
+            IdKind::AnalyticsDashboard,
+            IdKind::AnalyticsWidget,
+            IdKind::AnalyticsSchedule,
+            IdKind::AnalyticsRun,
         ] {
             let id = PublicId::generate(kind);
             let parsed: PublicId = id.to_string().parse().unwrap();

@@ -796,6 +796,71 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Read analytics facts derived from the event stream",
         sensitive: false,
     },
+    // --- Analytics & reporting (Phase 3.2) ---
+    PermissionDef {
+        id: "analytics.report.read",
+        context: "analytics",
+        resource: "report",
+        action: "read",
+        description: "View saved reports and governed metric definitions",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.report.write",
+        context: "analytics",
+        resource: "report",
+        action: "write",
+        description: "Create and update saved reports (human commit only)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.report.run",
+        context: "analytics",
+        resource: "report",
+        action: "run",
+        description: "Execute a report; results are permission-filtered per viewer",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.report.share",
+        context: "analytics",
+        resource: "report",
+        action: "share",
+        description: "Share saved reports within the organization",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.report.export",
+        context: "analytics",
+        resource: "report",
+        action: "export",
+        description: "Export report results to CSV/XLSX/PDF",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.dashboard.read",
+        context: "analytics",
+        resource: "dashboard",
+        action: "read",
+        description: "View analytics dashboards and widgets",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.dashboard.write",
+        context: "analytics",
+        resource: "dashboard",
+        action: "write",
+        description: "Create and update analytics dashboards (human commit only)",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "analytics.schedule.write",
+        context: "analytics",
+        resource: "schedule",
+        action: "write",
+        description: "Create and manage scheduled report delivery",
+        sensitive: true,
+    },
     // --- AI (Phase 1.9) ---
     PermissionDef {
         id: "ai.copilot.use",
@@ -1259,6 +1324,7 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "inventory.purchase_order.write",
     "inventory.goods_receipt.write",
     "inventory.asset.write",
+    "analytics.schedule.write",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1565,6 +1631,30 @@ pub mod perms {
     }
     pub fn platform_analytics_read() -> PermissionId {
         PermissionId::from("platform.analytics.read")
+    }
+    pub fn analytics_report_read() -> PermissionId {
+        PermissionId::from("analytics.report.read")
+    }
+    pub fn analytics_report_write() -> PermissionId {
+        PermissionId::from("analytics.report.write")
+    }
+    pub fn analytics_report_run() -> PermissionId {
+        PermissionId::from("analytics.report.run")
+    }
+    pub fn analytics_report_share() -> PermissionId {
+        PermissionId::from("analytics.report.share")
+    }
+    pub fn analytics_report_export() -> PermissionId {
+        PermissionId::from("analytics.report.export")
+    }
+    pub fn analytics_dashboard_read() -> PermissionId {
+        PermissionId::from("analytics.dashboard.read")
+    }
+    pub fn analytics_dashboard_write() -> PermissionId {
+        PermissionId::from("analytics.dashboard.write")
+    }
+    pub fn analytics_schedule_write() -> PermissionId {
+        PermissionId::from("analytics.schedule.write")
     }
     pub fn ai_copilot_use() -> PermissionId {
         PermissionId::from("ai.copilot.use")
