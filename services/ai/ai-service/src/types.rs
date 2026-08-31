@@ -163,6 +163,14 @@ pub struct InsightObservation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suggested_action: Option<String>,
     pub estimate: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub insight_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggested_action_detail: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proposal_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -170,6 +178,47 @@ pub struct InsightsResponse {
     pub observations: Vec<InsightObservation>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub empty_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct InsightsRefreshResponse {
+    pub created: u32,
+    pub observations: Vec<InsightObservation>,
+    pub pending_proposals: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateMeetingSummaryRequest {
+    pub calendar_event_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transcript: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub starts_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct MeetingSummaryView {
+    pub id: String,
+    pub public_id: String,
+    pub calendar_event_id: String,
+    pub calendar_connector: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transcript: Option<String>,
+    pub summary_markdown: String,
+    pub action_items: serde_json::Value,
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct MeetingSummariesListResponse {
+    pub items: Vec<MeetingSummaryView>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

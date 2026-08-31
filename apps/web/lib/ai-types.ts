@@ -89,11 +89,35 @@ export type InsightObservation = {
   evidence: Citation[];
   suggested_action?: string | null;
   estimate: boolean;
+  insight_type?: string | null;
+  status?: string | null;
+  suggested_action_detail?: Record<string, unknown> | null;
+  proposal_id?: string | null;
 };
 
 export type InsightsResponse = {
   observations: InsightObservation[];
   empty_reason?: string | null;
+};
+
+export type InsightsRefreshResponse = {
+  created: number;
+  observations: InsightObservation[];
+  pending_proposals: string[];
+};
+
+export type MeetingSummaryView = {
+  id: string;
+  public_id: string;
+  calendar_event_id: string;
+  calendar_connector: string;
+  transcript?: string | null;
+  summary_markdown: string;
+  action_items: unknown;
+  status: string;
+  accepted_at?: string | null;
+  accepted_by?: string | null;
+  created_at: string;
 };
 
 export type DocumentReview = {

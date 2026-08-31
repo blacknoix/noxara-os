@@ -1,6 +1,8 @@
 //! CompanyOS AI assistant (library) — Phase 1.9.
 
+pub mod audit;
 pub mod auth;
+pub mod calendar;
 pub mod document;
 pub mod gateway_client;
 pub mod handlers;
@@ -35,6 +37,9 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     companyos_tenancy::with_schema_migration_lock(pool, || async {
         for stmt in split_sql(include_str!("../migrations/001_ai.sql")) {
+            companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+        }
+        for stmt in split_sql(include_str!("../migrations/002_ai_depth.sql")) {
             companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
         }
         Ok(())
