@@ -159,6 +159,20 @@ pub async fn set_api_key_lookup(conn: &mut sqlx::PgConnection) -> Result<(), Ten
     Ok(())
 }
 
+/// Allow gateway / token exchange to look up marketplace app tokens by hash
+/// before `app.org_id` is known (RLS bypass key, **read-only** policy).
+///
+/// **Must be called inside an open transaction.**
+pub async fn set_marketplace_token_lookup(
+    conn: &mut sqlx::PgConnection,
+) -> Result<(), TenancyError> {
+    sqlx::query("SELECT set_config('app.marketplace_token_lookup', '1', true)")
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| TenancyError::SessionBind(e.to_string()))?;
+    Ok(())
+}
+
 /// Allow invitation accept to look up a row by token hash (RLS bypass key).
 pub async fn set_invite_token_hash(
     conn: &mut sqlx::PgConnection,
