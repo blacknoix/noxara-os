@@ -14,8 +14,8 @@ use crate::auth::AuthCtx;
 use crate::query::{execute_query, validate_query, ReportDefinition};
 use crate::state::AppState;
 use crate::types::{
-    CreateReportRequest, ReportDto, ReportListResponse, RunReportRequest, RunReportResponse,
-    SimulateQueryRequest, UpdateReportRequest,
+    CreateReportRequest, QueryResult, ReportDto, ReportListResponse, RunReportRequest,
+    RunReportResponse, SimulateQueryRequest, UpdateReportRequest,
 };
 
 use super::{authorize, ensure_human, internal, not_found, parse_id, set_org, user_public};
