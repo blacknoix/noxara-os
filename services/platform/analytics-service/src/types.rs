@@ -23,14 +23,14 @@ pub struct FactsResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct IngestResponse {
+pub struct AnalyticsIngestResponse {
     pub accepted: bool,
     pub duplicate: bool,
     pub fact: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ReconcileResponse {
+pub struct AnalyticsReconcileResponse {
     pub mirror_count: i64,
     pub expected_count: i64,
     pub matched: bool,

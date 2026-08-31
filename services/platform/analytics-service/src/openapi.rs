@@ -51,8 +51,8 @@ use crate::types::*;
     components(schemas(
         InvoiceIssuedFact,
         FactsResponse,
-        IngestResponse,
-        ReconcileResponse,
+        AnalyticsIngestResponse,
+        AnalyticsReconcileResponse,
         FactSource,
         MeasureKind,
         MetricDefinition,

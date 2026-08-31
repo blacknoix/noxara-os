@@ -617,6 +617,19 @@ async fn reports_and_facts_are_tenant_isolated_by_rls() {
     .await;
     assert_eq!(cross_org_status, StatusCode::FORBIDDEN);
 
+    let (cross_reconcile_status, _) = call(
+        &second_app,
+        "POST",
+        "/api/v1/analytics/reconcile/nightly",
+        &second.owner_token,
+        Some(json!({
+            "org_id": first.org.as_uuid(),
+            "expected_count": 1
+        })),
+    )
+    .await;
+    assert_eq!(cross_reconcile_status, StatusCode::FORBIDDEN);
+
     let mut tx = second.pool.begin().await.unwrap();
     set_session_org_id(&mut tx, second.org).await.unwrap();
     let hidden_report: Option<(Uuid,)> =

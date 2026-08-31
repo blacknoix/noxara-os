@@ -13,7 +13,7 @@ use sqlx::{Postgres, Transaction};
 
 use crate::metrics::FactSource;
 use crate::state::AppState;
-use crate::types::IngestResponse;
+use crate::types::AnalyticsIngestResponse;
 
 fn internal(request_id: &str) -> impl Fn(sqlx::Error) -> AppError + '_ {
     move |error| AppError::new(ErrorCode::Internal, request_id, error.to_string())
@@ -345,13 +345,13 @@ async fn best_effort_clickhouse(state: &AppState, envelope: &EventEnvelope, fact
 #[utoipa::path(
     post,
     path = "/api/v1/analytics/internal/ingest",
-    responses((status = 200, body = IngestResponse)),
+    responses((status = 200, body = AnalyticsIngestResponse)),
     tag = "analytics-internal"
 )]
 pub async fn ingest(
     State(state): State<AppState>,
     Json(envelope): Json<EventEnvelope>,
-) -> Result<Json<IngestResponse>, AppError> {
+) -> Result<Json<AnalyticsIngestResponse>, AppError> {
     let request_id = envelope.event_id.to_string();
     let fact = supported_fact(&envelope);
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -423,7 +423,7 @@ pub async fn ingest(
             best_effort_clickhouse(&state, &envelope, source).await;
         }
     }
-    Ok(Json(IngestResponse {
+    Ok(Json(AnalyticsIngestResponse {
         accepted: fact.is_some(),
         duplicate,
         fact: fact.map(|source| source.as_str().to_string()),
