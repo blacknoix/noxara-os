@@ -33,6 +33,8 @@ fn parse_schema_name(stem: &str) -> (Context, &str, &str, u32) {
         "operations" => Context::Operations,
         "people" => Context::People,
         "inventory" => Context::Inventory,
+        "admin" => Context::Admin,
+        "auth" => Context::Auth,
         other => panic!("unknown context {other}"),
     };
     (context, parts[1], parts[2], version)
@@ -96,6 +98,9 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
             serde_json::json!({ "id": "pr_test" })
         }
         ("asset", "assigned" | "depreciated") => serde_json::json!({ "id": "ast_test" }),
+        ("access_review", "completed") => serde_json::json!({ "id": "arv_test" }),
+        ("retention", "changed") => serde_json::json!({ "default_retention_days": 2555 }),
+        ("sso", "linked") => serde_json::json!({ "sso_config_id": "sso_test" }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

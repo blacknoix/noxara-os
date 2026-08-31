@@ -303,6 +303,22 @@ pub async fn list_journals(
     Ok(Json(JournalListResponse { items, total }))
 }
 
+fn is_salary_adjacent(source_type: &str) -> bool {
+    matches!(source_type, "payroll" | "payroll_reversal" | "salary")
+}
+
+fn redact_salary_journal(mut dto: JournalEntryDto, can_read_salary: bool) -> JournalEntryDto {
+    if is_salary_adjacent(&dto.source_type) && !can_read_salary {
+        for line in &mut dto.lines {
+            line.debit_minor = 0;
+            line.credit_minor = 0;
+            line.memo = Some("[redacted]".into());
+        }
+        dto.memo = "[salary amounts redacted]".into();
+    }
+    dto
+}
+
 /// GET /api/v1/finance/journals/{id}
 #[utoipa::path(
     get,
@@ -331,6 +347,10 @@ pub async fn get_journal(
         perms::finance_ledger_read(),
         &request_id,
     )?;
+    let can_salary = companyos_authz::is_allowed(
+        &membership.principal,
+        &perms::finance_field_salary_journal_read(),
+    );
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
     set_session_org_id(&mut tx, auth.ctx.org_id)
@@ -341,8 +361,27 @@ pub async fn get_journal(
         .await
         .map_err(internal(&request_id))?
         .ok_or_else(|| not_found(&request_id, "journal"))?;
+    if is_salary_adjacent(&dto.source_type) {
+        insert_audit(
+            &mut *tx,
+            org_id,
+            auth.ctx.actor.user_id,
+            auth.ctx.actor.on_behalf_of,
+            auth.ctx.actor.is_ai,
+            if can_salary {
+                "finance.field.salary_journal_read"
+            } else {
+                "finance.journal.read_redacted"
+            },
+            "journal",
+            &dto.id,
+            serde_json::json!({ "source_type": dto.source_type, "redacted": !can_salary }),
+        )
+        .await
+        .map_err(internal(&request_id))?;
+    }
     tx.commit().await.map_err(internal(&request_id))?;
-    Ok(Json(dto))
+    Ok(Json(redact_salary_journal(dto, can_salary)))
 }
 
 /// POST /api/v1/finance/journals

@@ -14,7 +14,8 @@ use companyos_tenancy::set_session_org_id;
 use uuid::Uuid;
 
 use super::employees::{
-    can_read_sensitive, enforce_employee_scope, fetch_employee_row, parse_optional_date,
+    can_read_field, can_read_sensitive, enforce_employee_scope, fetch_employee_row,
+    parse_optional_date,
 };
 use super::{crypto_err, internal, not_found, parse_public_id, validation};
 use crate::audit::insert_audit;
@@ -134,6 +135,13 @@ pub async fn list_compensation(
             ErrorCode::Forbidden,
             request_id,
             "missing permission hr.employee.read_sensitive",
+        ));
+    }
+    if !can_read_field(&membership, &perms::hr_field_compensation_read()) {
+        return Err(AppError::new(
+            ErrorCode::Forbidden,
+            request_id,
+            "missing permission hr.field.compensation_read",
         ));
     }
 

@@ -107,6 +107,7 @@ mod tests {
             effect: Effect::Allow,
             permission: perms::sales_deal_update(),
             scope: Scope::Own,
+            conditions: vec![],
         });
         let scope = scope_for_permission(&p, &perms::sales_deal_update());
         assert_eq!(scope, Scope::Own);
@@ -119,11 +120,13 @@ mod tests {
             effect: Effect::Allow,
             permission: perms::sales_deal_update(),
             scope: Scope::Own,
+            conditions: vec![],
         });
         p.statements.push(Statement {
             effect: Effect::Allow,
             permission: perms::sales_deal_update(),
             scope: Scope::Team,
+            conditions: vec![],
         });
         let scope = scope_for_permission(&p, &perms::sales_deal_update());
         assert_eq!(scope, Scope::Team);

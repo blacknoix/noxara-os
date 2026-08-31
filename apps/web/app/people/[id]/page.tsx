@@ -36,6 +36,9 @@ type Employee = {
   user_id: string | null;
   created_at: string;
   updated_at: string;
+  government_id?: string | null;
+  bank_details?: string | null;
+  tax_id?: string | null;
 };
 
 type Compensation = {
@@ -106,6 +109,9 @@ export default function EmployeeRecordPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const canReadSensitive = can('hr.employee.read_sensitive');
+  const canReadCompensation = can('hr.field.compensation_read');
+  const canReadGovId = can('hr.field.government_id_read');
+  const canReadBank = can('hr.field.bank_read');
   const canOffboard = can('hr.employee.offboard');
 
   const load = useCallback(async () => {
@@ -144,7 +150,8 @@ export default function EmployeeRecordPage() {
   }, [load]);
 
   useEffect(() => {
-    if (state.status !== 'ready' || !canReadSensitive || tab !== 'compensation') return;
+    if (state.status !== 'ready' || !canReadSensitive || !canReadCompensation || tab !== 'compensation')
+      return;
     void (async () => {
       setCompensationError(null);
       setCompensationDenied(false);
@@ -160,7 +167,7 @@ export default function EmployeeRecordPage() {
       const body = await res.json();
       setCompensation(body.items ?? []);
     })();
-  }, [state.status, canReadSensitive, tab, employeeId]);
+  }, [state.status, canReadSensitive, canReadCompensation, tab, employeeId]);
 
   useEffect(() => {
     if (state.status !== 'ready' || tab !== 'documents') return;
@@ -209,12 +216,14 @@ export default function EmployeeRecordPage() {
   const tabItems = useMemo(() => {
     const items = [
       { id: 'overview', label: 'Overview' },
-      ...(canReadSensitive ? [{ id: 'compensation', label: 'Compensation' }] : []),
+      ...(canReadSensitive && canReadCompensation
+        ? [{ id: 'compensation', label: 'Compensation' }]
+        : []),
       { id: 'documents', label: 'Documents' },
       { id: 'timeline', label: 'Timeline' },
     ];
     return items;
-  }, [canReadSensitive]);
+  }, [canReadSensitive, canReadCompensation]);
 
   async function offboard() {
     if (!canOffboard || state.status !== 'ready') return;
@@ -347,13 +356,27 @@ export default function EmployeeRecordPage() {
               </dd>
               <dt style={dtStyle}>Linked user</dt>
               <dd style={ddStyle}>{employee.user_id ?? '—'}</dd>
+              {canReadSensitive && canReadGovId ? (
+                <>
+                  <dt style={dtStyle}>Government ID</dt>
+                  <dd style={ddStyle}>{employee.government_id ?? '—'}</dd>
+                  <dt style={dtStyle}>Tax ID</dt>
+                  <dd style={ddStyle}>{employee.tax_id ?? '—'}</dd>
+                </>
+              ) : null}
+              {canReadSensitive && canReadBank ? (
+                <>
+                  <dt style={dtStyle}>Bank details</dt>
+                  <dd style={ddStyle}>{employee.bank_details ?? '—'}</dd>
+                </>
+              ) : null}
             </dl>
           </Card>
         ) : null}
 
-        {tab === 'compensation' && canReadSensitive ? (
+        {tab === 'compensation' && canReadSensitive && canReadCompensation ? (
           compensationDenied ? (
-            <PermissionDeniedState requiredPermission="hr.employee.read_sensitive" />
+            <PermissionDeniedState requiredPermission="hr.field.compensation_read" />
           ) : compensationError ? (
             <ErrorState message={compensationError} />
           ) : compensation.length === 0 ? (

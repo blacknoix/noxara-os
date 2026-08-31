@@ -124,6 +124,8 @@ impl EmployeeRow {
         self,
         encryptor: &FieldEncryptor,
         request_id: &str,
+        include_government_id: bool,
+        include_bank: bool,
     ) -> Result<EmployeeDto, AppError> {
         let manager_public = self
             .manager_employee_id
@@ -153,17 +155,30 @@ impl EmployeeRow {
             created_at: self.created_at.to_rfc3339(),
             updated_at: self.updated_at.to_rfc3339(),
             version: self.version,
-            government_id: decrypt_opt_str(
-                encryptor,
-                self.government_id_ciphertext.as_deref(),
-                request_id,
-            )?,
-            bank_details: decrypt_opt_str(
-                encryptor,
-                self.bank_details_ciphertext.as_deref(),
-                request_id,
-            )?,
-            tax_id: decrypt_opt_str(encryptor, self.tax_id_ciphertext.as_deref(), request_id)?,
+            government_id: if include_government_id {
+                decrypt_opt_str(
+                    encryptor,
+                    self.government_id_ciphertext.as_deref(),
+                    request_id,
+                )?
+            } else {
+                None
+            },
+            bank_details: if include_bank {
+                decrypt_opt_str(
+                    encryptor,
+                    self.bank_details_ciphertext.as_deref(),
+                    request_id,
+                )?
+            } else {
+                None
+            },
+            // tax_id rides with government_id field permission
+            tax_id: if include_government_id {
+                decrypt_opt_str(encryptor, self.tax_id_ciphertext.as_deref(), request_id)?
+            } else {
+                None
+            },
         })
     }
 }
@@ -284,6 +299,14 @@ pub(crate) fn can_read_sensitive(membership: &MembershipScope) -> bool {
     )
     .decision
         == Decision::Allow
+}
+
+/// Field-level reads never bypass `hr.employee.read_sensitive`.
+pub(crate) fn can_read_field(
+    membership: &MembershipScope,
+    field: &companyos_authz::PermissionId,
+) -> bool {
+    can_read_sensitive(membership) && companyos_authz::is_allowed(&membership.principal, field)
 }
 
 pub(crate) async fn resolve_manager_id(
@@ -712,7 +735,17 @@ pub async fn get_employee(
 
     let include_sensitive = can_read_sensitive(&membership);
     let dto = if include_sensitive {
-        // Audit every sensitive read.
+        let include_gov = can_read_field(&membership, &perms::hr_field_government_id_read());
+        let include_bank = can_read_field(&membership, &perms::hr_field_bank_read());
+        let mut fields = Vec::new();
+        if include_gov {
+            fields.push("government_id");
+            fields.push("tax_id");
+        }
+        if include_bank {
+            fields.push("bank_details");
+        }
+        // Audit every sensitive read (even if all field perms strip to empty).
         insert_audit(
             &mut *tx,
             org_id,
@@ -722,11 +755,11 @@ pub async fn get_employee(
             "hr.employee.read_sensitive",
             "employee",
             &row.public_id,
-            serde_json::json!({ "fields": ["government_id", "bank_details", "tax_id"] }),
+            serde_json::json!({ "fields": fields }),
         )
         .await
         .map_err(internal(&request_id))?;
-        row.into_sensitive_dto(&state.encryptor, &request_id)?
+        row.into_sensitive_dto(&state.encryptor, &request_id, include_gov, include_bank)?
     } else {
         row.into_directory_dto()
     };

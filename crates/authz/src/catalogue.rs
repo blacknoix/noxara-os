@@ -829,6 +829,87 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "View compensation, government IDs, bank/tax identifiers",
         sensitive: true,
     },
+    // Field-level (Phase 2.6) — still require / align with read_sensitive at handlers
+    PermissionDef {
+        id: "hr.field.compensation_read",
+        context: "hr",
+        resource: "field",
+        action: "compensation_read",
+        description: "View compensation component amounts (field-level)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.field.government_id_read",
+        context: "hr",
+        resource: "field",
+        action: "government_id_read",
+        description: "View government ID / tax identifiers (field-level)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "hr.field.bank_read",
+        context: "hr",
+        resource: "field",
+        action: "bank_read",
+        description: "View employee bank details (field-level)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.field.bank_account_read",
+        context: "finance",
+        resource: "field",
+        action: "bank_account_read",
+        description: "View full bank account identifiers beyond mask (field-level)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.field.salary_journal_read",
+        context: "finance",
+        resource: "field",
+        action: "salary_journal_read",
+        description: "View salary-adjacent journal line amounts (field-level)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.access_review.read",
+        context: "admin",
+        resource: "access_review",
+        action: "read",
+        description: "Run access-review who-could / who-did queries and exports",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.access_review.manage",
+        context: "admin",
+        resource: "access_review",
+        action: "manage",
+        description: "Kick off access-review runs",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.audit.verify",
+        context: "admin",
+        resource: "audit",
+        action: "verify",
+        description: "Run audit hash-chain verification",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.retention.manage",
+        context: "admin",
+        resource: "retention",
+        action: "manage",
+        description: "Configure per-org data retention",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.api_key.manage",
+        context: "admin",
+        resource: "api_key",
+        action: "manage",
+        description: "Create, rotate, and revoke organization API keys",
+        sensitive: true,
+    },
     PermissionDef {
         id: "hr.employee.write",
         context: "hr",
@@ -1099,6 +1180,16 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "operations.approval.manage",
     "ai.settings.manage",
     "hr.employee.read_sensitive",
+    "hr.field.compensation_read",
+    "hr.field.government_id_read",
+    "hr.field.bank_read",
+    "finance.field.bank_account_read",
+    "finance.field.salary_journal_read",
+    "admin.access_review.read",
+    "admin.access_review.manage",
+    "admin.audit.verify",
+    "admin.retention.manage",
+    "admin.api_key.manage",
     "hr.employee.write",
     "hr.employee.onboard",
     "hr.employee.offboard",
@@ -1272,6 +1363,36 @@ pub mod perms {
     }
     pub fn admin_sso_manage() -> PermissionId {
         PermissionId::from("admin.sso.manage")
+    }
+    pub fn admin_access_review_read() -> PermissionId {
+        PermissionId::from("admin.access_review.read")
+    }
+    pub fn admin_access_review_manage() -> PermissionId {
+        PermissionId::from("admin.access_review.manage")
+    }
+    pub fn admin_audit_verify() -> PermissionId {
+        PermissionId::from("admin.audit.verify")
+    }
+    pub fn admin_retention_manage() -> PermissionId {
+        PermissionId::from("admin.retention.manage")
+    }
+    pub fn admin_api_key_manage() -> PermissionId {
+        PermissionId::from("admin.api_key.manage")
+    }
+    pub fn hr_field_compensation_read() -> PermissionId {
+        PermissionId::from("hr.field.compensation_read")
+    }
+    pub fn hr_field_government_id_read() -> PermissionId {
+        PermissionId::from("hr.field.government_id_read")
+    }
+    pub fn hr_field_bank_read() -> PermissionId {
+        PermissionId::from("hr.field.bank_read")
+    }
+    pub fn finance_field_bank_account_read() -> PermissionId {
+        PermissionId::from("finance.field.bank_account_read")
+    }
+    pub fn finance_field_salary_journal_read() -> PermissionId {
+        PermissionId::from("finance.field.salary_journal_read")
     }
     pub fn finance_invoice_approve() -> PermissionId {
         PermissionId::from("finance.invoice.approve")

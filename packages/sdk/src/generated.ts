@@ -2246,3 +2246,121 @@ export type PayVendorBillRequest = {
   amount_minor?: string;
   memo?: string;
 };
+
+export type AccessReviewQuery = {
+  /** RFC3339 timestamp. */
+  period_end: string;
+  /** RFC3339 timestamp. */
+  period_start: string;
+  permission_id: string;
+};
+
+export type EntitlementRow = {
+  effective_from: string;
+  effective_to?: string;
+  email: string;
+  permission_id: string;
+  role_key: string;
+  user_id: string;
+};
+
+export type WhoCouldSeeResponse = {
+  items: EntitlementRow[];
+};
+
+export type AuditReadRow = {
+  action: string;
+  created_at: string;
+  email: string;
+  metadata: Record<string, unknown>;
+  resource_id: string;
+  resource_type: string;
+  user_id: string;
+};
+
+export type WhoDidSeeResponse = {
+  items: AuditReadRow[];
+};
+
+export type AccessReviewKickoffRequest = {
+  /** RFC3339 timestamp. */
+  period_end: string;
+  /** RFC3339 timestamp. */
+  period_start: string;
+  permission_id: string;
+};
+
+export type AccessReviewRunView = {
+  completed_at?: string;
+  created_at: string;
+  id: string;
+  period_end: string;
+  period_start: string;
+  permission_id: string;
+  status: string;
+  summary: Record<string, unknown>;
+};
+
+export type AuditVerifyRequest = {
+  /** `YYYY-MM`, or `None` to verify all partitions for the org. */
+  partition_key?: string;
+};
+
+export type AuditVerifyResponse = {
+  first_break?: string;
+  ok: boolean;
+  partitions_checked: number;
+  rows_checked: number;
+};
+
+export type RetentionConfigView = {
+  default_retention_days: number;
+  overrides: Record<string, unknown>;
+  updated_at: string;
+  version: number;
+};
+
+export type UpdateRetentionRequest = {
+  default_retention_days?: string;
+  overrides?: Record<string, unknown>;
+};
+
+export type RetentionDryRunResponse = {
+  cutoff_date: string;
+  partitions: string[];
+  would_affect_estimate: number;
+};
+
+export type ApiKeyView = {
+  created_at: string;
+  expires_at?: string;
+  id: string;
+  key_prefix: string;
+  last_used_at?: string;
+  name: string;
+  revoked_at?: string;
+  scopes: string[];
+};
+
+export type ApiKeyListResponse = {
+  items: ApiKeyView[];
+};
+
+export type CreateApiKeyRequest = {
+  /** RFC3339 timestamp, or `None` for no expiry. */
+  expires_at?: string;
+  name: string;
+  scopes: string[];
+};
+
+export type CreateApiKeyResponse = {
+  key: ApiKeyView;
+  /** Raw secret — returned only once, at creation time. */
+  secret: string;
+};
+
+export type RotateApiKeyResponse = {
+  key: ApiKeyView;
+  /** Raw secret — returned only once, at rotation time. */
+  secret: string;
+};

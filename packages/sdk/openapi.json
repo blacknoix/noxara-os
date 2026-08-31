@@ -2,12 +2,12 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CompanyOS Core API",
-    "description": "Phase 1.3 \u2014 dashboard BFF + workspace + auth + hello.",
+    "description": "Phase 2.6 \u2014 governance (access review, audit verify, retention, API keys) + dashboard BFF + workspace + auth + hello.",
     "license": {
       "name": "Proprietary",
       "identifier": "Proprietary"
     },
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/api/v1/auth/login": {
@@ -95,6 +95,335 @@
           },
           "403": {
             "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/governance/access-review/runs": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "kickoff_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessReviewKickoffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewRunView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/access-review/runs/{id}": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "get_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewRunView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/access-review/runs/{id}/export": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "export_run",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON (default) or CSV export depending on ?format="
+          }
+        }
+      }
+    },
+    "/api/v1/governance/access-review/who-could-see": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "who_could_see",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhoCouldSeeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/access-review/who-did": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "who_did",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhoDidSeeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/api-keys": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "list_api_keys",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "create_api_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateApiKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/api-keys/{id}/revoke": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "revoke_api_key",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/api-keys/{id}/rotate": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "rotate_api_key",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotateApiKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/audit/verify": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "verify_audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditVerifyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/retention": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "get_retention",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionConfigView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "update_retention",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRetentionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionConfigView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governance/retention/dry-run": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "retention_dry_run",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionDryRunResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -8462,6 +8791,221 @@
           }
         }
       },
+      "AccessReviewKickoffRequest": {
+        "type": "object",
+        "required": [
+          "permission_id",
+          "period_start",
+          "period_end"
+        ],
+        "properties": {
+          "period_end": {
+            "type": "string",
+            "description": "RFC3339 timestamp."
+          },
+          "period_start": {
+            "type": "string",
+            "description": "RFC3339 timestamp."
+          },
+          "permission_id": {
+            "type": "string"
+          }
+        }
+      },
+      "AccessReviewQuery": {
+        "type": "object",
+        "required": [
+          "permission_id",
+          "period_start",
+          "period_end"
+        ],
+        "properties": {
+          "period_end": {
+            "type": "string",
+            "description": "RFC3339 timestamp."
+          },
+          "period_start": {
+            "type": "string",
+            "description": "RFC3339 timestamp."
+          },
+          "permission_id": {
+            "type": "string"
+          }
+        }
+      },
+      "AccessReviewRunView": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "permission_id",
+          "period_start",
+          "period_end",
+          "summary",
+          "created_at"
+        ],
+        "properties": {
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          },
+          "permission_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "summary": {}
+        }
+      },
+      "ApiKeyListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiKeyView"
+            }
+          }
+        }
+      },
+      "ApiKeyView": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "key_prefix",
+          "scopes",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "key_prefix": {
+            "type": "string"
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "revoked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AuditReadRow": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "action",
+          "resource_type",
+          "resource_id",
+          "created_at",
+          "metadata"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "metadata": {},
+          "resource_id": {
+            "type": "string"
+          },
+          "resource_type": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditVerifyRequest": {
+        "type": "object",
+        "properties": {
+          "partition_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`YYYY-MM`, or `None` to verify all partitions for the org."
+          }
+        }
+      },
+      "AuditVerifyResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "partitions_checked",
+          "rows_checked"
+        ],
+        "properties": {
+          "first_break": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "partitions_checked": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rows_checked": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "CapabilityPreviewResponse": {
         "type": "object",
         "required": [
@@ -8496,6 +9040,47 @@
           "role": {
             "type": "string",
             "description": "Public role id or system key."
+          }
+        }
+      },
+      "CreateApiKeyRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "RFC3339 timestamp, or `None` for no expiry."
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateApiKeyResponse": {
+        "type": "object",
+        "required": [
+          "key",
+          "secret"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/ApiKeyView"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Raw secret \u2014 returned only once, at creation time."
           }
         }
       },
@@ -8685,6 +9270,39 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "EntitlementRow": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "role_key",
+          "permission_id",
+          "effective_from"
+        ],
+        "properties": {
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": "string"
+          },
+          "permission_id": {
+            "type": "string"
+          },
+          "role_key": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
           }
         }
       },
@@ -9288,6 +9906,52 @@
           }
         }
       },
+      "RetentionConfigView": {
+        "type": "object",
+        "required": [
+          "default_retention_days",
+          "overrides",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "default_retention_days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overrides": {},
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RetentionDryRunResponse": {
+        "type": "object",
+        "required": [
+          "cutoff_date",
+          "partitions",
+          "would_affect_estimate"
+        ],
+        "properties": {
+          "cutoff_date": {
+            "type": "string"
+          },
+          "partitions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "would_affect_estimate": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "RoleListResponse": {
         "type": "object",
         "required": [
@@ -9385,6 +10049,22 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "RotateApiKeyResponse": {
+        "type": "object",
+        "required": [
+          "key",
+          "secret"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/ApiKeyView"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Raw secret \u2014 returned only once, at rotation time."
           }
         }
       },
@@ -9610,6 +10290,19 @@
           }
         }
       },
+      "UpdateRetentionRequest": {
+        "type": "object",
+        "properties": {
+          "default_retention_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "overrides": {}
+        }
+      },
       "UpsertRoleRequest": {
         "type": "object",
         "required": [
@@ -9675,6 +10368,34 @@
         "properties": {
           "token": {
             "type": "string"
+          }
+        }
+      },
+      "WhoCouldSeeResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitlementRow"
+            }
+          }
+        }
+      },
+      "WhoDidSeeResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditReadRow"
+            }
           }
         }
       },
@@ -20903,6 +21624,10 @@
     {
       "name": "dashboard",
       "description": "Phase 1.3 dashboard BFF widget descriptors"
+    },
+    {
+      "name": "governance",
+      "description": "Phase 2.6 access review, audit verification, retention, and API keys"
     },
     {
       "name": "sales-pipelines",

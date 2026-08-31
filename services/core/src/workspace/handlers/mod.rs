@@ -1538,6 +1538,7 @@ pub async fn preview_role_capabilities(
             effect,
             permission: PermissionId::from(p.permission_id.as_str()),
             scope: Scope::parse(&p.scope).unwrap_or(Scope::Organization),
+            conditions: vec![],
         });
     }
     let principal = Principal { roles, statements };

@@ -1,6 +1,6 @@
 //! Auth HTTP handlers — `/api/v1/auth/...`.
 
-mod flows;
+pub mod flows;
 pub mod types;
 
 use std::time::Duration;
@@ -76,6 +76,8 @@ pub fn router() -> Router<AppState> {
             "/api/v1/auth/sso/configs",
             get(flows::list_sso).post(flows::create_sso),
         )
+        .route("/api/v1/auth/sso/{id}/start", get(flows::sso_start))
+        .route("/api/v1/auth/sso/callback", get(flows::sso_callback))
         .route("/api/v1/auth/jwks.json", get(flows::jwks))
         .route("/api/v1/auth/jwks/rotate", post(flows::rotate_jwks))
 }

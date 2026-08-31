@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–2.4 merged; Phase 2.5 is this slice.
+Status: **Active** outline. Phase 0–2.5 merged; Phase 2.6 is this slice.
 
 ## Completed
 
@@ -20,49 +20,40 @@ Status: **Active** outline. Phase 0–2.4 merged; Phase 2.5 is this slice.
 | 2.2 | Attendance & Leave (People / hr-service) |
 | 2.3 | Payroll basics (`companyos-hr`): draft → calculate → approve → paid, journals via Finance HTTP, Temporal `PayrollRun` (ADR 021) |
 | 2.4 | Finance CoA, periods, bank rec, expense policy depth (ADR 022) |
+| 2.5 | Inventory & Procurement (`companyos-inventory`) |
 
-## Phase 2.5 — Inventory & Procurement (`companyos-inventory`) (this slice)
+## Phase 2.6 — Security & governance hardening (this slice)
 
-- New standalone service `companyos-inventory` (port 8093), API `/api/v1/inventory/...`,
-  events under `Context::Inventory`. Shares core Postgres; never touches `people_*` or
-  `finance_*` tables directly (journals + vendor bills go through Finance HTTP).
-- Authz: `inventory.item.read|write`, `inventory.warehouse.read|write`,
-  `inventory.stock.read`, `inventory.stock.move`, `inventory.supplier.read|write`,
-  `inventory.purchase_request.read|write`, `inventory.purchase_order.read|write`,
-  `inventory.goods_receipt.read|write`, `inventory.asset.read|write`
-- Schema (`inventory_*`, all RLS): `warehouse`, `item`, `stock_level` (cache) +
-  `stock_movement` (append-only source of truth), `supplier`, `purchase_request(_line)`,
-  `purchase_order(_line)`, `goods_receipt(_line)`, `asset`, `asset_assignment`,
-  `maintenance_schedule`, `idempotency`, `drift_alert`
-- Valuation: **Weighted Average** — receipts blend into `avg_unit_cost_minor`, issues cost
-  at the current average without changing it; `reconcile_stock` alerts on cache/ledger
-  drift instead of silently rewriting it (ADR 023)
-- Procure-to-pay: purchase request (draft → submit → Approvals routing → decide callback)
-  → purchase order (draft → issue) → goods receipt (draft, partial OK → post: stock
-  movement + PO status + one Dr Inventory / Cr AP journal to Finance, all-or-nothing) →
-  optional vendor-bill proxy to Finance (`vendor_bills.rs`)
-- Fixed assets: CRUD, assign/return (opaque `emp_…` reference, no People FK), straight-line
-  depreciation (posts Dr Depreciation Expense / Cr Accumulated Depreciation to Finance),
-  maintenance schedules + due list
-- Approval routing: `purchase_request` subject type added to `companyos-project`'s
-  approvals engine, default policy routes to the `manager` role; decide callback posts to
-  `/api/v1/inventory/purchase-requests/{id}/decide`
-- Finance: `inventory_receipt` / `inventory_cogs` / `inventory_depreciation` /
-  `vendor_bill` / `vendor_payment` added to the journal `source_type` allowlist;
-  `finance_vendor_bill` table + `/api/v1/finance/vendor-bills` (create, pay) added
-- Cut: multi-warehouse transfer approvals, lot/serial tracking, landed cost allocation,
-  cycle-count workflows, barcode/RFID scanning UI — all deferred past this slice
+Platform/governance — extend `crates/authz`, `companyos-core`, shared `audit_entry`. No new
+bounded context; thin governance module under core. Own tables keep `org_id` + RLS.
+
+- **ABAC** condition library (time, location, delegation, record state) wired into PDP
+  `decide_with_context`; fail-closed; tests for time window + record state
+- **Field-level permissions**: `hr.field.compensation_read|government_id_read|bank_read`,
+  `finance.field.bank_account_read|salary_journal_read` — never bypass
+  `hr.employee.read_sensitive`; UI hides fields the principal cannot read
+- **Access review**: who-could / who-did from `permission_entitlement_history` + audited
+  sensitive reads; kickoff + CSV/JSON export; DoD Q&A under two minutes
+- **Audit**: append-only hash-chained partitions (DB trigger) + verify job fails closed
+- **SSO**: OIDC login path (enterprise / feature-flag gated); dual mocked IdPs in tests;
+  SCIM deferred to Phase 4
+- **Retention**: per-org config + dry-run cutoff selection (no live prod-like purge)
+- **Secrets**: hashed org API keys with create/rotate/revoke
+- **SOC 2 Type I readiness**: `docs/compliance/` control mapping, DPIA + sub-processor templates
+- API: `/api/v1/governance/...` via gateway; Idempotency-Key on mutating endpoints
 
 ## Later (not this PR)
 
 | Phase | Notes |
 |-------|--------|
+| 3.x | Configurable workflows, public API, marketplace — **do not start** |
 | InvoiceDunning | Temporal dunning polish |
 | PDF / email | Nice-to-have |
 | Mobile | Flutter / Tauri |
+| 4.x | SCIM |
 
 ## Cut order if needed
 
-Cut full statutory filing (TDS/EIN/HMRC), multi-country tax engines, live bank
-payouts, and benefits marketplace before immutable runs, traceable payslips,
-leave/attendance-aware calc, journal post, self-service, and gated+audited salary reads.
+Cut live Okta+Azure AD in CI, CMEK, private connectivity, SCIM, and paid SOC 2 Type I
+attestation before access-review Q&A, field-level HR/Finance, hash-chain verify, OIDC SSO
+path + second mocked IdP, retention config, and in-repo control/evidence pack.

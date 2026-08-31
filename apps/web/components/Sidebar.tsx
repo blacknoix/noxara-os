@@ -145,6 +145,12 @@ const GROUPS: NavGroup[] = [
     label: 'Settings',
     items: [
       { href: '/settings', label: 'Organization', short: 'G', perm: 'workspace.org.read' },
+      {
+        href: '/settings/security',
+        label: 'Security',
+        short: 'Z',
+        perm: 'admin.access_review.read',
+      },
       { href: '/members', label: 'Members', short: 'P', perm: 'workspace.member.read' },
     ],
   },

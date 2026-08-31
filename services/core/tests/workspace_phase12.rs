@@ -450,6 +450,7 @@ async fn system_role_deny_matrix_unit() {
             }
             // Phase 2.3: Finance may read/approve payroll and post journals.
             // Phase 2.4: Finance owns CoA / periods / bank / expense policy.
+            // Phase 2.6: Finance may read field-level compensation/ID/bank data.
             if *role == Role::Finance
                 && matches!(
                     *perm,
@@ -462,6 +463,11 @@ async fn system_role_deny_matrix_unit() {
                         | "finance.bank.reconcile"
                         | "finance.expense_policy.manage"
                         | "finance.reimbursement.manage"
+                        | "hr.field.compensation_read"
+                        | "hr.field.government_id_read"
+                        | "hr.field.bank_read"
+                        | "finance.field.bank_account_read"
+                        | "finance.field.salary_journal_read"
                 )
             {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
@@ -469,6 +475,7 @@ async fn system_role_deny_matrix_unit() {
             }
             // Phase 2.1 People: Manager may write/onboard/offboard and read sensitive.
             // Phase 2.5 Inventory: Manager owns stock/procurement writes.
+            // Phase 2.6: Manager may read field-level compensation/ID/bank data.
             if *role == Role::Manager
                 && matches!(
                     *perm,
@@ -493,6 +500,9 @@ async fn system_role_deny_matrix_unit() {
                         | "inventory.purchase_order.write"
                         | "inventory.goods_receipt.write"
                         | "inventory.asset.write"
+                        | "hr.field.compensation_read"
+                        | "hr.field.government_id_read"
+                        | "hr.field.bank_read"
                 )
             {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));

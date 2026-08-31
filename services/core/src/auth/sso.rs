@@ -36,12 +36,19 @@ pub async fn sso_enabled_for_org(pool: &PgPool, org_id: Uuid) -> Result<bool, sq
     if !sso_globally_enabled() {
         return Ok(false);
     }
-    let row: Option<(bool,)> =
+    let flag_row: Option<(bool,)> =
         sqlx::query_as("SELECT enabled FROM org_feature_flag WHERE org_id = $1 AND flag = 'sso'")
             .bind(org_id)
             .fetch_optional(pool)
             .await?;
-    Ok(row.map(|(e,)| e).unwrap_or(false))
+    if flag_row.map(|(e,)| e).unwrap_or(false) {
+        return Ok(true);
+    }
+    let plan_row: Option<(String,)> = sqlx::query_as("SELECT plan FROM organization WHERE id = $1")
+        .bind(org_id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(plan_row.map(|(p,)| p == "enterprise").unwrap_or(false))
 }
 
 pub fn ensure_sso_admin(roles: &[String], request_id: &str) -> Result<(), AppError> {
@@ -114,9 +121,7 @@ pub async fn upsert_config(
         return Err("protocol must be saml or oidc".into());
     }
     let id = new_uuid_v7();
-    let public_id = PublicId::new(IdKind::Org, id); // reuse org prefix? better custom — use hel-like
-                                                    // Use a stable public id string without new IdKind for SSO: `sso_{uuid}`
-    let public = format!("sso_{id}");
+    let public = PublicId::new(IdKind::SsoConfig, id).as_str();
     let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
     set_session_org_id(&mut tx, org)
         .await
@@ -138,7 +143,6 @@ pub async fn upsert_config(
     .await
     .map_err(|e| e.to_string())?;
     tx.commit().await.map_err(|e| e.to_string())?;
-    let _ = public_id;
     Ok(SsoConfigView {
         id: public,
         org_id: org.to_public().as_str(),

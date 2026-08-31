@@ -28,6 +28,7 @@ use crate::auth::oauth::{self, OAuthProvider};
 use crate::auth::password;
 use crate::auth::sessions::{self, RefreshOutcome};
 use crate::auth::sso::{self, UpsertSsoRequest};
+use crate::auth::sso_login;
 use crate::state::AppState;
 
 fn refresh_from_cookie(headers: &HeaderMap) -> Option<String> {
@@ -1631,6 +1632,8 @@ pub async fn oauth_callback(
     .await
 }
 
+#[utoipa::path(get, path = "/api/v1/auth/sso/configs", tag = "auth",
+    responses((status = 200, body = SsoListResponse)))]
 pub async fn list_sso(
     State(state): State<AppState>,
     user: AuthUser,
@@ -1649,17 +1652,108 @@ pub async fn list_sso(
     Ok(Json(SsoListResponse { items }))
 }
 
+#[utoipa::path(post, path = "/api/v1/auth/sso/configs", tag = "auth",
+    request_body = UpsertSsoRequest, responses((status = 201, body = crate::auth::sso::SsoConfigView)))]
 pub async fn create_sso(
     State(state): State<AppState>,
     user: AuthUser,
+    headers: HeaderMap,
     Json(body): Json<UpsertSsoRequest>,
 ) -> Result<(StatusCode, Json<crate::auth::sso::SsoConfigView>), AppError> {
     sso::ensure_sso_admin(&user.roles, &user.ctx.request_id)?;
     sso::require_sso_feature(&state.pool, user.ctx.org_id.as_uuid(), &user.ctx.request_id).await?;
+
+    if let Some(key) = idempotency_key(&headers) {
+        if let Ok(Some((_, cached))) = idempotent_get(&state.pool, "sso.upsert", &key).await {
+            if let Ok(view) = serde_json::from_value::<crate::auth::sso::SsoConfigView>(cached) {
+                return Ok((StatusCode::CREATED, Json(view)));
+            }
+        }
+        let view = sso::upsert_config(&state.pool, user.ctx.org_id, body)
+            .await
+            .map_err(|e| {
+                AppError::new(ErrorCode::ValidationFailed, user.ctx.request_id.clone(), e)
+            })?;
+        let _ = idempotent_put(
+            &state.pool,
+            "sso.upsert",
+            &key,
+            201,
+            serde_json::to_value(&view).unwrap_or(serde_json::json!({})),
+        )
+        .await;
+        return Ok((StatusCode::CREATED, Json(view)));
+    }
+
     let view = sso::upsert_config(&state.pool, user.ctx.org_id, body)
         .await
         .map_err(|e| AppError::new(ErrorCode::ValidationFailed, user.ctx.request_id.clone(), e))?;
     Ok((StatusCode::CREATED, Json(view)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SsoStartQuery {
+    pub redirect_uri: Option<String>,
+}
+
+#[utoipa::path(get, path = "/api/v1/auth/sso/{id}/start", tag = "auth",
+    params(("id" = String, Path), ("redirect_uri" = Option<String>, Query)),
+    responses((status = 307, description = "Redirect to the IdP authorization endpoint")))]
+pub async fn sso_start(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Query(q): Query<SsoStartQuery>,
+    headers: HeaderMap,
+) -> Result<Redirect, AppError> {
+    let request_id = req_id(&headers);
+    let redirect_uri = q
+        .redirect_uri
+        .unwrap_or_else(|| format!("{}/api/v1/auth/sso/callback", mail::public_api_base()));
+    let url = sso_login::start_oidc_login(&state.pool, &id, &redirect_uri, &request_id).await?;
+    Ok(Redirect::temporary(&url))
+}
+
+#[utoipa::path(get, path = "/api/v1/auth/sso/callback", tag = "auth",
+    params(("code" = Option<String>, Query), ("state" = Option<String>, Query)),
+    responses((status = 200, body = TokenResponse)))]
+pub async fn sso_callback(
+    State(state): State<AppState>,
+    Query(q): Query<OAuthCallbackQuery>,
+    headers: HeaderMap,
+) -> Result<Response, AppError> {
+    let request_id = req_id(&headers);
+    let (ip, ua) = client_meta(&headers);
+    if let Some(err) = q.error {
+        return Err(AppError::new(
+            ErrorCode::Unauthorized,
+            request_id,
+            format!("sso error: {err}"),
+        ));
+    }
+    let code = q.code.ok_or_else(|| {
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            request_id.clone(),
+            "missing code",
+        )
+    })?;
+    let st = q.state.ok_or_else(|| {
+        AppError::new(
+            ErrorCode::ValidationFailed,
+            request_id.clone(),
+            "missing state",
+        )
+    })?;
+    let issued = sso_login::complete_oidc_login(
+        &state,
+        &st,
+        &code,
+        &request_id,
+        ip.as_deref(),
+        ua.as_deref(),
+    )
+    .await?;
+    Ok(token_response(issued))
 }
 
 pub async fn jwks(State(state): State<AppState>) -> Json<serde_json::Value> {
