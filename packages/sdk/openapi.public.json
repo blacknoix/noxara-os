@@ -18800,7 +18800,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "values": {}
+          "values": {},
+          "version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Optimistic concurrency version (If-Match on PATCH)."
+          }
         }
       },
       "CustomScriptDto": {
@@ -19023,6 +19028,199 @@
           }
         }
       },
+      "IndustryPackDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "version",
+          "marketplace_connector_key",
+          "entity_slugs",
+          "installed",
+          "seed_pipeline_stages",
+          "seed_expense_categories"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "entity_slugs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "installed": {
+            "type": "boolean"
+          },
+          "marketplace_connector_key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "seed_expense_categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "seed_pipeline_stages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "IndustryPackListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndustryPackSummary"
+            }
+          }
+        }
+      },
+      "IndustryPackSummary": {
+        "type": "object",
+        "description": "Catalogue row returned to API clients (package body omitted for list).",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "version",
+          "marketplace_connector_key",
+          "entity_slugs",
+          "installed"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "entity_slugs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "installed": {
+            "type": "boolean"
+          },
+          "marketplace_connector_key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "InstallPackResponse": {
+        "type": "object",
+        "required": [
+          "install_id",
+          "pack_id",
+          "pack_version",
+          "package",
+          "marketplace_connector_key",
+          "seed_applied"
+        ],
+        "properties": {
+          "install_id": {
+            "type": "string"
+          },
+          "marketplace_connector_key": {
+            "type": "string"
+          },
+          "marketplace_install_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pack_id": {
+            "type": "string"
+          },
+          "pack_version": {
+            "type": "string"
+          },
+          "package": {
+            "$ref": "#/components/schemas/ImportPackageResponse"
+          },
+          "seed_applied": {}
+        }
+      },
+      "PackMarketplace": {
+        "type": "object",
+        "description": "Marketplace listing metadata shipped with an industry pack.",
+        "required": [
+          "connector_key",
+          "slug",
+          "name",
+          "description",
+          "requested_scopes"
+        ],
+        "properties": {
+          "connector_key": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requested_scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "PackSeed": {
+        "type": "object",
+        "description": "Seed overlays applied on install (pipeline stages + expense categories).",
+        "required": [
+          "pipeline_stages",
+          "expense_categories"
+        ],
+        "properties": {
+          "expense_categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pipeline_stages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "PackageEntity": {
         "type": "object",
         "required": [
@@ -19130,6 +19328,25 @@
             "items": {
               "$ref": "#/components/schemas/CustomScriptDto"
             }
+          }
+        }
+      },
+      "UninstallPackResponse": {
+        "type": "object",
+        "required": [
+          "pack_id",
+          "status",
+          "note"
+        ],
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "pack_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
           }
         }
       },
@@ -19618,6 +19835,10 @@
     {
       "name": "custom-packages",
       "description": "Export / additive import packages"
+    },
+    {
+      "name": "custom-industry-packs",
+      "description": "Phase 4.5 industry vertical packs"
     }
   ],
   "x-companyos-deprecation-policy": {

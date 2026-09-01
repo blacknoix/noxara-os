@@ -1317,6 +1317,7 @@ class CustomRecordDto(BaseModel):
     id: str
     updated_at: str
     values: str
+    version: int | None = None
 
 class CustomScriptDto(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1991,6 +1992,32 @@ class InboxSummaryDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     pending_for_me: int
 
+class IndustryPackDetail(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str
+    entity_slugs: list[str]
+    id: str
+    installed: bool
+    marketplace_connector_key: str
+    name: str
+    seed_expense_categories: list[str]
+    seed_pipeline_stages: list[str]
+    version: str
+
+class IndustryPackListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[IndustryPackSummary]
+
+class IndustryPackSummary(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str
+    entity_slugs: list[str]
+    id: str
+    installed: bool
+    marketplace_connector_key: str
+    name: str
+    version: str
+
 class IngestResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     upserted: bool
@@ -2018,6 +2045,16 @@ class InsightsResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     empty_reason: str | None = None
     observations: list[InsightObservation]
+
+class InstallPackResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    install_id: str
+    marketplace_connector_key: str
+    marketplace_install_id: str | None = None
+    pack_id: str
+    pack_version: str
+    package: ImportPackageResponse
+    seed_applied: str
 
 class InventoryAssetDto(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2685,6 +2722,19 @@ class OrgResponse(BaseModel):
     plan: str
     region: str
     timezone: str
+
+class PackMarketplace(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    connector_key: str
+    description: str
+    name: str
+    requested_scopes: list[str]
+    slug: str
+
+class PackSeed(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    expense_categories: list[str]
+    pipeline_stages: list[str]
 
 class PackageEntity(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3919,6 +3969,12 @@ class TriggerCatalogueEntry(BaseModel):
 class TriggerCatalogueResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[TriggerCatalogueEntry]
+
+class UninstallPackResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    note: str
+    pack_id: str
+    status: str
 
 class UpdateAiSettingsRequest(BaseModel):
     model_config = ConfigDict(extra="allow")

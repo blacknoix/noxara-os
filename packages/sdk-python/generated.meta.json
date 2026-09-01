@@ -2,6 +2,6 @@
   "generator": "companyos-python-sdk-gen@1.0.0",
   "source": "openapi.public.json",
   "path_count": 29,
-  "schema_count": 584,
-  "content_sha256": "1f0e73d97113b68eb3a90246b49b19026cf6922356c641f60ad84e49a7b9ed16"
+  "schema_count": 591,
+  "content_sha256": "fa98a2567812fffba9bddb48f89559b2b8831bd1b1dae007222526125533993b"
 }

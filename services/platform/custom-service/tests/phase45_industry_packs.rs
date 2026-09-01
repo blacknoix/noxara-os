@@ -413,7 +413,7 @@ async fn industry_packs_install_without_core_branching() {
             "values": {
                 "title": "Acme retainers",
                 "status": "active",
-                "retainer_amount": 150000
+                "retainer_amount": { "amount_minor": 150000, "currency": "USD" }
             }
         })),
     )
@@ -429,7 +429,7 @@ async fn industry_packs_install_without_core_branching() {
             "values": {
                 "sku": "TEE-001",
                 "name": "Logo Tee",
-                "list_price": 2500,
+                "list_price": { "amount_minor": 2500, "currency": "USD" },
                 "active": true,
                 "category": "apparel"
             }
