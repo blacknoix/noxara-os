@@ -31,10 +31,15 @@ if command -v sudo >/dev/null 2>&1; then
     || true
 fi
 
-echo "==> Applying core migrations (idempotent)…"
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/001_init.sql"
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/002_auth.sql"
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/services/core/migrations/003_workspace.sql"
+echo "==> Applying core migrations (idempotent, advisory-locked)…"
+# One session so the lock is held across DDL (same key as companyos_tenancy::SCHEMA_MIGRATION_LOCK_KEY).
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<SQL
+SELECT pg_advisory_lock(x'00434F534D494701'::bigint);
+\i $ROOT/services/core/migrations/001_init.sql
+\i $ROOT/services/core/migrations/002_auth.sql
+\i $ROOT/services/core/migrations/003_workspace.sql
+SELECT pg_advisory_unlock(x'00434F534D494701'::bigint);
+SQL
 
 PASS_HASH="$(cd "$ROOT" && cargo run -q -p companyos-core --example hash_password -- "$SEED_PASSWORD" | tail -n 1)"
 

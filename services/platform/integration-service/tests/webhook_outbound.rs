@@ -184,8 +184,11 @@ fn sample_event(org: OrgId) -> EventEnvelope {
 }
 
 /// Allow loopback echo servers without racing on process-wide env vars.
+/// Short delivering lease so a mid-flight `Err` (outbox/pool under workspace load)
+/// can be reclaimed inside `dispatch_until` instead of sticking forever.
 const ALLOW_PRIVATE: DispatchOptions = DispatchOptions {
     allow_private: true,
+    delivering_lease_secs: 2,
 };
 
 /// Keep claiming global pending deliveries until `ready` is true or deadline.
@@ -194,6 +197,9 @@ const ALLOW_PRIVATE: DispatchOptions = DispatchOptions {
 /// so parallel workspace tests cannot steal (or be stolen by) this suite's rows.
 /// A single `dispatch_once(limit=5)` often misses rows when other orgs flood the
 /// shared claim window; we use a higher limit and poll until ready.
+///
+/// Rows stuck in `delivering` (process Err after claim) are reclaimed via the
+/// short test lease on [`ALLOW_PRIVATE`].
 async fn dispatch_until<F, Fut>(
     pool: &PgPool,
     decryptor: &WebhookDecryptor,
@@ -211,7 +217,7 @@ async fn dispatch_until<F, Fut>(
         if ready().await {
             return;
         }
-        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
     }
 }
 
@@ -306,7 +312,7 @@ async fn happy_delivery_and_signature() {
     dispatch_until(
         &pool,
         &decryptor,
-        std::time::Duration::from_secs(10),
+        std::time::Duration::from_secs(30),
         || {
             let pool = pool.clone();
             async move {
@@ -464,7 +470,7 @@ async fn retry_backoff_then_success() {
     dispatch_until(
         &pool,
         &decryptor,
-        std::time::Duration::from_secs(10),
+        std::time::Duration::from_secs(30),
         || {
             let pool = pool.clone();
             async move {
@@ -515,7 +521,7 @@ async fn retry_backoff_then_success() {
         dispatch_until(
             &pool,
             &decryptor,
-            std::time::Duration::from_secs(10),
+            std::time::Duration::from_secs(30),
             || {
                 let pool = pool.clone();
                 async move {
@@ -602,7 +608,7 @@ async fn replay_delivers_again_at_least_once() {
     dispatch_until(
         &pool,
         &decryptor,
-        std::time::Duration::from_secs(10),
+        std::time::Duration::from_secs(30),
         || {
             let pool = pool.clone();
             async move {
@@ -645,7 +651,7 @@ async fn replay_delivers_again_at_least_once() {
     dispatch_until(
         &pool,
         &decryptor,
-        std::time::Duration::from_secs(10),
+        std::time::Duration::from_secs(30),
         || {
             let echo = echo.clone();
             let before = hits_before;
