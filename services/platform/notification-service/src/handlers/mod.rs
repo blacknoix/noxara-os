@@ -1,10 +1,11 @@
+pub mod devices;
 pub mod digest_run;
 pub mod feed;
 pub mod ingest;
 pub mod preferences;
 pub mod sse;
 
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use axum::Router;
 
 use crate::state::AppState;
@@ -16,6 +17,14 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/notifications/preferences",
             get(preferences::get_preferences).put(preferences::put_preferences),
+        )
+        .route(
+            "/api/v1/notifications/devices",
+            get(devices::list_devices).post(devices::register_device),
+        )
+        .route(
+            "/api/v1/notifications/devices/{id}",
+            delete(devices::unregister_device),
         )
         .route(
             "/api/v1/notifications/internal/ingest",

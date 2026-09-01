@@ -21,8 +21,15 @@ describe('client parity matrix', () => {
       expect(md, `missing feature row: ${feature}`).toContain(feature);
     }
     expect(md).toContain('implemented');
-    expect(md).toContain('not-yet');
     expect(md).toContain('last-write-wins');
     expect(md).toContain('If-Match');
+    // Phase 1.11 shipped Flutter + Tauri shells for the high-frequency set.
+    expect(md).toContain('apps/mobile');
+    expect(md).toContain('apps/desktop');
+    expect(md).toContain('companyos://record/');
+    expect(md).toContain('FakeBiometricService');
+    expect(md).toContain('out-of-scope');
+    // Auth row: web + mobile both implemented
+    expect(md).toMatch(/\|\s*Auth[^\n]*\|\s*implemented\s*\|\s*implemented\s*\|/);
   });
 });

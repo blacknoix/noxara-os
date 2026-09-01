@@ -61,6 +61,12 @@ default-members = [
     "services/ai/ai-service",
 ]
 
+# Desktop / mobile shells are separate Cargo/Flutter projects (Phase 1.11).
+exclude = [
+    "apps/desktop/shell-core",
+    "apps/desktop/src-tauri",
+]
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"

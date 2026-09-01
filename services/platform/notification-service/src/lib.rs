@@ -32,8 +32,13 @@ pub fn split_sql(sql: &str) -> Vec<String> {
 
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     companyos_tenancy::with_schema_migration_lock(pool, || async {
-        for stmt in split_sql(include_str!("../migrations/001_notifications.sql")) {
-            companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+        for sql in [
+            include_str!("../migrations/001_notifications.sql"),
+            include_str!("../migrations/002_push_devices.sql"),
+        ] {
+            for stmt in split_sql(sql) {
+                companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+            }
         }
         Ok(())
     })

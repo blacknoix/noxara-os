@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CompanyOS</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg0: #0b3d32;
+        --bg1: #147d64;
+        --fg: #f5faf8;
+      }
+      html, body {
+        margin: 0;
+        height: 100%;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        background: radial-gradient(120% 80% at 10% 0%, var(--bg1), var(--bg0));
+        color: var(--fg);
+      }
+      #boot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 12px;
+        padding: 24px;
+        text-align: center;
+      }
+      h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; }
+      #frame {
+        border: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+      }
+      #offline {
+        display: none;
+        max-width: 640px;
+        background: rgba(0,0,0,0.25);
+        padding: 16px 20px;
+        border-radius: 12px;
+        text-align: left;
+        white-space: pre-wrap;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="boot">
+      <h1>CompanyOS</h1>
+      <p id="status">Connecting to web shell…</p>
+      <pre id="offline"></pre>
+    </div>
+    <iframe id="frame" title="CompanyOS Web"></iframe>
+    <script type="module">
+      const boot = document.getElementById("boot");
+      const status = document.getElementById("status");
+      const offline = document.getElementById("offline");
+      const frame = document.getElementById("frame");
+
+      async function invoke(cmd, args) {
+        if (window.__TAURI__?.core?.invoke) {
+          return window.__TAURI__.core.invoke(cmd, args ?? {});
+        }
+        // Browser fallback for local preview without Tauri.
+        if (cmd === "get_web_url") return "http://127.0.0.1:3000";
+        if (cmd === "load_cached_dashboard") return null;
+        return null;
+      }
+
+      async function bootShell() {
+        const url = await invoke("get_web_url");
+        try {
+          const res = await fetch(url, { mode: "no-cors" });
+          // no-cors opaque is fine — treat as reachable attempt
+          void res;
+          frame.src = url;
+          frame.style.display = "block";
+          boot.style.display = "none";
+          await invoke("cache_dashboard_hint", { url });
+        } catch (e) {
+          status.textContent = "Offline — showing last cached dashboard";
+          const cached = await invoke("load_cached_dashboard");
+          offline.style.display = "block";
+          offline.textContent = cached
+            ? JSON.stringify(cached, null, 2)
+            : "No cached dashboard yet.";
+        }
+      }
+
+      bootShell();
+    </script>
+  </body>
+</html>

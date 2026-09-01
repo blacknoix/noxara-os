@@ -4,7 +4,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use utoipa::OpenApi;
 
-use crate::handlers::{feed, ingest, preferences, sse};
+use crate::handlers::{devices, feed, ingest, preferences, sse};
 use crate::state::AppState;
 use crate::types::*;
 
@@ -15,6 +15,9 @@ use crate::types::*;
         feed::mark_read,
         preferences::get_preferences,
         preferences::put_preferences,
+        devices::list_devices,
+        devices::register_device,
+        devices::unregister_device,
         ingest::ingest,
         sse::sse_token,
     ),
@@ -27,15 +30,19 @@ use crate::types::*;
         MessageResponse,
         SseTokenResponse,
         IngestResponse,
+        RegisterDeviceRequest,
+        RegisterDeviceResponse,
+        DeviceDto,
+        DeviceListResponse,
     )),
     tags(
-        (name = "notifications", description = "In-app notification feed and preferences"),
+        (name = "notifications", description = "In-app notification feed, preferences, and push device tokens"),
         (name = "notifications-internal", description = "Event ingest (service-to-service)"),
     ),
     info(
         title = "CompanyOS Notification API",
         version = "0.1.0",
-        description = "Phase 1.8 — notification fan-out with authz and preferences."
+        description = "Phase 1.8 + 1.11 — notification fan-out, preferences, push device registration (no live FCM/APNs)."
     )
 )]
 pub struct ApiDoc;

@@ -1,12 +1,14 @@
 # Client parity matrix (Phase 4.5 / 1.11 surface)
 
-Published matrix of **web** vs intended **mobile** vs **desktop** clients for the
-1.11 product surface. Native Flutter / Tauri shells were **not** shipped in 1.11
-and are not feature-complete in this phase — see status column.
+Published matrix of **web** vs **mobile (Flutter)** vs **desktop (Tauri)** for the
+1.11 high-frequency product surface. Native shells ship in Phase 1.11 as a
+**subset** of web (PRD 5.8 / high-frequency set) — not full Phase 2–4 module
+parity.
 
-CI references this file via `apps/web/lib/offline/parity-matrix.test.ts`.
+CI references this file via `apps/web/lib/offline/parity-matrix.test.ts` and
+Flutter / desktop-shell unit tests.
 
-## Conflict / offline rule (web)
+## Conflict / offline rule (web + Flutter)
 
 - Mutations use stable `Idempotency-Key` so offline replay cannot duplicate
   expenses / invoices / other POSTs.
@@ -14,35 +16,41 @@ CI references this file via `apps/web/lib/offline/parity-matrix.test.ts`.
 - **Deterministic resolve:** last-write-wins with matching `If-Match` version.
   Stale writers receive **409 Conflict**; the loser is **not** silently dropped.
   The web shell shows a conflict alert and requires explicit acknowledgement.
+  Flutter queues with the same key semantics; conflict UI is thinner on mobile.
 
 ## Matrix
 
-| Feature | Web (`apps/web`) | Mobile (Flutter) | Desktop (Tauri) | Notes |
+| Feature | Web (`apps/web`) | Mobile (Flutter `apps/mobile`) | Desktop (Tauri `apps/desktop`) | Notes |
 | --- | --- | --- | --- | --- |
-| Auth (login / MFA / refresh) | implemented | not-yet | thin/not-yet | Web only |
-| Org switch | implemented | not-yet | thin/not-yet | Web only |
-| Dashboard | implemented | not-yet | thin/not-yet | Offline read-cache on web |
-| Approvals (list / decide) | implemented | not-yet | thin/not-yet | Offline queue on web |
-| Tasks (board / move) | implemented | not-yet | thin/not-yet | If-Match + offline queue |
-| Deal quick-update | implemented | not-yet | thin/not-yet | If-Match on pipeline move |
-| Expense capture | implemented | not-yet | thin/not-yet | Idempotency-Key + offline queue |
-| Copilot | implemented | not-yet | thin/not-yet | Web AI panel |
-| Industry pack install | implemented | not-yet | thin/not-yet | Settings → Industry packs |
-| Offline conflict UI | implemented | not-yet | thin/not-yet | Banner + ConfirmDialog |
-| Store-signed iOS/Android | out-of-scope | out-of-scope | n/a | Remains for a later native push |
-| Crashlytics / APNs / FCM | out-of-scope | out-of-scope | out-of-scope | Not wired |
+| Auth (login / MFA / refresh) | implemented | implemented | thin/wrap-web | Mobile uses `/api/v1/auth/*`; MFA challenge surfaced; desktop wraps web auth |
+| Org switch | implemented | implemented | thin/wrap-web | `POST /auth/switch-org` → new JWT; deep links may switch org first |
+| Dashboard | implemented | implemented | thin/wrap-web + offline cache | Flutter read-cache; Tauri offline shell shows last cached dashboard |
+| Approvals (list / decide) | implemented | implemented | thin/wrap-web | Work tab; Idempotency-Key on decide |
+| Tasks (board / move) | implemented | implemented | thin/wrap-web | List + navigate; not full board parity |
+| Deal quick-update | implemented | implemented | thin/wrap-web | Patch stage with If-Match when version known |
+| Expense capture | implemented | implemented | thin/wrap-web | Camera-first mobile; offline queue + same Idempotency-Key |
+| Copilot | implemented | not-yet | thin/wrap-web | Desktop global hotkey ⌥Space / Alt+Space focuses web copilot |
+| Industry pack install | implemented | not-yet | thin/wrap-web | Settings on web; not in 1.11 mobile tabs |
+| Offline conflict UI | implemented | thin | thin/wrap-web | Flutter: queue + key stability; full conflict dialog later |
+| Push notifications | n/a (SSE) | interface + fake | native notify API | Device token register API; **no live FCM/APNs in CI** |
+| Biometric unlock | n/a | interface + fake | n/a | FakeBiometricService in CI; real biometrics are a store follow-up |
+| Deep links `companyos://record/{id}` | n/a | implemented | implemented | Org via `?org=` / path; unit-tested open-in-correct-org |
+| Store-signed iOS/Android/macOS | out-of-scope | out-of-scope | out-of-scope | Linux CI only; Xcode/signed artifacts deferred |
+| Crashlytics / APNs / FCM live | out-of-scope | out-of-scope | out-of-scope | Not wired |
 
 ## Status legend
 
 | Status | Meaning |
 | --- | --- |
 | `implemented` | Available in this repo and covered by tests where marked |
-| `thin/not-yet` | Optional thin shell not shipped; parity row reserved |
-| `not-yet` | Intended client does not exist yet |
-| `out-of-scope` | Explicitly deferred (store submission, push providers) |
+| `thin/wrap-web` | Tauri loads `apps/web`; shell features (tray, hotkey, deep link, offline cache) are native |
+| `thin` | Partial client support vs web |
+| `not-yet` | Intentionally not in this 1.11 slice |
+| `out-of-scope` | Explicitly deferred (store submission, push providers, crash reporting) |
 
 ## What remains for native store work
 
-1. Flutter app scaffold + feature parity against this matrix
-2. Tauri desktop wrapper (Linux CI first; signed macOS/Windows later)
-3. Store signing, Crashlytics, APNs/FCM — only after shells exist
+1. Store-signed iOS / Android / macOS artifacts and notarization
+2. Live Crashlytics / Sentry, APNs, FCM credentials
+3. Broader mobile feature parity with Phase 2–4 modules (later client-parity)
+4. Full Flutter conflict UI matching web ConfirmDialog

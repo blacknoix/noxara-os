@@ -424,3 +424,71 @@ async fn idempotent_ingest_duplicate_delivery() {
     assert_eq!(b2["duplicate"], true);
     assert_eq!(b2["notified"], 0);
 }
+
+#[tokio::test]
+async fn push_device_register_upsert_no_duplicate() {
+    let Some(seeded) = seed("notif-device-secret").await else {
+        eprintln!("skip: no TEST_DATABASE_URL");
+        return;
+    };
+    let app = notif_app(seeded.pool.clone(), seeded.ring.clone());
+
+    let body = serde_json::to_vec(&json!({
+        "platform": "fake",
+        "push_token": "ci-fake-token-1",
+        "device_label": "phase111-test"
+    }))
+    .unwrap();
+
+    let res1 = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/notifications/devices")
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", seeded.member_token))
+                .body(Body::from(body.clone()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res1.status(), StatusCode::CREATED);
+    let b1: Value =
+        serde_json::from_slice(&res1.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let id1 = b1["id"].as_str().unwrap().to_string();
+
+    let res2 = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/notifications/devices")
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", seeded.member_token))
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res2.status(), StatusCode::OK);
+    let b2: Value =
+        serde_json::from_slice(&res2.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    assert_eq!(b2["id"].as_str().unwrap(), id1);
+
+    let list = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/v1/notifications/devices")
+                .header("authorization", format!("Bearer {}", seeded.member_token))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(list.status(), StatusCode::OK);
+    let lb: Value =
+        serde_json::from_slice(&list.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    assert_eq!(lb["items"].as_array().unwrap().len(), 1);
+}
