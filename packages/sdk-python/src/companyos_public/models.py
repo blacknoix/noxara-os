@@ -144,9 +144,9 @@ class ApiKeyExchangeResponse(BaseModel):
     access_token: str
     api_key_id: str
     org_id: str
-    scopes: list[str]
     rate_limit_per_minute: int
-    rate_limit_rpm: int | None = None  # deprecated
+    rate_limit_rpm: str | None = None  # deprecated
+    scopes: list[str]
 
 class ApiKeyListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -280,6 +280,11 @@ class AssignAssetRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     assignee_employee_public_id: str
     notes: str | None = None
+
+class AssignTerritoryRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    customer_id: str | None = None
+    deal_id: str | None = None
 
 class AttendanceDto(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -432,6 +437,33 @@ class CapabilityPreviewResponse(BaseModel):
     allowed: list[str]
     denied_sensitive: list[str]
     role_id: str
+
+class CapacityAllocationDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    capacity_minutes: int
+    created_at: str
+    id: str
+    membership_user_id: str
+    period_end: str
+    period_start: str
+    project_id: str | None = None
+    updated_at: str
+
+class CapacityAllocationListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[CapacityAllocationDto]
+    total: int
+
+class CapacityOverloadResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[CapacityOverloadRow]
+
+class CapacityOverloadRow(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    booked_minutes: int
+    capacity_minutes: int
+    member_id: str
+    overload_minutes: int
 
 class CardTransactionDto(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -645,6 +677,14 @@ class CreateBankAccountRequest(BaseModel):
     ledger_account_id: str
     name: str
 
+class CreateCapacityAllocationRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    capacity_minutes: int
+    membership_user_id: str
+    period_end: str
+    period_start: str
+    project_id: str | None = None
+
 class CreateCommentRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     body: str
@@ -735,6 +775,12 @@ class CreateDocumentRequest(BaseModel):
     file_id: str | None = None
     title: str
 
+class CreateDunningProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    is_default: bool | None = None
+    name: str
+    steps: list[DunningStepDto]
+
 class CreateEmployeeRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     bank_details: str | None = None
@@ -753,6 +799,13 @@ class CreateEmployeeRequest(BaseModel):
     title: str | None = None
     user_id: str | None = None
     work_email: str | None = None
+
+class CreateFinanceEntityRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    code: str
+    currency: str | None = None
+    is_default: bool | None = None
+    name: str
 
 class CreateFiscalPeriodRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -822,6 +875,7 @@ class CreateInvoiceRequest(BaseModel):
     currency: str
     customer_id: str
     due_date: str | None = None
+    entity_id: str | None = None
     lines: list[InvoiceLineInput]
     notes: str | None = None
     terms: str | None = None
@@ -878,11 +932,39 @@ class CreateMaintenanceScheduleRequest(BaseModel):
     notes: str | None = None
     title: str
 
+class CreateMeetingSummaryRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    calendar_event_id: str
+    starts_at: str | None = None
+    title: str | None = None
+    transcript: str | None = None
+
+class CreateOrderLineRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    discount_minor: int | None = None
+    product_id: str | None = None
+    quantity: int
+    tax_rate_bps: int | None = None
+    unit_price_minor: int
+
+class CreateOrderRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    currency: str | None = None
+    customer_id: str
+    deal_id: str | None = None
+    lines: list[CreateOrderLineRequest] | None = None
+    notes: str | None = None
+    owner_user_id: str | None = None
+    quote_id: str | None = None
+    territory_id: str | None = None
+
 class CreateOrgRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     business_type: str | None = None
     currency: str | None = None
     name: str
+    region: str | None = None
     timezone: str | None = None
 
 class CreatePayrollComponentRequest(BaseModel):
@@ -1035,12 +1117,40 @@ class CreateTaskRequest(BaseModel):
     status: str | None = None
     title: str
 
+class CreateTaxGroupRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    name: str
+
+class CreateTaxRateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    component_name: str | None = None
+    is_component: bool | None = None
+    name: str
+    rate_bps: int
+    supersedes_id: str | None = None
+    tax_group_id: str | None = None
+    valid_from: str
+    valid_to: str | None = None
+
 class CreateTeamRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     department_id: str | None = None
     lead_user_id: str | None = None
     name: str
     parent_team_id: str | None = None
+
+class CreateTerritoryRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    name: str
+    owner_user_id: str | None = None
+
+class CreateTimesheetRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    membership_user_id: str | None = None
+    notes: str | None = None
+    week_start: str
 
 class CreateVendorBillFromReceiptRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1065,9 +1175,9 @@ class CreateWarehouseRequest(BaseModel):
 
 class CreateWebhookEndpointRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
-    url: str
     description: str | None = None
     event_types: list[str]
+    url: str
 
 class CreateWebhookEndpointResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1222,6 +1332,10 @@ class DecideReimbursementRequest(BaseModel):
     approve: bool
     note: str | None = None
 
+class DecideTimesheetRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    note: str | None = None
+
 class DelegationDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     approval_id: str | None = None
@@ -1315,6 +1429,38 @@ class DrillResponse(BaseModel):
     filtered_by_permission: bool
     metric: str
     records: list[DrillRecord]
+
+class DunningProfileDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created_at: str
+    id: str
+    is_default: bool
+    name: str
+    steps: list[DunningStepDto]
+    updated_at: str
+    version: int
+
+class DunningProfileListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[DunningProfileDto]
+    total: int
+
+class DunningScheduleQuery(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    customer_id: str | None = None
+    invoice_id: str | None = None
+
+class DunningScheduleResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    profile_id: str
+    schedule_offsets_days: list[int]
+    steps: list[DunningStepDto]
+
+class DunningStepDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    channel: str
+    label: str
+    offset_days: int
 
 class DuplicateCheckResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1444,6 +1590,21 @@ class FinanceCustomerDto(BaseModel):
 class FinanceCustomerListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[FinanceCustomerDto]
+    total: int
+
+class FinanceEntityDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    code: str
+    created_at: str
+    currency: str
+    id: str
+    is_default: bool
+    name: str
+    updated_at: str
+
+class FinanceEntityListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[FinanceEntityDto]
     total: int
 
 class FireScheduleRequest(BaseModel):
@@ -1678,8 +1839,18 @@ class InsightObservation(BaseModel):
     estimate: bool
     evidence: list[Citation]
     id: str
+    insight_type: str | None = None
+    proposal_id: str | None = None
+    status: str | None = None
     suggested_action: str | None = None
+    suggested_action_detail: str | None = None
     title: str
+
+class InsightsRefreshResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created: int
+    observations: list[InsightObservation]
+    pending_proposals: list[str]
 
 class InsightsResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1758,6 +1929,7 @@ class InvoiceDto(BaseModel):
     customer_id: str
     discount_minor: int
     due_date: str | None = None
+    entity_id: str | None = None
     fx_rate_date: str | None = None
     fx_rate_den: str | None = None
     fx_rate_num: str | None = None
@@ -1792,8 +1964,10 @@ class InvoiceLineDto(BaseModel):
     id: str
     line_total_minor: int
     quantity: int
+    tax_group_id: str | None = None
     tax_minor: int
     tax_rate_bps: int
+    tax_rate_id: str | None = None
     unit_price_minor: int
 
 class InvoiceLineInput(BaseModel):
@@ -1801,7 +1975,9 @@ class InvoiceLineInput(BaseModel):
     description: str
     discount_minor: int | None = None
     quantity: int
+    tax_group_id: str | None = None
     tax_rate_bps: int | None = None
+    tax_rate_id: str | None = None
     unit_price_minor: int
 
 class InvoiceListResponse(BaseModel):
@@ -1985,6 +2161,7 @@ class LedgerAccountTreeResponse(BaseModel):
 class ListQuery(BaseModel):
     model_config = ConfigDict(extra="allow")
     customer_id: str | None = None
+    entity_id: str | None = None
     limit: str | None = None
     offset: str | None = None
     q: str | None = None
@@ -2040,6 +2217,24 @@ class MeResponse(BaseModel):
 
 class MeasureKind(BaseModel):
     model_config = ConfigDict(extra="allow")
+
+class MeetingSummariesListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[MeetingSummaryView]
+
+class MeetingSummaryView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    accepted_at: str | None = None
+    accepted_by: str | None = None
+    action_items: str
+    calendar_connector: str
+    calendar_event_id: str
+    created_at: str
+    id: str
+    public_id: str
+    status: str
+    summary_markdown: str
+    transcript: str | None = None
 
 class MemberListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2242,6 +2437,52 @@ class OnboardResponse(BaseModel):
     tasks: list[HrTaskDto]
     workflow_id: str
 
+class OrderDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created_at: str
+    currency: str
+    customer_id: str
+    deal_id: str | None = None
+    discount_minor: int
+    id: str
+    lines: list[OrderLineDto]
+    notes: str | None = None
+    owner_user_id: str | None = None
+    quote_id: str | None = None
+    status: str
+    subtotal_minor: int
+    tax_minor: int
+    territory_id: str | None = None
+    total_minor: int
+    updated_at: str
+    version: int
+
+class OrderFromDealRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    deal_id: str
+
+class OrderFromQuoteRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    quote_id: str
+
+class OrderLineDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str
+    discount_minor: int
+    id: str
+    line_total_minor: int
+    position: int
+    product_id: str | None = None
+    quantity: int
+    tax_minor: int
+    tax_rate_bps: int
+    unit_price_minor: int
+
+class OrderListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[OrderDto]
+    total: int
+
 class OrgBoundsDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     max_concurrent: int
@@ -2258,6 +2499,7 @@ class OrgResponse(BaseModel):
     numbering_series: str
     org_id: str
     plan: str
+    region: str
     timezone: str
 
 class PasswordResetConfirm(BaseModel):
@@ -2268,6 +2510,15 @@ class PasswordResetConfirm(BaseModel):
 class PasswordResetRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     email: str
+
+class PatchTimeEntryRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    billable: str | None = None
+    entry_date: str | None = None
+    minutes: str | None = None
+    notes: str | None = None
+    project_id: str | None = None
+    task_id: str | None = None
 
 class PayVendorBillRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2743,6 +2994,7 @@ class RegisterRequest(BaseModel):
     email: str
     org_name: str
     password: str
+    region: str | None = None
 
 class RegisterResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2774,6 +3026,11 @@ class RejectQuoteRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     reason: str | None = None
 
+class RenewalPipelineResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[ContractDto]
+    within_days: int
+
 class ReopenPeriodRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     reason: str
@@ -2789,6 +3046,7 @@ class ReportDefinition(BaseModel):
     group_by: list[str] | None = None
     metric: str
     org_id: str | None = None
+    region: str | None = None
     visualization: str | None = None
 
 class ReportDto(BaseModel):
@@ -2980,6 +3238,10 @@ class SessionView(BaseModel):
 class SessionsListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[SessionSummary]
+
+class SetCustomerDunningProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    profile_id: str
 
 class SimulateQueryRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3215,6 +3477,48 @@ class TaskListResponse(BaseModel):
     items: list[TaskDto]
     total: int
 
+class TaxGroupDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created_at: str
+    description: str | None = None
+    id: str
+    name: str
+
+class TaxGroupListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[TaxGroupDto]
+    total: int
+
+class TaxRateDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    component_name: str | None = None
+    created_at: str
+    id: str
+    is_component: bool
+    name: str
+    rate_bps: int
+    supersedes_id: str | None = None
+    tax_group_id: str | None = None
+    valid_from: str
+    valid_to: str | None = None
+
+class TaxRateListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[TaxRateDto]
+
+class TaxResolveQuery(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    as_of: str | None = None
+    group_id: str | None = None
+    rate_id: str | None = None
+
+class TaxResolveResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    as_of: str
+    rate_bps: int
+    tax_group_id: str | None = None
+    tax_rate_id: str | None = None
+
 class TeamListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[TeamView]
@@ -3226,6 +3530,44 @@ class TeamView(BaseModel):
     name: str
     parent_team_id: str | None = None
     team_id: str
+
+class TerritoryAssignmentDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    assigned_at: str
+    customer_id: str | None = None
+    deal_id: str | None = None
+    territory_id: str
+
+class TerritoryDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created_at: str
+    description: str | None = None
+    id: str
+    name: str
+    owner_user_id: str | None = None
+    updated_at: str
+    version: int
+
+class TerritoryListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[TerritoryDto]
+    total: int
+
+class TimeEntryDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    billable: bool
+    created_at: str
+    entry_date: str
+    id: str
+    membership_user_id: str
+    minutes: int
+    notes: str | None = None
+    project_id: str
+    status: str
+    task_id: str | None = None
+    timesheet_id: str | None = None
+    updated_at: str
+    version: int
 
 class TimelineEventDto(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3239,6 +3581,27 @@ class TimelineEventDto(BaseModel):
 class TimelineResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[TimelineEventDto]
+
+class TimesheetDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    approval_id: str | None = None
+    approved_at: str | None = None
+    approved_by: str | None = None
+    created_at: str
+    entries: list[TimeEntryDto]
+    id: str
+    membership_user_id: str
+    notes: str | None = None
+    status: str
+    submitted_at: str | None = None
+    updated_at: str
+    version: int
+    week_start: str
+
+class TimesheetListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[TimesheetDto]
+    total: int
 
 class TokenResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3318,6 +3681,19 @@ class UpdateContactRequest(BaseModel):
     phone: str | None = None
     title: str | None = None
 
+class UpdateContractRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    auto_renew: str | None = None
+    currency: str | None = None
+    end_date: str | None = None
+    owner_user_id: str | None = None
+    renewal_notice_days: str | None = None
+    start_date: str | None = None
+    status: str | None = None
+    term_months: str | None = None
+    title: str | None = None
+    value_minor: str | None = None
+
 class UpdateCustomerRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     billing_address: str | None = None
@@ -3345,6 +3721,12 @@ class UpdateDealRequest(BaseModel):
     probability: str | None = None
     stage_id: str | None = None
 
+class UpdateDunningProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    is_default: str | None = None
+    name: str | None = None
+    steps: str | None = None
+
 class UpdateEmployeeRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     bank_details: str | None = None
@@ -3364,6 +3746,13 @@ class UpdateEmployeeRequest(BaseModel):
     title: str | None = None
     user_id: str | None = None
     work_email: str | None = None
+
+class UpdateFinanceEntityRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    code: str | None = None
+    currency: str | None = None
+    is_default: str | None = None
+    name: str | None = None
 
 class UpdateInventoryAssetRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3406,6 +3795,10 @@ class UpdateLedgerAccountRequest(BaseModel):
     name: str | None = None
     parent_id: str | None = None
     sort_order: str | None = None
+
+class UpdateOrderStatusRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    status: str
 
 class UpdateOrgBoundsRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3502,6 +3895,12 @@ class UpdateTaskRequest(BaseModel):
     status: str | None = None
     title: str | None = None
 
+class UpdateTerritoryRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    name: str | None = None
+    owner_user_id: str | None = None
+
 class UpdateWarehouseRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     is_active: str | None = None
@@ -3539,6 +3938,16 @@ class UpsertSsoRequest(BaseModel):
     display_name: str
     enabled: bool | None = None
     protocol: str
+
+class UpsertTimeEntryRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    billable: str | None = None
+    entry_date: str
+    id: str | None = None
+    minutes: int
+    notes: str | None = None
+    project_id: str
+    task_id: str | None = None
 
 class UpsertWidgetRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3614,17 +4023,17 @@ class WebhookDeliveryListResponse(BaseModel):
 
 class WebhookDeliveryView(BaseModel):
     model_config = ConfigDict(extra="allow")
-    id: str
+    attempt: int
+    created_at: str
+    delivered_at: str | None = None
     endpoint_id: str
     event_subject: str
     event_type: str
-    attempt: int
-    status: str
-    status_code: int | None = None
-    response_body: str | None = None
-    delivered_at: str | None = None
+    id: str
     next_retry_at: str | None = None
-    created_at: str
+    response_body: str | None = None
+    status: str
+    status_code: str | None = None
 
 class WebhookEndpointListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3632,17 +4041,17 @@ class WebhookEndpointListResponse(BaseModel):
 
 class WebhookEndpointView(BaseModel):
     model_config = ConfigDict(extra="allow")
-    id: str
-    url: str
-    description: str
-    event_types: list[str]
-    secret_prefix: str
-    status: str
-    failure_count: int
-    last_delivery_at: str | None = None
     created_at: str
+    description: str
     disabled_at: str | None = None
     disabled_reason: str | None = None
+    event_types: list[str]
+    failure_count: int
+    id: str
+    last_delivery_at: str | None = None
+    secret_prefix: str
+    status: str
+    url: str
 
 class WeightedForecast(BaseModel):
     model_config = ConfigDict(extra="allow")

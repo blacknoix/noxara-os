@@ -291,6 +291,7 @@ async fn ingest(app: &Router, envelope: EventEnvelope) -> Value {
 fn report_definition(org_id: &str) -> Value {
     json!({
         "org_id": org_id,
+        "region": "us",
         "metric": "revenue_issued",
         "dimensions": ["currency"],
         "filters": [],

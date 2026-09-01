@@ -5,13 +5,14 @@ CompanyOS (repo `noxara-os`) is an AI-native, multi-tenant Business Operating Sy
 ## Non-negotiable invariants
 
 1. **One tenant key:** `org_id` on every tenant-owned row, enforced by PostgreSQL RLS, present in every token, cache key, event subject, workflow ID, and analytics predicate.
-2. **One policy decision point:** `crates/authz` decides every permission question for humans, workflows, and AI. Deny by default; explicit deny wins. Permission IDs are `{context}.{resource}.{action}`.
-3. **Bounded contexts own their data.** FKs within a context; identifiers plus events across contexts. No cross-context table reads.
-4. **Write and publish atomically.** Domain change + outbox event in one transaction; at-least-once to NATS JetStream; idempotent consumers.
-5. **Long processes are Temporal workflows,** not status columns plus cron.
-6. **Money is integer minor units** (`amount_minor: i64`) plus ISO 4217 currency. No floats on the finance path. Financial documents are immutable; corrections are new documents; journal is append-only and balances.
-7. **Everything is attributable.** Every mutation writes an audit entry naming the actor, including AI which always records the human it acts on behalf of.
-8. **AI proposes, humans commit (v1).** Every AI write is a previewed diff, tagged, cited, and reversible.
+2. **Region is a tenant attribute (ADR-015):** `organization.region` set at creation; cell routing + residency are tenancy invariants (not authz permissions). See `docs/compliance/data-residency.md`.
+3. **One policy decision point:** `crates/authz` decides every permission question for humans, workflows, and AI. Deny by default; explicit deny wins. Permission IDs are `{context}.{resource}.{action}`.
+4. **Bounded contexts own their data.** FKs within a context; identifiers plus events across contexts. No cross-context table reads.
+5. **Write and publish atomically.** Domain change + outbox event in one transaction; at-least-once to NATS JetStream; idempotent consumers.
+6. **Long processes are Temporal workflows,** not status columns plus cron.
+7. **Money is integer minor units** (`amount_minor: i64`) plus ISO 4217 currency. No floats on the finance path. Financial documents are immutable; corrections are new documents; journal is append-only and balances.
+8. **Everything is attributable.** Every mutation writes an audit entry naming the actor, including AI which always records the human it acts on behalf of.
+9. **AI proposes, humans commit (v1).** Every AI write is a previewed diff, tagged, cited, and reversible.
 
 ## Specs
 

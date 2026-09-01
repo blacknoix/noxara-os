@@ -37,13 +37,17 @@ pub async fn presign_upload(
     validate_upload(&body.content_type, body.size_bytes)
         .map_err(|e| AppError::new(ErrorCode::ValidationFailed, &request_id, e))?;
 
+    let tenant_region = auth.ctx.region.unwrap_or(state.cell_region);
+    companyos_tenancy::enforce_cell_serves_tenant(tenant_region, state.cell_region)
+        .map_err(|e| AppError::new(ErrorCode::ResidencyViolation, &request_id, e.to_string()))?;
+
     let id = new_uuid_v7();
     let public_id = format!("fil_{}", id.simple());
-    let object_key = format!(
-        "{}/{}/{}",
-        org_id.as_uuid(),
+    let object_key = companyos_tenancy::object_key(
+        tenant_region,
+        org_id,
         id,
-        sanitize_filename(&body.filename)
+        &sanitize_filename(&body.filename),
     );
 
     let mut tx = state

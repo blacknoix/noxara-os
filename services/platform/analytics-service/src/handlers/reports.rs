@@ -11,7 +11,12 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::auth::AuthCtx;
-use crate::query::{execute_query, validate_query, ReportDefinition};
+use crate::query::{execute_query, validate_query_for_tenant, ReportDefinition};
+use companyos_tenancy::RegionCode;
+
+fn tenant_home(auth: &AuthCtx) -> RegionCode {
+    auth.ctx.region.unwrap_or(RegionCode::Us)
+}
 use crate::state::AppState;
 use crate::types::{
     CreateReportRequest, QueryResult, ReportDto, ReportListResponse, RunReportRequest,
@@ -70,7 +75,10 @@ fn validate_definition(
     } else {
         definition.org_id = Some(expected);
     }
-    validate_query(&definition, request_id)?;
+    if definition.region.is_none() {
+        definition.region = Some(tenant_home(auth).as_str().into());
+    }
+    validate_query_for_tenant(&definition, tenant_home(auth), request_id)?;
     Ok(definition)
 }
 
@@ -313,7 +321,7 @@ async fn run_definition(
 ) -> Result<RunReportResponse, AppError> {
     let request_id = auth.ctx.request_id.as_str();
     let definition = validate_definition(definition, auth)?;
-    let validated = validate_query(&definition, request_id)?;
+    let validated = validate_query_for_tenant(&definition, tenant_home(auth), request_id)?;
     let run_id = new_uuid_v7();
     let run_public = PublicId::new(IdKind::AnalyticsRun, run_id).as_str();
     let mut tx = state.pool.begin().await.map_err(internal(request_id))?;
@@ -393,7 +401,7 @@ pub async fn simulate_query(
     let request_id = auth.ctx.request_id.as_str();
     let principal = authorize(&state, &auth, perms::analytics_report_run()).await?;
     let definition = validate_definition(body.definition, &auth)?;
-    let validated = validate_query(&definition, request_id)?;
+    let validated = validate_query_for_tenant(&definition, tenant_home(&auth), request_id)?;
     let mut tx = state.pool.begin().await.map_err(internal(request_id))?;
     set_org(&mut tx, auth.ctx.org_id, request_id).await?;
     let result = execute_query(&mut tx, &validated, principal.as_ref(), true, request_id).await?;
@@ -411,7 +419,7 @@ pub async fn run_query(
     // Ad-hoc queries must carry an explicit tenant predicate. Saved report
     // creation may infer the authenticated org, but the raw query API must
     // fail closed when callers omit the query guard.
-    validate_query(&definition, &auth.ctx.request_id)?;
+    validate_query_for_tenant(&definition, tenant_home(&auth), &auth.ctx.request_id)?;
     let principal = authorize(&state, &auth, perms::analytics_report_run()).await?;
     Ok(Json(
         run_definition(&state, &auth, definition, None, principal.as_ref()).await?,

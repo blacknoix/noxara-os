@@ -12,6 +12,9 @@ pub struct CreateOrgRequest {
     pub currency: String,
     #[serde(default = "default_timezone")]
     pub timezone: String,
+    /// Home region (`us` | `eu` | `ap`). Immutable after creation (ADR-015).
+    #[serde(default = "default_region")]
+    pub region: String,
 }
 
 fn default_business_type() -> String {
@@ -22,6 +25,9 @@ fn default_currency() -> String {
 }
 fn default_timezone() -> String {
     "UTC".into()
+}
+fn default_region() -> String {
+    "us".into()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -36,6 +42,8 @@ pub struct OrgResponse {
     pub numbering_series: serde_json::Value,
     pub branding: serde_json::Value,
     pub feature_flags: serde_json::Value,
+    /// Home region (`us` | `eu` | `ap`) — ADR-015 / Phase 4.1.
+    pub region: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

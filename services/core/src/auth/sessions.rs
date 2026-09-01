@@ -8,9 +8,19 @@ use companyos_ids::new_uuid_v7;
 use companyos_tenancy::OrgId;
 use cookie::{Cookie, SameSite};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{PgConnection, PgPool, Postgres, Transaction};
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+/// Load organization.region for JWT claims (ADR-015). Defaults to `us`.
+pub async fn load_org_region(conn: &mut PgConnection, org: OrgId) -> Result<String, String> {
+    let row: Option<(String,)> = sqlx::query_as("SELECT region FROM organization WHERE id = $1")
+        .bind(org.as_uuid())
+        .fetch_optional(&mut *conn)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(row.map(|r| r.0).unwrap_or_else(|| "us".into()))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SessionView {
@@ -125,6 +135,8 @@ async fn issue_refresh_and_access(
     .await
     .map_err(|e| e.to_string())?;
 
+    let region = load_org_region(tx, org).await?;
+
     let claims = AccessClaims {
         sub: user_public.to_string(),
         user_id,
@@ -141,6 +153,7 @@ async fn issue_refresh_and_access(
         exp: 0,
         api_key_id: None,
         scopes: None,
+        region,
     };
     let access =
         companyos_auth_token::mint_access_token(ring, claims, companyos_auth_token::access_ttl())
@@ -280,6 +293,7 @@ pub async fn rotate_refresh(
 
     let org = OrgId::new(org_uuid);
     let roles = vec![membership.0.clone()];
+    let region = load_org_region(&mut tx, org).await?;
     let claims = AccessClaims {
         sub: membership.3.clone(),
         user_id,
@@ -296,6 +310,7 @@ pub async fn rotate_refresh(
         exp: 0,
         api_key_id: None,
         scopes: None,
+        region,
     };
     let access =
         companyos_auth_token::mint_access_token(ring, claims, companyos_auth_token::access_ttl())
@@ -477,6 +492,7 @@ pub fn switch_org_access(
     policy_version: i64,
     session_id: Uuid,
     family_id: Uuid,
+    region: &str,
 ) -> Result<String, String> {
     let claims = AccessClaims {
         sub: user_public.to_string(),
@@ -494,6 +510,7 @@ pub fn switch_org_access(
         exp: 0,
         api_key_id: None,
         scopes: None,
+        region: region.to_string(),
     };
     companyos_auth_token::mint_access_token(ring, claims, companyos_auth_token::access_ttl())
         .map_err(|e| e.to_string())

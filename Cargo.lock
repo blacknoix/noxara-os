@@ -779,6 +779,7 @@ dependencies = [
  "companyos-authz",
  "companyos-errors",
  "companyos-telemetry",
+ "companyos-tenancy",
  "futures",
  "http",
  "redis",
@@ -789,6 +790,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

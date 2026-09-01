@@ -78,6 +78,13 @@ pub struct AccessClaims {
     /// owner's role permissions (narrower wins). Present only for API-key tokens.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scopes: Option<Vec<String>>,
+    /// Org home region (ADR-015). Defaults to `us` when absent (pre-4.1 tokens).
+    #[serde(default = "default_region_claim")]
+    pub region: String,
+}
+
+fn default_region_claim() -> String {
+    "us".into()
 }
 
 impl AccessClaims {
@@ -308,6 +315,7 @@ mod tests {
             exp: 0,
             api_key_id: None,
             scopes: None,
+            region: "us".into(),
         }
     }
 

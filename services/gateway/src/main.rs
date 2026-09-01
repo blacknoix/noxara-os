@@ -1,9 +1,9 @@
-//! CompanyOS gateway / BFF — Phase 3.3.
+//! CompanyOS gateway / BFF — Phase 4.1 multi-region cell gate.
 //!
 //! Authenticates access JWTs (org-scoped) or organization API keys, resolves
 //! tenant, runs a coarse authz pre-check (or public allowlist for API keys),
-//! attaches request context headers, and proxies to core, CRM, Finance,
-//! Operations, platform, and AI.
+//! enforces cell residency for data-plane routes, attaches request context
+//! headers, and proxies to core, CRM, Finance, Operations, platform, and AI.
 
 mod api_key_auth;
 mod public_routes;
@@ -23,7 +23,9 @@ use axum::{Json, Router};
 use companyos_auth_token::{decode_jwk_k, verify_access_token, AccessClaims, KeyRing, SigningKey};
 use companyos_authz::{self as authz, perms, Principal, Role};
 use companyos_errors::{AppError, ErrorCode};
+use companyos_gateway::region_gate::{self, CellBinding};
 use companyos_telemetry::init_tracing;
+use companyos_tenancy::{ControlPlane, RegionCode, REGION_HINT_HEADER};
 use futures::stream::Stream;
 use tokio::sync::RwLock;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
@@ -56,6 +58,8 @@ struct GatewayState {
     jwks_cache: Arc<RwLock<JwksCache>>,
     local_auth: bool,
     api_key_limiter: Arc<ApiKeyRateLimiter>,
+    cell_binding: CellBinding,
+    cell_plane: Arc<RwLock<ControlPlane>>,
 }
 
 struct JwksCache {
@@ -127,6 +131,8 @@ async fn main() -> anyhow::Result<()> {
         jwks_cache: Arc::new(RwLock::new(JwksCache { fetched_at: None })),
         local_auth,
         api_key_limiter: Arc::new(ApiKeyRateLimiter::new()),
+        cell_binding: CellBinding::from_env(),
+        cell_plane: Arc::new(RwLock::new(ControlPlane::new())),
     };
 
     let x_request_id = http::HeaderName::from_static("x-request-id");
@@ -156,7 +162,9 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         "JWT primary + API keys (LOCAL-ONLY bypass off)"
                     },
-                    "phase": "3.4"
+                    "phase": "4.1",
+                    "cell_id": state.cell_binding.cell.as_str(),
+                    "cell_region": state.cell_binding.region().as_str(),
                 }))
             }),
         )
@@ -171,6 +179,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/hello", any(proxy_hello))
         .route("/api/v1/dashboard", any(proxy_dashboard))
         .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
+        .route("/api/v1/control-plane/{*rest}", any(proxy_control_plane))
         .route("/api/v1/governance/{*rest}", any(proxy_governance))
         .route("/api/v1/sales/{*rest}", any(proxy_sales))
         .route("/api/v1/finance/{*rest}", any(proxy_finance))
@@ -539,6 +548,20 @@ async fn proxy_to(
     }
 
     if let Some(ref c) = auth.claims {
+        // Hydrate control-plane directory from token (home region).
+        if let Ok(home) = RegionCode::parse(&c.region) {
+            let mut plane = state.cell_plane.write().await;
+            plane.register_org(&c.org_id, home);
+        }
+        // Data-plane residency gate (HTTP 451 on cross-region).
+        {
+            let plane = state.cell_plane.read().await;
+            if let Err(e) =
+                region_gate::gate_data_plane(&state.cell_binding, &plane, c, auth_path, &request_id)
+            {
+                return e.into_response();
+            }
+        }
         // Propagate resolved tenant + actor context for core (in addition to Bearer).
         if let Ok(v) = HeaderValue::from_str(&c.org_id) {
             headers.insert("x-companyos-org-id", v);
@@ -554,6 +577,15 @@ async fn proxy_to(
                 headers.insert("x-companyos-api-key-id", v);
             }
         }
+        // Authoritative home region + serving cell for downstream stores.
+        if let Ok(v) = HeaderValue::from_str(&c.region) {
+            headers.insert(REGION_HINT_HEADER, v);
+        }
+        if let Ok(v) = HeaderValue::from_str(state.cell_binding.cell.as_str()) {
+            headers.insert("x-companyos-cell-id", v);
+        }
+        // Edge latency hint (Cloudflare/geo) — documented; tests honor the header.
+        let _ = region_gate::edge_region_hint(&headers);
     }
 
     let url = format!("{}{}", base_url.trim_end_matches('/'), upstream_path);
@@ -639,6 +671,12 @@ async fn proxy_dashboard(State(state): State<GatewayState>, req: Request) -> Res
 }
 
 async fn proxy_workspace(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.core_url, true, "core").await
+}
+
+async fn proxy_control_plane(State(state): State<GatewayState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     proxy_to(&state, req, &upstream, &state.core_url, true, "core").await

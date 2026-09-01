@@ -10,11 +10,16 @@ rust-version.workspace = true
 name = "companyos-gateway"
 path = "src/main.rs"
 
+[lib]
+name = "companyos_gateway"
+path = "src/lib.rs"
+
 [dependencies]
 companyos-errors = { workspace = true }
 companyos-telemetry = { workspace = true }
 companyos-auth-token = { workspace = true }
 companyos-authz = { workspace = true }
+companyos-tenancy = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
@@ -28,3 +33,4 @@ reqwest = { workspace = true }
 redis = { workspace = true }
 futures = { workspace = true }
 async-stream = "0.3"
+uuid = { workspace = true }

@@ -9,6 +9,13 @@ pub struct RegisterRequest {
     pub password: String,
     pub display_name: String,
     pub org_name: String,
+    /// Home region (`us` | `eu` | `ap`). Defaults to `us`. Immutable after create.
+    #[serde(default = "default_register_region")]
+    pub region: String,
+}
+
+fn default_register_region() -> String {
+    "us".into()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
