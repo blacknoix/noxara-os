@@ -105,7 +105,8 @@ pub struct SeededListing {
     pub connector_key: String,
 }
 
-/// Upsert the five first-party listings as published, owned by `publisher_org_id`.
+/// Upsert first-party connector + industry-pack listings as published, owned by
+/// `publisher_org_id`.
 ///
 /// Safe to call repeatedly and from concurrent test binaries.
 pub async fn seed_first_party_catalogue(
