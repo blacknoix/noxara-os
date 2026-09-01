@@ -119,20 +119,36 @@ type ClaimedRow = (
     i32,
 );
 
+/// Default lease before reclaiming rows stuck in `delivering` (crash / mid-flight Err).
+pub const DEFAULT_DELIVERING_LEASE_SECS: i64 = 60;
+
 /// Whether SSRF private/loopback checks are relaxed (tests / local echo only).
 ///
 /// Prefer passing this explicitly rather than mutating process-wide env vars —
 /// integration tests run in parallel and raced on `COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE`.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct DispatchOptions {
     pub allow_private: bool,
+    /// Reclaim `delivering` rows whose `updated_at` is older than this many seconds.
+    ///
+    /// Claim commits `delivering` before HTTP; if `process_one` returns `Err` (or the
+    /// worker dies) the row would otherwise sit forever outside the pending/failed
+    /// claim set. Shared-DB tests use a short lease so `dispatch_until` can recover.
+    pub delivering_lease_secs: i64,
+}
+
+impl Default for DispatchOptions {
+    fn default() -> Self {
+        Self::strict()
+    }
 }
 
 impl DispatchOptions {
-    /// Production-safe default: SSRF checks enforced.
+    /// Production-safe default: SSRF checks enforced, 60s delivering lease.
     pub fn strict() -> Self {
         Self {
             allow_private: false,
+            delivering_lease_secs: DEFAULT_DELIVERING_LEASE_SECS,
         }
     }
 
@@ -141,7 +157,10 @@ impl DispatchOptions {
         let allow_private = std::env::var("COMPANYOS_WEBHOOK_SSRF_ALLOW_PRIVATE")
             .map(|v| v == "1")
             .unwrap_or(false);
-        Self { allow_private }
+        Self {
+            allow_private,
+            delivering_lease_secs: DEFAULT_DELIVERING_LEASE_SECS,
+        }
     }
 }
 
@@ -164,14 +183,21 @@ pub async fn dispatch_once(
     let mut tx = pool.begin().await?;
     set_dispatch_session(&mut tx).await?;
 
+    let lease_secs = opts.delivering_lease_secs.max(1);
     let rows: Vec<ClaimedRow> = sqlx::query_as(
         r#"
         SELECT d.id, d.org_id, d.endpoint_id, d.event_id, d.event_subject, d.event_type,
                d.payload, d.attempt, e.url, e.secret_ciphertext, e.public_id, e.failure_count
         FROM webhook_delivery d
         INNER JOIN webhook_endpoint e ON e.id = d.endpoint_id AND e.org_id = d.org_id
-        WHERE d.status IN ('pending', 'failed')
-          AND (d.next_retry_at IS NULL OR d.next_retry_at <= now())
+        WHERE (
+                d.status IN ('pending', 'failed')
+                OR (
+                    d.status = 'delivering'
+                    AND d.updated_at <= now() - make_interval(secs => $3::double precision)
+                )
+              )
+          AND (d.next_retry_at IS NULL OR d.next_retry_at <= now() OR d.status = 'delivering')
           AND e.status = 'active'
           AND d.attempt < $2
         ORDER BY d.created_at ASC
@@ -181,6 +207,7 @@ pub async fn dispatch_once(
     )
     .bind(limit)
     .bind(MAX_ATTEMPTS)
+    .bind(lease_secs as f64)
     .fetch_all(&mut *tx)
     .await?;
 
@@ -193,22 +220,29 @@ pub async fn dispatch_once(
         event_subject,
         event_type,
         payload,
-        attempt,
+        _prior_attempt,
         endpoint_url,
         secret_ciphertext,
         endpoint_public_id,
         failure_count,
     ) in rows
     {
-        sqlx::query(
+        // Reclaimed `delivering` rows already counted an attempt on the prior claim.
+        let (new_attempt,): (i32,) = sqlx::query_as(
             r#"
             UPDATE webhook_delivery
-            SET status = 'delivering', attempt = attempt + 1, updated_at = now()
+            SET status = 'delivering',
+                attempt = CASE
+                    WHEN status = 'delivering' THEN attempt
+                    ELSE attempt + 1
+                END,
+                updated_at = now()
             WHERE id = $1
+            RETURNING attempt
             "#,
         )
         .bind(id)
-        .execute(&mut *tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         claimed.push(ClaimedDelivery {
@@ -219,7 +253,7 @@ pub async fn dispatch_once(
             event_subject,
             event_type,
             payload,
-            attempt: attempt + 1,
+            attempt: new_attempt,
             endpoint_url,
             secret_ciphertext,
             endpoint_public_id,
@@ -237,7 +271,27 @@ pub async fn dispatch_once(
                 stats.failed += 1;
                 stats.skipped_ssrf += 1;
             }
-            Ok(ProcessOutcome::Failed) | Err(_) => stats.failed += 1,
+            Ok(ProcessOutcome::Failed) => stats.failed += 1,
+            Err(e) => {
+                // Claim already flipped the row to `delivering`. Any Err after that
+                // (crypto, outbox, pool) must leave a terminal/retryable status or the
+                // row is invisible to the pending/failed claim set until lease expiry.
+                tracing::warn!(
+                    delivery_id = %delivery.id,
+                    error = %e,
+                    "webhook process_one failed after claim; marking failed"
+                );
+                let _ = mark_failed(
+                    pool,
+                    &delivery,
+                    None,
+                    None,
+                    &format!("process error: {e}"),
+                    false,
+                )
+                .await;
+                stats.failed += 1;
+            }
         }
     }
 

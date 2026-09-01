@@ -2,6 +2,8 @@
 
 Flagship product loop: **sign up → org → invite/role → customer/deal → quote → accept → invoice → payment**, with journal balance and tenant isolation.
 
+Still the Phase 1–4 flagship path after industry modules (4.5): money stays integer minor units, issued invoices are immutable, and payment allocations never exceed invoice total.
+
 Automated coverage: `cargo test -p companyos-finance --test deal_to_cash`.
 
 ## Prerequisites

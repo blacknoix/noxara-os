@@ -25,6 +25,7 @@ use uuid::Uuid;
 
 const ALLOW_PRIVATE: DispatchOptions = DispatchOptions {
     allow_private: true,
+    delivering_lease_secs: 2,
 };
 
 async fn pool() -> Option<PgPool> {
