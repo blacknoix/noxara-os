@@ -8,7 +8,7 @@ use serde_json::json;
 
 use crate::auth::AuthCtx;
 use crate::export::{to_csv, to_xlsx_tsv};
-use crate::query::{execute_query, validate_query, ReportDefinition};
+use crate::query::{execute_query, validate_query_for_tenant, ReportDefinition};
 use crate::state::AppState;
 use crate::types::{ExportRequest, ExportResponse};
 
@@ -44,9 +44,13 @@ pub async fn export_report(
             .await
             .map_err(internal(request_id))?;
     let (definition_json,) = row.ok_or_else(|| not_found(request_id, "report"))?;
-    let definition: ReportDefinition = serde_json::from_value(definition_json)
+    let mut definition: ReportDefinition = serde_json::from_value(definition_json)
         .map_err(|error| AppError::new(ErrorCode::Internal, request_id, error.to_string()))?;
-    let validated = validate_query(&definition, request_id)?;
+    let home = auth.ctx.region.unwrap_or(companyos_tenancy::RegionCode::Us);
+    if definition.region.is_none() {
+        definition.region = Some(home.as_str().into());
+    }
+    let validated = validate_query_for_tenant(&definition, home, request_id)?;
     if validated.org != auth.ctx.org_id {
         return Err(AppError::new(
             ErrorCode::Forbidden,

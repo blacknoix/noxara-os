@@ -2,6 +2,19 @@
 //!
 //! Request context **cannot** be built without `org_id`. When talking to
 //! PostgreSQL, callers must set `app.org_id` for RLS.
+//!
+//! Phase 4.1 adds [`region`]: region is a tenant attribute (ADR-015). Residency
+//! and cell routing live here — not in `crates/authz`.
+
+pub mod region;
+
+pub use region::{
+    allows_replica, enforce_cell_serves_tenant, enforce_object_key_region, enforce_query_region,
+    enforce_region_immutable, is_control_plane_path, is_data_plane_path, object_key, policy_for,
+    region_catalogue, region_from_object_key, run_failover_drill, CellHealth, CellId, ControlPlane,
+    FailoverDrillReport, RegionCode, RegionError, RegionPolicy, ReplicaKind, RoutingDecision,
+    CI_FAILOVER_DRILL_BUDGET, PRODUCTION_REGION_RTO, REGION_HINT_HEADER,
+};
 
 use std::fmt;
 
@@ -76,11 +89,16 @@ impl Actor {
 /// Request-scoped tenancy + actor context.
 ///
 /// Construction requires `org_id` — there is no `Default` or empty builder.
+/// `region` is the org's home region (ADR-015); set whenever known.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RequestContext {
     pub org_id: OrgId,
     pub actor: Actor,
     pub request_id: String,
+    /// Home region of the org. `None` only for pre-Phase-4.1 tokens / legacy paths;
+    /// data-plane handlers must reject missing region where residency applies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub region: Option<RegionCode>,
 }
 
 impl RequestContext {
@@ -89,7 +107,13 @@ impl RequestContext {
             org_id,
             actor,
             request_id: request_id.into(),
+            region: None,
         }
+    }
+
+    pub fn with_region(mut self, region: RegionCode) -> Self {
+        self.region = Some(region);
+        self
     }
 }
 
@@ -101,6 +125,8 @@ pub enum TenancyError {
     NotAnOrgId,
     #[error("failed to bind postgres session org_id: {0}")]
     SessionBind(String),
+    #[error("region residency violation: {0}")]
+    Residency(String),
 }
 
 /// Set PostgreSQL session variable used by RLS policies: `app.org_id`.

@@ -1,4 +1,4 @@
-//! Search query — org_id required; re-verify authz per hit.
+//! Search query — org_id + region required; re-verify authz per hit.
 
 use axum::extract::{Query, State};
 use axum::Json;
@@ -18,6 +18,8 @@ use crate::types::{QueryResponse, SearchHit};
 pub struct QueryParams {
     pub q: Option<String>,
     pub org_id: Option<String>,
+    /// Required home region (`us`|`eu`|`ap`) — must match authenticated tenant.
+    pub region: Option<String>,
 }
 
 #[utoipa::path(
@@ -26,6 +28,7 @@ pub struct QueryParams {
     params(
         ("q" = Option<String>, Query, description = "search text"),
         ("org_id" = String, Query, description = "required tenant org public id"),
+        ("region" = String, Query, description = "required tenant home region"),
     ),
     responses((status = 200, body = QueryResponse)),
     tag = "search"
@@ -67,6 +70,17 @@ pub async fn query(
             "org_id does not match authenticated tenant",
         ));
     }
+
+    let tenant_home = auth.ctx.region.unwrap_or(companyos_tenancy::RegionCode::Us);
+    companyos_tenancy::enforce_query_region(params.region.as_deref(), tenant_home).map_err(
+        |e| {
+            let code = match e {
+                companyos_tenancy::RegionError::MissingRegion => ErrorCode::ValidationFailed,
+                _ => ErrorCode::ResidencyViolation,
+            };
+            AppError::new(code, &request_id, e.to_string())
+        },
+    )?;
 
     let user_id = auth.ctx.actor.user_id;
     let principal = if auth.local_bypass {

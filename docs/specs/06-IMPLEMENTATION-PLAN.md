@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–3.4 implemented; Phase 3.5 (this PR) depth and polish.
+Status: **Active** outline. Phase 0–3.5 implemented; Phase 4.1 (this PR) multi-region foundations.
 
 ## Completed
 
@@ -27,6 +27,7 @@ Status: **Active** outline. Phase 0–3.4 implemented; Phase 3.5 (this PR) depth
 | 3.3   | Public API, generated SDKs (TS + Python), outbound webhooks, developer docs + sandbox                                           |
 | 3.4   | Marketplace skeleton: listings, review gate, scoped-consent installs, app tokens, mock OAuth, integrations alias                |
 | 3.5   | Depth / polish: CRM orders/contracts/territories; finance tax/dunning/entities; ops timesheets/capacity; AI insights/meetings; list_invoices N+1 fix + RED meters |
+| 4.1   | Multi-region foundations: region catalogue, org.region (ADR-015), cell routing, residency guards, failover drill (CI), control-plane region map |
 
 ## Phase 3.3 — Public API, SDKs & webhooks (done)
 
@@ -72,7 +73,8 @@ only), cross-org publisher review staffing, and marketplace billing.
 | InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
 | Mobile         | Flutter / Tauri         |
-| 4.x            | Multi-region, CMEK, SCIM, consolidation |
+| 4.2            | SCIM, CMEK, consolidation, dedicated isolation (not started) |
+| 4.3+           | Autonomous agents, low-code, industry packs |
 
 ## Cut order if needed
 

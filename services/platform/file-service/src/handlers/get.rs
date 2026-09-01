@@ -63,6 +63,24 @@ pub async fn get_file(
         ));
     };
 
+    // Reject cross-region object access (wrong-cell client).
+    if let Err(e) = companyos_tenancy::enforce_object_key_region(&object_key, state.cell_region) {
+        return Err(AppError::new(
+            ErrorCode::ResidencyViolation,
+            &request_id,
+            e.to_string(),
+        ));
+    }
+    let tenant_region = auth.ctx.region.unwrap_or(state.cell_region);
+    if let Err(e) = companyos_tenancy::enforce_cell_serves_tenant(tenant_region, state.cell_region)
+    {
+        return Err(AppError::new(
+            ErrorCode::ResidencyViolation,
+            &request_id,
+            e.to_string(),
+        ));
+    }
+
     let download_url = if let Some(ep) = &state.minio_endpoint {
         format!(
             "{}/{}/{}?response-content-disposition=attachment",

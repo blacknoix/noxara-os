@@ -187,6 +187,9 @@ pub async fn create_organization(
         ));
     }
 
+    let region = crate::control_plane::parse_region_or_default(Some(body.region.as_str()))
+        .map_err(|e| AppError::new(ErrorCode::ValidationFailed, request_id.clone(), e))?;
+
     let org = OrgId::generate();
     let membership_id = new_uuid_v7();
     let mem_public = PublicId::new(IdKind::Membership, membership_id);
@@ -200,8 +203,8 @@ pub async fn create_organization(
     sqlx::query(
         r#"
         INSERT INTO organization (
-            id, public_id, name, currency, timezone, business_type, plan
-        ) VALUES ($1,$2,$3,$4,$5,$6,'starter')
+            id, public_id, name, currency, timezone, business_type, plan, region
+        ) VALUES ($1,$2,$3,$4,$5,$6,'starter',$7)
         "#,
     )
     .bind(org.as_uuid())
@@ -210,6 +213,7 @@ pub async fn create_organization(
     .bind(body.currency.trim())
     .bind(body.timezone.trim())
     .bind(body.business_type.trim())
+    .bind(region.as_str())
     .execute(&mut *tx)
     .await
     .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
@@ -243,6 +247,7 @@ pub async fn create_organization(
         serde_json::json!({
             "org_id": org.to_public().as_str(),
             "name": body.name.trim(),
+            "region": region.as_str(),
         }),
     );
     companyos_outbox::insert_event(&mut *tx, &created)
@@ -286,9 +291,14 @@ pub async fn create_organization(
         "workspace.organization.created",
         "organization",
         &org.to_public().as_str(),
-        serde_json::json!({ "name": body.name.trim() }),
+        serde_json::json!({ "name": body.name.trim(), "region": region.as_str() }),
     )
     .await;
+
+    state
+        .cell_plane
+        .register_org(&org.to_public().as_str(), region)
+        .await;
 
     let org_resp = fetch_org(&state.pool, org, &request_id).await?;
     Ok((StatusCode::CREATED, Json(org_resp)))
@@ -310,10 +320,11 @@ async fn fetch_org(
         serde_json::Value,
         serde_json::Value,
         serde_json::Value,
+        String,
     )> = sqlx::query_as(
         r#"
         SELECT public_id, name, currency, timezone, fiscal_year_start_month,
-               business_type, plan, numbering_series, branding, feature_flags
+               business_type, plan, numbering_series, branding, feature_flags, region
         FROM organization WHERE id = $1
         "#,
     )
@@ -339,6 +350,7 @@ async fn fetch_org(
         numbering_series: r.7,
         branding: r.8,
         feature_flags: r.9,
+        region: r.10,
     })
 }
 

@@ -281,7 +281,7 @@ async fn results_rechecked_and_tenant_isolation() {
             Request::builder()
                 .method("GET")
                 .uri(format!(
-                    "/api/v1/search/query?q=Acme&org_id={}",
+                    "/api/v1/search/query?q=Acme&org_id={}&region=us",
                     a.org.to_public()
                 ))
                 .header("authorization", format!("Bearer {}", a.finance_token))
@@ -302,7 +302,7 @@ async fn results_rechecked_and_tenant_isolation() {
             Request::builder()
                 .method("GET")
                 .uri(format!(
-                    "/api/v1/search/query?q=Acme&org_id={}",
+                    "/api/v1/search/query?q=Acme&org_id={}&region=us",
                     a.org.to_public()
                 ))
                 .header("authorization", format!("Bearer {}", a.owner_token))
@@ -324,7 +324,7 @@ async fn results_rechecked_and_tenant_isolation() {
             Request::builder()
                 .method("GET")
                 .uri(format!(
-                    "/api/v1/search/query?q=Acme&org_id={}",
+                    "/api/v1/search/query?q=Acme&org_id={}&region=us",
                     a.org.to_public()
                 ))
                 .header("authorization", format!("Bearer {}", b.owner_token))

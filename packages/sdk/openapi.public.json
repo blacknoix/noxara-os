@@ -23,7 +23,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -51,7 +52,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/governance/api-keys/{id}/revoke": {
@@ -81,7 +83,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/governance/api-keys/{id}/rotate": {
@@ -111,7 +114,192 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
+      }
+    },
+    "/api/v1/governance/webhooks": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "list_webhooks",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointListResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-companyos-public": true
+      },
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "create_webhook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookEndpointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateWebhookEndpointResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-companyos-public": true
+      }
+    },
+    "/api/v1/governance/webhooks/deliveries/{id}/replay": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "replay_webhook_delivery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayWebhookResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-companyos-public": true
+      }
+    },
+    "/api/v1/governance/webhooks/{id}/deliveries": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "list_webhook_deliveries",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryListResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-companyos-public": true
+      }
+    },
+    "/api/v1/governance/webhooks/{id}/disable": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "disable_webhook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisableWebhookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointView"
+                }
+              }
+            }
+          }
+        },
+        "x-companyos-public": true
+      }
+    },
+    "/api/v1/governance/webhooks/{id}/rotate": {
+      "post": {
+        "tags": [
+          "governance"
+        ],
+        "operationId": "rotate_webhook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotateWebhookSecretResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/customers": {
@@ -161,7 +349,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -193,7 +382,8 @@
           "409": {
             "description": "Strict duplicate check failed"
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/customers/{id}": {
@@ -217,7 +407,8 @@
           "404": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "delete": {
         "tags": [
@@ -232,7 +423,8 @@
           "404": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "patch": {
         "tags": [
@@ -267,7 +459,8 @@
           "409": {
             "description": "version mismatch"
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/customers/{id}/contacts": {
@@ -288,7 +481,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -317,7 +511,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/deals": {
@@ -338,7 +533,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -367,7 +563,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/deals/{id}": {
@@ -391,7 +588,8 @@
           "404": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "patch": {
         "tags": [
@@ -426,7 +624,8 @@
           "409": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/deals/{id}/lose": {
@@ -457,7 +656,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/deals/{id}/win": {
@@ -489,7 +689,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/quotes": {
@@ -510,7 +711,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -539,7 +741,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/quotes/{id}": {
@@ -563,7 +766,8 @@
           "404": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "patch": {
         "tags": [
@@ -596,7 +800,8 @@
           "404": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/quotes/{id}/accept": {
@@ -617,7 +822,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/quotes/{id}/invoice-action": {
@@ -639,7 +845,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/quotes/{id}/reject": {
@@ -670,7 +877,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/sales/quotes/{id}/send": {
@@ -691,7 +899,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/invoices": {
@@ -720,6 +929,14 @@
           },
           {
             "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -756,7 +973,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -785,7 +1003,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/invoices/from-quote": {
@@ -816,7 +1035,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/invoices/{id}": {
@@ -840,7 +1060,8 @@
           "404": {
             "description": ""
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "patch": {
         "tags": [
@@ -869,7 +1090,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/invoices/{id}/issue": {
@@ -900,7 +1122,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/invoices/{id}/send": {
@@ -921,7 +1144,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/invoices/{id}/void": {
@@ -942,7 +1166,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/payments": {
@@ -991,7 +1216,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       },
       "post": {
         "tags": [
@@ -1020,7 +1246,8 @@
               }
             }
           }
-        }
+        },
+        "x-companyos-public": true
       }
     },
     "/api/v1/finance/payments/{id}/allocate": {
@@ -1051,89 +1278,8 @@
               }
             }
           }
-        }
-      }
-    },
-    "/api/v1/governance/webhooks": {
-      "get": {
-        "operationId": "list_webhooks",
-        "tags": [
-          "governance"
-        ],
-        "x-companyos-public": true,
-        "responses": {
-          "200": {
-            "description": "ok"
-          }
-        }
-      },
-      "post": {
-        "operationId": "create_webhook",
-        "tags": [
-          "governance"
-        ],
-        "x-companyos-public": true,
-        "responses": {
-          "201": {
-            "description": "created"
-          }
-        }
-      }
-    },
-    "/api/v1/governance/webhooks/{id}/rotate": {
-      "post": {
-        "operationId": "rotate_webhook",
-        "tags": [
-          "governance"
-        ],
-        "x-companyos-public": true,
-        "responses": {
-          "200": {
-            "description": "ok"
-          }
-        }
-      }
-    },
-    "/api/v1/governance/webhooks/{id}/disable": {
-      "post": {
-        "operationId": "disable_webhook",
-        "tags": [
-          "governance"
-        ],
-        "x-companyos-public": true,
-        "responses": {
-          "200": {
-            "description": "ok"
-          }
-        }
-      }
-    },
-    "/api/v1/governance/webhooks/{id}/deliveries": {
-      "get": {
-        "operationId": "list_webhook_deliveries",
-        "tags": [
-          "governance"
-        ],
-        "x-companyos-public": true,
-        "responses": {
-          "200": {
-            "description": "ok"
-          }
-        }
-      }
-    },
-    "/api/v1/governance/webhooks/deliveries/{id}/replay": {
-      "post": {
-        "operationId": "replay_webhook_delivery",
-        "tags": [
-          "governance"
-        ],
-        "x-companyos-public": true,
-        "responses": {
-          "200": {
-            "description": "ok"
-          }
-        }
+        },
+        "x-companyos-public": true
       }
     }
   },
@@ -1241,6 +1387,60 @@
             "type": "string"
           },
           "summary": {}
+        }
+      },
+      "ApiKeyExchangeRequest": {
+        "type": "object",
+        "description": "Internal gateway \u2194 core API key exchange (not part of the public catalogue).",
+        "required": [
+          "key_hash"
+        ],
+        "properties": {
+          "key_hash": {
+            "type": "string",
+            "description": "SHA-256 hex hash of the raw API key (gateway hashes before calling)."
+          }
+        }
+      },
+      "ApiKeyExchangeResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "api_key_id",
+          "org_id",
+          "scopes",
+          "rate_limit_per_minute"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "Short-lived access JWT with `api_key_id` + effective `scopes`."
+          },
+          "api_key_id": {
+            "type": "string"
+          },
+          "org_id": {
+            "type": "string"
+          },
+          "rate_limit_per_minute": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rate_limit_rpm": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Deprecated alias of rate_limit_per_minute. Dual-published for 180 days.",
+            "deprecated": true
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       },
       "ApiKeyListResponse": {
@@ -1498,6 +1698,10 @@
           "name": {
             "type": "string"
           },
+          "region": {
+            "type": "string",
+            "description": "Home region (`us` | `eu` | `ap`). Immutable after creation (ADR-015)."
+          },
           "timezone": {
             "type": "string"
           }
@@ -1529,6 +1733,43 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "CreateWebhookEndpointRequest": {
+        "type": "object",
+        "required": [
+          "url",
+          "event_types"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateWebhookEndpointResponse": {
+        "type": "object",
+        "required": [
+          "endpoint",
+          "secret"
+        ],
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/WebhookEndpointView"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Signing secret \u2014 returned only once, at creation time."
           }
         }
       },
@@ -1641,6 +1882,14 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "DisableWebhookRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
           }
         }
       },
@@ -2119,7 +2368,8 @@
           "plan",
           "numbering_series",
           "branding",
-          "feature_flags"
+          "feature_flags",
+          "region"
         ],
         "properties": {
           "branding": {},
@@ -2143,6 +2393,10 @@
           },
           "plan": {
             "type": "string"
+          },
+          "region": {
+            "type": "string",
+            "description": "Home region (`us` | `eu` | `ap`) \u2014 ADR-015 / Phase 4.1."
           },
           "timezone": {
             "type": "string"
@@ -2240,6 +2494,10 @@
           },
           "password": {
             "type": "string"
+          },
+          "region": {
+            "type": "string",
+            "description": "Home region (`us` | `eu` | `ap`). Defaults to `us`. Immutable after create."
           }
         }
       },
@@ -2263,6 +2521,17 @@
           },
           "verification_required": {
             "type": "boolean"
+          }
+        }
+      },
+      "ReplayWebhookResponse": {
+        "type": "object",
+        "required": [
+          "delivery"
+        ],
+        "properties": {
+          "delivery": {
+            "$ref": "#/components/schemas/WebhookDeliveryView"
           }
         }
       },
@@ -2436,6 +2705,22 @@
           "secret": {
             "type": "string",
             "description": "Raw secret \u2014 returned only once, at rotation time."
+          }
+        }
+      },
+      "RotateWebhookSecretResponse": {
+        "type": "object",
+        "required": [
+          "endpoint",
+          "secret"
+        ],
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/WebhookEndpointView"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Signing secret \u2014 returned only once, at rotation time."
           }
         }
       },
@@ -2742,6 +3027,156 @@
           }
         }
       },
+      "WebhookDeliveryListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryView"
+            }
+          }
+        }
+      },
+      "WebhookDeliveryView": {
+        "type": "object",
+        "required": [
+          "id",
+          "endpoint_id",
+          "event_subject",
+          "event_type",
+          "attempt",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "attempt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "delivered_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endpoint_id": {
+            "type": "string"
+          },
+          "event_subject": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "next_retry_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "response_body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "status_code": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "WebhookEndpointListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEndpointView"
+            }
+          }
+        }
+      },
+      "WebhookEndpointView": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "description",
+          "event_types",
+          "secret_prefix",
+          "status",
+          "failure_count",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "disabled_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "disabled_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "failure_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_delivery_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "secret_prefix": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "WhoCouldSeeResponse": {
         "type": "object",
         "required": [
@@ -2859,6 +3294,23 @@
           }
         }
       },
+      "AssignTerritoryRequest": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "BoardResponse": {
         "type": "object",
         "required": [
@@ -2964,6 +3416,70 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ContactDto"
+            }
+          }
+        }
+      },
+      "ContractDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "employee_id",
+          "contract_type",
+          "effective_from",
+          "created_at",
+          "version"
+        ],
+        "properties": {
+          "contract_type": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "employee_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ContractListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractDto"
             }
           }
         }
@@ -3096,6 +3612,41 @@
             ]
           },
           "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateContractRequest": {
+        "type": "object",
+        "required": [
+          "effective_from"
+        ],
+        "properties": {
+          "contract_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effective_from": {
+            "type": "string"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
             "type": [
               "string",
               "null"
@@ -3284,6 +3835,93 @@
           }
         }
       },
+      "CreateOrderLineRequest": {
+        "type": "object",
+        "required": [
+          "quantity",
+          "unit_price_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "product_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "customer_id"
+        ],
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderLineRequest"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quote_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "territory_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateProductRequest": {
         "type": "object",
         "required": [
@@ -3403,6 +4041,29 @@
             ]
           },
           "valid_until": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateTerritoryRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_user_id": {
             "type": [
               "string",
               "null"
@@ -3988,6 +4649,196 @@
           }
         }
       },
+      "OrderDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "status",
+          "currency",
+          "subtotal_minor",
+          "discount_minor",
+          "tax_minor",
+          "total_minor",
+          "created_at",
+          "updated_at",
+          "version",
+          "lines"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineDto"
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quote_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "territory_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "OrderFromDealRequest": {
+        "type": "object",
+        "required": [
+          "deal_id"
+        ],
+        "properties": {
+          "deal_id": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderFromQuoteRequest": {
+        "type": "object",
+        "required": [
+          "quote_id"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderLineDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "description",
+          "quantity",
+          "unit_price_minor",
+          "discount_minor",
+          "tax_rate_bps",
+          "tax_minor",
+          "line_total_minor"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "discount_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "line_total_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "product_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tax_minor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_rate_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "OrderListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PipelineDto": {
         "type": "object",
         "required": [
@@ -4279,6 +5130,25 @@
           }
         }
       },
+      "RenewalPipelineResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "within_days"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractDto"
+            }
+          },
+          "within_days": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ReportSummaryResponse": {
         "type": "object",
         "required": [
@@ -4374,6 +5244,92 @@
           }
         }
       },
+      "TerritoryAssignmentDto": {
+        "type": "object",
+        "required": [
+          "territory_id",
+          "assigned_at"
+        ],
+        "properties": {
+          "assigned_at": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "territory_id": {
+            "type": "string"
+          }
+        }
+      },
+      "TerritoryDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TerritoryListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TerritoryDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "UpdateContactRequest": {
         "type": "object",
         "properties": {
@@ -4418,6 +5374,74 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "UpdateContractRequest": {
+        "type": "object",
+        "properties": {
+          "auto_renew": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "renewal_notice_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "term_months": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -4583,6 +5607,17 @@
           }
         }
       },
+      "UpdateOrderStatusRequest": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      },
       "UpdateProductRequest": {
         "type": "object",
         "properties": {
@@ -4656,6 +5691,29 @@
             ]
           },
           "valid_until": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateTerritoryRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_user_id": {
             "type": [
               "string",
               "null"
@@ -5104,6 +6162,48 @@
           }
         }
       },
+      "CreateDunningProfileRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "steps"
+        ],
+        "properties": {
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningStepDto"
+            }
+          }
+        }
+      },
+      "CreateFinanceEntityRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "CreateFiscalPeriodRequest": {
         "type": "object",
         "required": [
@@ -5199,6 +6299,13 @@
               "string",
               "null"
             ]
+          },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional finance entity (`ent_\u2026`); defaults to org default entity."
           },
           "lines": {
             "type": "array",
@@ -5305,6 +6412,72 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "CreateTaxGroupRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateTaxRateRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "rate_bps",
+          "valid_from"
+        ],
+        "properties": {
+          "component_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_component": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rate_bps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "supersedes_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Previous rate version public id (`txr_\u2026`) when creating a successor."
+          },
+          "tax_group_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_from": {
+            "type": "string",
+            "description": "Required \u2014 start of validity window (YYYY-MM-DD)."
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -5448,6 +6621,127 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "DunningProfileDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_default",
+          "steps",
+          "version",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningStepDto"
+            }
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DunningProfileListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningProfileDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DunningScheduleQuery": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "invoice_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DunningScheduleResponse": {
+        "type": "object",
+        "required": [
+          "profile_id",
+          "schedule_offsets_days",
+          "steps"
+        ],
+        "properties": {
+          "profile_id": {
+            "type": "string"
+          },
+          "schedule_offsets_days": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningStepDto"
+            }
+          }
+        }
+      },
+      "DunningStepDto": {
+        "type": "object",
+        "required": [
+          "offset_days",
+          "channel",
+          "label"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "offset_days": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -5623,6 +6917,60 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FinanceCustomerDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FinanceEntityDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "code",
+          "currency",
+          "is_default",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "FinanceEntityListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FinanceEntityDto"
             }
           },
           "total": {
@@ -5840,6 +7188,12 @@
               "null"
             ]
           },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "fx_rate_date": {
             "type": [
               "string",
@@ -5960,6 +7314,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "tax_group_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "tax_minor": {
             "type": "integer",
             "format": "int64"
@@ -5967,6 +7327,12 @@
           "tax_rate_bps": {
             "type": "integer",
             "format": "int64"
+          },
+          "tax_rate_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "unit_price_minor": {
             "type": "integer",
@@ -5993,9 +7359,23 @@
             "type": "integer",
             "format": "int64"
           },
+          "tax_group_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional tax group public id (`txg_\u2026`) \u2014 resolved as-of issue date."
+          },
           "tax_rate_bps": {
             "type": "integer",
             "format": "int64"
+          },
+          "tax_rate_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional tax rate public id (`txr_\u2026`) \u2014 snapshotted at issue."
           },
           "unit_price_minor": {
             "type": "integer",
@@ -6263,6 +7643,13 @@
               "string",
               "null"
             ]
+          },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Filter invoices by finance entity public id (`ent_\u2026`)."
           },
           "limit": {
             "type": [
@@ -6968,6 +8355,17 @@
           }
         }
       },
+      "SetCustomerDunningProfileRequest": {
+        "type": "object",
+        "required": [
+          "profile_id"
+        ],
+        "properties": {
+          "profile_id": {
+            "type": "string"
+          }
+        }
+      },
       "StatementLineDto": {
         "type": "object",
         "required": [
@@ -7124,6 +8522,171 @@
           }
         }
       },
+      "TaxGroupDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "TaxGroupListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxGroupDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "TaxRateDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "rate_bps",
+          "valid_from",
+          "is_component",
+          "created_at"
+        ],
+        "properties": {
+          "component_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_component": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rate_bps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "supersedes_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_group_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_from": {
+            "type": "string"
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TaxRateListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRateDto"
+            }
+          }
+        }
+      },
+      "TaxResolveQuery": {
+        "type": "object",
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "group_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rate_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TaxResolveResponse": {
+        "type": "object",
+        "required": [
+          "rate_bps",
+          "as_of"
+        ],
+        "properties": {
+          "as_of": {
+            "type": "string"
+          },
+          "rate_bps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tax_group_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tax_rate_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "TrialBalanceResponse": {
         "type": "object",
         "required": [
@@ -7199,6 +8762,61 @@
         "properties": {
           "checklist": {
             "type": "object"
+          }
+        }
+      },
+      "UpdateDunningProfileRequest": {
+        "type": "object",
+        "properties": {
+          "is_default": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DunningStepDto"
+            }
+          }
+        }
+      },
+      "UpdateFinanceEntityRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_default": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -7787,6 +9405,107 @@
           }
         }
       },
+      "CapacityAllocationDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "membership_user_id",
+          "period_start",
+          "period_end",
+          "capacity_minutes",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "capacity_minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "membership_user_id": {
+            "type": "string"
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "CapacityAllocationListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityAllocationDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CapacityOverloadResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityOverloadRow"
+            }
+          }
+        }
+      },
+      "CapacityOverloadRow": {
+        "type": "object",
+        "required": [
+          "member_id",
+          "capacity_minutes",
+          "booked_minutes",
+          "overload_minutes"
+        ],
+        "properties": {
+          "booked_minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "capacity_minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "member_id": {
+            "type": "string"
+          },
+          "overload_minutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ChecklistItemDto": {
         "type": "object",
         "required": [
@@ -7894,6 +9613,36 @@
           },
           "url": {
             "type": "string"
+          }
+        }
+      },
+      "CreateCapacityAllocationRequest": {
+        "type": "object",
+        "required": [
+          "membership_user_id",
+          "period_start",
+          "period_end",
+          "capacity_minutes"
+        ],
+        "properties": {
+          "capacity_minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "membership_user_id": {
+            "type": "string"
+          },
+          "period_end": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -8077,6 +9826,31 @@
           }
         }
       },
+      "CreateTimesheetRequest": {
+        "type": "object",
+        "required": [
+          "week_start"
+        ],
+        "properties": {
+          "membership_user_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Target user (managers only); defaults to the caller."
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "week_start": {
+            "type": "string",
+            "description": "Monday of the week (YYYY-MM-DD). Non-Monday values are normalized to Monday."
+          }
+        }
+      },
       "DecideApprovalRequest": {
         "type": "object",
         "required": [
@@ -8087,6 +9861,17 @@
             "type": "boolean"
           },
           "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DecideTimesheetRequest": {
+        "type": "object",
+        "properties": {
+          "note": {
             "type": [
               "string",
               "null"
@@ -8225,6 +10010,48 @@
           },
           "resource_type": {
             "type": "string"
+          }
+        }
+      },
+      "PatchTimeEntryRequest": {
+        "type": "object",
+        "properties": {
+          "billable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "entry_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -8747,6 +10574,165 @@
           }
         }
       },
+      "TimeEntryDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "membership_user_id",
+          "project_id",
+          "entry_date",
+          "minutes",
+          "billable",
+          "status",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "billable": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "entry_date": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "membership_user_id": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timesheet_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TimesheetDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "membership_user_id",
+          "week_start",
+          "status",
+          "entries",
+          "created_at",
+          "updated_at",
+          "version"
+        ],
+        "properties": {
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approved_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approved_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimeEntryDto"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "membership_user_id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "submitted_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "week_start": {
+            "type": "string"
+          }
+        }
+      },
+      "TimesheetListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimesheetDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "UpdatePolicyRequest": {
         "type": "object",
         "properties": {
@@ -8887,6 +10873,51 @@
             ]
           },
           "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpsertTimeEntryRequest": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "entry_date",
+          "minutes"
+        ],
+        "properties": {
+          "billable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "entry_date": {
+            "type": "string"
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When set, updates an existing draft entry owned by the timesheet user."
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "task_id": {
             "type": [
               "string",
               "null"
@@ -9328,70 +11359,6 @@
           }
         }
       },
-      "ContractDto": {
-        "type": "object",
-        "required": [
-          "id",
-          "employee_id",
-          "contract_type",
-          "effective_from",
-          "created_at",
-          "version"
-        ],
-        "properties": {
-          "contract_type": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string"
-          },
-          "effective_from": {
-            "type": "string"
-          },
-          "effective_to": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "employee_id": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "notes": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "title": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ContractListResponse": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ContractDto"
-            }
-          }
-        }
-      },
       "CreateAssetRequest": {
         "type": "object",
         "required": [
@@ -9448,41 +11415,6 @@
           },
           "label": {
             "type": "string"
-          }
-        }
-      },
-      "CreateContractRequest": {
-        "type": "object",
-        "required": [
-          "effective_from"
-        ],
-        "properties": {
-          "contract_type": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "effective_from": {
-            "type": "string"
-          },
-          "effective_to": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "notes": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "title": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         }
       },
@@ -11944,6 +13876,36 @@
           }
         }
       },
+      "CreateMeetingSummaryRequest": {
+        "type": "object",
+        "required": [
+          "calendar_event_id"
+        ],
+        "properties": {
+          "calendar_event_id": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "DataSharingSettings": {
         "type": "object",
         "required": [
@@ -12039,14 +14001,60 @@
           "id": {
             "type": "string"
           },
+          "insight_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proposal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "suggested_action": {
             "type": [
               "string",
               "null"
             ]
           },
+          "suggested_action_detail": {},
           "title": {
             "type": "string"
+          }
+        }
+      },
+      "InsightsRefreshResponse": {
+        "type": "object",
+        "required": [
+          "created",
+          "observations",
+          "pending_proposals"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InsightObservation"
+            }
+          },
+          "pending_proposals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -12067,6 +14075,77 @@
             "items": {
               "$ref": "#/components/schemas/InsightObservation"
             }
+          }
+        }
+      },
+      "MeetingSummariesListResponse": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeetingSummaryView"
+            }
+          }
+        }
+      },
+      "MeetingSummaryView": {
+        "type": "object",
+        "required": [
+          "id",
+          "public_id",
+          "calendar_event_id",
+          "calendar_connector",
+          "summary_markdown",
+          "action_items",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "accepted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "accepted_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "action_items": {},
+          "calendar_connector": {
+            "type": "string"
+          },
+          "calendar_event_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string"
+          },
+          "public_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "summary_markdown": {
+            "type": "string"
+          },
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -15219,6 +17298,7 @@
           "payment",
           "expense",
           "task_lifecycle",
+          "time_entry",
           "ai_usage",
           "api_request",
           "invoice_issued"
@@ -15716,6 +17796,13 @@
             ],
             "description": "Must be present \u2014 query guard rejects missing org_id."
           },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Must be present and match tenant home region (Phase 4.1 residency)."
+          },
           "visualization": {
             "type": "string"
           }
@@ -16046,256 +18133,6 @@
             "type": "string"
           }
         }
-      },
-      "WebhookEndpointView": {
-        "type": "object",
-        "required": [
-          "id",
-          "url",
-          "description",
-          "event_types",
-          "secret_prefix",
-          "status",
-          "failure_count",
-          "created_at"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "event_types": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "secret_prefix": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "failure_count": {
-            "type": "integer"
-          },
-          "last_delivery_at": {
-            "type": "string",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string"
-          },
-          "disabled_at": {
-            "type": "string",
-            "nullable": true
-          },
-          "disabled_reason": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "WebhookEndpointListResponse": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WebhookEndpointView"
-            }
-          }
-        }
-      },
-      "CreateWebhookEndpointRequest": {
-        "type": "object",
-        "required": [
-          "url",
-          "event_types"
-        ],
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "event_types": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "CreateWebhookEndpointResponse": {
-        "type": "object",
-        "required": [
-          "endpoint",
-          "secret"
-        ],
-        "properties": {
-          "endpoint": {
-            "$ref": "#/components/schemas/WebhookEndpointView"
-          },
-          "secret": {
-            "type": "string"
-          }
-        }
-      },
-      "RotateWebhookSecretResponse": {
-        "type": "object",
-        "required": [
-          "endpoint",
-          "secret"
-        ],
-        "properties": {
-          "endpoint": {
-            "$ref": "#/components/schemas/WebhookEndpointView"
-          },
-          "secret": {
-            "type": "string"
-          }
-        }
-      },
-      "DisableWebhookRequest": {
-        "type": "object",
-        "properties": {
-          "reason": {
-            "type": "string"
-          }
-        }
-      },
-      "WebhookDeliveryView": {
-        "type": "object",
-        "required": [
-          "id",
-          "endpoint_id",
-          "event_subject",
-          "event_type",
-          "attempt",
-          "status",
-          "created_at"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "endpoint_id": {
-            "type": "string"
-          },
-          "event_subject": {
-            "type": "string"
-          },
-          "event_type": {
-            "type": "string"
-          },
-          "attempt": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string"
-          },
-          "status_code": {
-            "type": "integer",
-            "nullable": true
-          },
-          "response_body": {
-            "type": "string",
-            "nullable": true
-          },
-          "delivered_at": {
-            "type": "string",
-            "nullable": true
-          },
-          "next_retry_at": {
-            "type": "string",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string"
-          }
-        }
-      },
-      "WebhookDeliveryListResponse": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WebhookDeliveryView"
-            }
-          }
-        }
-      },
-      "ReplayWebhookResponse": {
-        "type": "object",
-        "required": [
-          "delivery"
-        ],
-        "properties": {
-          "delivery": {
-            "$ref": "#/components/schemas/WebhookDeliveryView"
-          }
-        }
-      },
-      "ApiKeyExchangeRequest": {
-        "type": "object",
-        "required": [
-          "key_hash"
-        ],
-        "properties": {
-          "key_hash": {
-            "type": "string"
-          }
-        }
-      },
-      "ApiKeyExchangeResponse": {
-        "type": "object",
-        "required": [
-          "access_token",
-          "api_key_id",
-          "org_id",
-          "scopes",
-          "rate_limit_per_minute"
-        ],
-        "properties": {
-          "access_token": {
-            "type": "string"
-          },
-          "api_key_id": {
-            "type": "string"
-          },
-          "org_id": {
-            "type": "string"
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "rate_limit_per_minute": {
-            "type": "integer",
-            "description": "Per-key rate limit (requests per minute). Prefer this over deprecated rate_limit_rpm."
-          },
-          "rate_limit_rpm": {
-            "type": "integer",
-            "deprecated": true,
-            "description": "Deprecated alias of rate_limit_per_minute. Dual-published for 180 days."
-          }
-        }
       }
     }
   },
@@ -16318,7 +18155,11 @@
     },
     {
       "name": "governance",
-      "description": "Phase 2.6 access review, audit verification, retention, and API keys"
+      "description": "Phase 2.6\u20133.3 access review, audit, retention, API keys, outbound webhooks"
+    },
+    {
+      "name": "internal",
+      "description": "Internal service-to-service endpoints (not public)"
     },
     {
       "name": "sales-pipelines",
@@ -16351,6 +18192,18 @@
     {
       "name": "sales-quotes",
       "description": "Quote drafting, versioning, and acceptance"
+    },
+    {
+      "name": "sales-orders",
+      "description": "Sales orders from quotes and won deals"
+    },
+    {
+      "name": "sales-contracts",
+      "description": "Customer contracts, publish, and renewals"
+    },
+    {
+      "name": "sales-territories",
+      "description": "Sales territories and assignments"
     },
     {
       "name": "sales-imports",
@@ -16421,6 +18274,18 @@
       "description": "Procure-to-pay vendor bills (inventory-service)"
     },
     {
+      "name": "finance-tax",
+      "description": "Tax groups and versioned rates"
+    },
+    {
+      "name": "finance-dunning",
+      "description": "Dunning profiles and schedules"
+    },
+    {
+      "name": "finance-entities",
+      "description": "Multi-entity foundations"
+    },
+    {
       "name": "operations-projects",
       "description": "Projects (Operations)"
     },
@@ -16451,6 +18316,14 @@
     {
       "name": "operations-events",
       "description": "In-process sales event apply"
+    },
+    {
+      "name": "operations-timesheets",
+      "description": "Timesheets and time entries (Phase 3.5)"
+    },
+    {
+      "name": "operations-capacity",
+      "description": "Capacity allocations and overload (Phase 3.5)"
     },
     {
       "name": "operations-approvals",

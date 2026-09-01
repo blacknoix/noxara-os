@@ -1101,6 +1101,14 @@ pub async fn switch_org(
     .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
     let user_public = PublicId::new(IdKind::User, user.ctx.actor.user_id).as_str();
+    let mut region_conn = state
+        .pool
+        .acquire()
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
+    let region = sessions::load_org_region(&mut region_conn, org)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e))?;
     let access = sessions::switch_org_access(
         &state.auth_keys.ring,
         user.ctx.actor.user_id,
@@ -1111,6 +1119,7 @@ pub async fn switch_org(
         policy_version,
         user.session_id,
         user.family_id,
+        &region,
     )
     .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e))?;
 

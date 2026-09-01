@@ -23,6 +23,9 @@ pub struct QueryFilter {
 pub struct ReportDefinition {
     /// Must be present — query guard rejects missing org_id.
     pub org_id: Option<String>,
+    /// Must be present and match tenant home region (Phase 4.1 residency).
+    #[serde(default)]
+    pub region: Option<String>,
     pub metric: String,
     #[serde(default)]
     pub dimensions: Vec<String>,
@@ -68,7 +71,7 @@ pub struct ValidatedQuery {
     pub visualization: String,
 }
 
-/// Reject queries without an org_id predicate (DoD).
+/// Reject queries without an org_id predicate (DoD) and without a matching region.
 pub fn validate_query(
     def: &ReportDefinition,
     request_id: &str,
@@ -117,6 +120,33 @@ pub fn validate_query(
         filters: def.filters.clone(),
         group_by: def.group_by.clone(),
         visualization: def.visualization.clone(),
+    })
+}
+
+/// Full query guard: org_id + region (Phase 4.1).
+pub fn validate_query_for_tenant(
+    def: &ReportDefinition,
+    tenant_home: companyos_tenancy::RegionCode,
+    request_id: &str,
+) -> Result<ValidatedQuery, AppError> {
+    let validated = validate_query(def, request_id)?;
+    validate_query_region(def.region.as_deref(), tenant_home, request_id)?;
+    Ok(validated)
+}
+
+/// Region guard (Phase 4.1): reject missing or mismatched region relative to
+/// the authenticated tenant home region.
+pub fn validate_query_region(
+    query_region: Option<&str>,
+    tenant_home: companyos_tenancy::RegionCode,
+    request_id: &str,
+) -> Result<companyos_tenancy::RegionCode, AppError> {
+    companyos_tenancy::enforce_query_region(query_region, tenant_home).map_err(|e| {
+        let code = match e {
+            companyos_tenancy::RegionError::MissingRegion => ErrorCode::ValidationFailed,
+            _ => ErrorCode::ResidencyViolation,
+        };
+        AppError::new(code, request_id, e.to_string())
     })
 }
 
@@ -341,6 +371,7 @@ mod tests {
     fn rejects_missing_org_id() {
         let def = ReportDefinition {
             org_id: None,
+            region: Some("us".into()),
             metric: "revenue_issued".into(),
             dimensions: vec![],
             filters: vec![],
@@ -356,6 +387,7 @@ mod tests {
         let org = OrgId::generate();
         let def = ReportDefinition {
             org_id: Some(org.to_public().as_str()),
+            region: Some("us".into()),
             metric: "revenue_issued".into(),
             dimensions: vec!["currency".into()],
             filters: vec![],
@@ -364,5 +396,39 @@ mod tests {
         };
         let v = validate_query(&def, "t").unwrap();
         assert_eq!(v.metric.name, "revenue_issued");
+    }
+
+    #[test]
+    fn rejects_missing_region() {
+        let org = OrgId::generate();
+        let def = ReportDefinition {
+            org_id: Some(org.to_public().as_str()),
+            region: None,
+            metric: "revenue_issued".into(),
+            dimensions: vec![],
+            filters: vec![],
+            group_by: vec![],
+            visualization: "table".into(),
+        };
+        let err =
+            validate_query_for_tenant(&def, companyos_tenancy::RegionCode::Us, "t").unwrap_err();
+        assert_eq!(err.code, ErrorCode::ValidationFailed);
+    }
+
+    #[test]
+    fn rejects_mismatched_region() {
+        let org = OrgId::generate();
+        let def = ReportDefinition {
+            org_id: Some(org.to_public().as_str()),
+            region: Some("us".into()),
+            metric: "revenue_issued".into(),
+            dimensions: vec![],
+            filters: vec![],
+            group_by: vec![],
+            visualization: "table".into(),
+        };
+        let err =
+            validate_query_for_tenant(&def, companyos_tenancy::RegionCode::Eu, "t").unwrap_err();
+        assert_eq!(err.code, ErrorCode::ResidencyViolation);
     }
 }

@@ -27,6 +27,8 @@ pub enum ErrorCode {
     MfaRequired,
     /// Plan/feature flag disabled (e.g. SSO).
     FeatureDisabled,
+    /// Data residency / cross-region access denied (HTTP 451).
+    ResidencyViolation,
 }
 
 impl ErrorCode {
@@ -44,6 +46,7 @@ impl ErrorCode {
             Self::AccountLocked => "account_locked",
             Self::MfaRequired => "mfa_required",
             Self::FeatureDisabled => "feature_disabled",
+            Self::ResidencyViolation => "residency_violation",
         }
     }
 
@@ -61,6 +64,8 @@ impl ErrorCode {
             Self::AccountLocked => StatusCode::FORBIDDEN,
             Self::MfaRequired => StatusCode::UNAUTHORIZED,
             Self::FeatureDisabled => StatusCode::FORBIDDEN,
+            // RFC 7725 — Unavailable For Legal Reasons (data residency).
+            Self::ResidencyViolation => StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,
         }
     }
 }
@@ -172,10 +177,23 @@ mod tests {
             ErrorCode::AccountLocked,
             ErrorCode::MfaRequired,
             ErrorCode::FeatureDisabled,
+            ErrorCode::ResidencyViolation,
         ];
         let mut set = std::collections::HashSet::new();
         for c in codes {
             assert!(set.insert(c.as_str()));
         }
+    }
+
+    #[test]
+    fn residency_violation_is_http_451() {
+        assert_eq!(
+            ErrorCode::ResidencyViolation.status(),
+            StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS
+        );
+        assert_eq!(
+            ErrorCode::ResidencyViolation.as_str(),
+            "residency_violation"
+        );
     }
 }

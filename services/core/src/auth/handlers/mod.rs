@@ -277,6 +277,9 @@ pub async fn register(
     let membership_id = new_uuid_v7();
     let membership_public = format!("mem_{membership_id}");
 
+    let region = crate::control_plane::parse_region_or_default(Some(body.region.as_str()))
+        .map_err(|e| AppError::new(ErrorCode::ValidationFailed, request_id.clone(), e))?;
+
     let mut tx = state
         .pool
         .begin()
@@ -285,12 +288,13 @@ pub async fn register(
 
     sqlx::query(
         r#"
-        INSERT INTO organization (id, public_id, name) VALUES ($1,$2,$3)
+        INSERT INTO organization (id, public_id, name, region) VALUES ($1,$2,$3,$4)
         "#,
     )
     .bind(org.as_uuid())
     .bind(org.to_public().as_str())
     .bind(body.org_name.trim())
+    .bind(region.as_str())
     .execute(&mut *tx)
     .await
     .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
@@ -411,9 +415,14 @@ pub async fn register(
         "auth.register",
         ip.as_deref(),
         ua.as_deref(),
-        serde_json::json!({ "email": email_norm }),
+        serde_json::json!({ "email": email_norm, "region": region.as_str() }),
     )
     .await;
+
+    state
+        .cell_plane
+        .register_org(&org.to_public().as_str(), region)
+        .await;
 
     Ok((
         StatusCode::CREATED,

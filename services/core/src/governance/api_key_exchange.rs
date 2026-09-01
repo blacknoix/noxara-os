@@ -125,6 +125,12 @@ pub async fn exchange(
     let org_public = org_id.to_public().as_str();
     let user_public = PublicId::new(IdKind::User, created_by).as_str();
     let now = Utc::now();
+    let region = {
+        let mut conn = state.pool.acquire().await.map_err(internal(request_id))?;
+        crate::auth::sessions::load_org_region(&mut conn, org_id)
+            .await
+            .map_err(|e| AppError::new(ErrorCode::Internal, request_id, e))?
+    };
     let claims = AccessClaims {
         sub: user_public,
         user_id: created_by,
@@ -141,6 +147,7 @@ pub async fn exchange(
         exp: (now + Duration::minutes(5)).timestamp(),
         api_key_id: Some(public_id.clone()),
         scopes: Some(effective.clone()),
+        region,
     };
 
     let access_token = mint_access_token(&state.auth_keys.ring, claims, Duration::minutes(5))

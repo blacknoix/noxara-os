@@ -200,7 +200,12 @@ async fn from_jwt(
     }
 
     let org_id = OrgId::new(claims.org_uuid);
+    let region = companyos_tenancy::RegionCode::parse(&claims.region).ok();
     let ctx = RequestContext::new(org_id, Actor::human(claims.user_id), request_id.to_string());
+    let ctx = match region {
+        Some(r) => ctx.with_region(r),
+        None => ctx,
+    };
     Ok(AuthCtx {
         ctx,
         roles: vec![role],
@@ -223,7 +228,15 @@ fn from_local_headers(headers: &HeaderMap, request_id: &str) -> Result<Option<Au
             .map_err(|e| AppError::new(e.code, request_id.to_string(), e.detail))?;
         let user_id = parse_user_public_id(user_s)
             .map_err(|e| AppError::new(e.code, request_id.to_string(), e.detail))?;
+        let region = headers
+            .get(companyos_tenancy::REGION_HINT_HEADER)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| companyos_tenancy::RegionCode::parse(s).ok());
         let ctx = RequestContext::new(org_id, Actor::human(user_id), request_id.to_string());
+        let ctx = match region {
+            Some(r) => ctx.with_region(r),
+            None => ctx,
+        };
         return Ok(Some(AuthCtx {
             ctx,
             roles: vec!["owner".into()],

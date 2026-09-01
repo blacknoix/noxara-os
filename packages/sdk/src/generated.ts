@@ -22,6 +22,8 @@ export type RegisterRequest = {
   email: string;
   org_name: string;
   password: string;
+  /** Home region (`us` | `eu` | `ap`). Defaults to `us`. Immutable after create. */
+  region?: string;
 };
 
 export type RegisterResponse = {
@@ -97,6 +99,8 @@ export type CreateOrgRequest = {
   business_type?: string;
   currency?: string;
   name: string;
+  /** Home region (`us` | `eu` | `ap`). Immutable after creation (ADR-015). */
+  region?: string;
   timezone?: string;
 };
 
@@ -110,6 +114,8 @@ export type OrgResponse = {
   numbering_series: Record<string, unknown>;
   org_id: string;
   plan: string;
+  /** Home region (`us` | `eu` | `ap`) — ADR-015 / Phase 4.1. */
+  region: string;
   timezone: string;
 };
 
@@ -470,6 +476,7 @@ export type InvoiceDto = {
   customer_id: string;
   discount_minor: number;
   due_date?: string;
+  entity_id?: string;
   fx_rate_date?: string;
   fx_rate_den?: string;
   fx_rate_num?: string;
@@ -495,8 +502,10 @@ export type InvoiceLineDto = {
   id: string;
   line_total_minor: number;
   quantity: number;
+  tax_group_id?: string;
   tax_minor: number;
   tax_rate_bps: number;
+  tax_rate_id?: string;
   unit_price_minor: number;
 };
 
@@ -504,7 +513,11 @@ export type InvoiceLineInput = {
   description: string;
   discount_minor?: number;
   quantity: number;
+  /** Optional tax group public id (`txg_…`) — resolved as-of issue date. */
+  tax_group_id?: string;
   tax_rate_bps?: number;
+  /** Optional tax rate public id (`txr_…`) — snapshotted at issue. */
+  tax_rate_id?: string;
   unit_price_minor: number;
 };
 
@@ -519,6 +532,8 @@ export type CreateInvoiceRequest = {
   /** Finance customer public id (`cus_…` projection) or sales customer id. */
   customer_id: string;
   due_date?: string;
+  /** Optional finance entity (`ent_…`); defaults to org default entity. */
+  entity_id?: string;
   lines: InvoiceLineInput[];
   notes?: string;
   terms?: string;
@@ -892,7 +907,11 @@ export type InsightObservation = {
   estimate: boolean;
   evidence: Citation[];
   id: string;
+  insight_type?: string;
+  proposal_id?: string;
+  status?: string;
   suggested_action?: string;
+  suggested_action_detail?: Record<string, unknown>;
   title: string;
 };
 
@@ -2343,17 +2362,17 @@ export type ApiKeyView = {
 };
 
 export type WebhookEndpointView = {
-  id: string;
-  url: string;
-  description: string;
-  event_types: string[];
-  secret_prefix: string;
-  status: string;
-  failure_count: number;
-  last_delivery_at?: string;
   created_at: string;
+  description: string;
   disabled_at?: string;
   disabled_reason?: string;
+  event_types: string[];
+  failure_count: number;
+  id: string;
+  last_delivery_at?: string;
+  secret_prefix: string;
+  status: string;
+  url: string;
 };
 
 export type WebhookEndpointListResponse = {
@@ -2361,33 +2380,35 @@ export type WebhookEndpointListResponse = {
 };
 
 export type CreateWebhookEndpointRequest = {
-  url: string;
   description?: string;
   event_types: string[];
+  url: string;
 };
 
 export type CreateWebhookEndpointResponse = {
   endpoint: WebhookEndpointView;
+  /** Signing secret — returned only once, at creation time. */
   secret: string;
 };
 
 export type RotateWebhookSecretResponse = {
   endpoint: WebhookEndpointView;
+  /** Signing secret — returned only once, at rotation time. */
   secret: string;
 };
 
 export type WebhookDeliveryView = {
-  id: string;
+  attempt: number;
+  created_at: string;
+  delivered_at?: string;
   endpoint_id: string;
   event_subject: string;
   event_type: string;
-  attempt: number;
-  status: string;
-  status_code?: number;
-  response_body?: string;
-  delivered_at?: string;
+  id: string;
   next_retry_at?: string;
-  created_at: string;
+  response_body?: string;
+  status: string;
+  status_code?: string;
 };
 
 export type WebhookDeliveryListResponse = {
@@ -2399,14 +2420,15 @@ export type ReplayWebhookResponse = {
 };
 
 export type ApiKeyExchangeResponse = {
+  /** Short-lived access JWT with `api_key_id` + effective `scopes`. */
   access_token: string;
   api_key_id: string;
   org_id: string;
-  scopes: string[];
-  /** Per-key rate limit (requests per minute). Prefer this over deprecated rate_limit_rpm. */
   rate_limit_per_minute: number;
-  /** Deprecated alias of rate_limit_per_minute. Dual-published for 180 days. */
-  rate_limit_rpm?: number;
+  /** Deprecated dual-published field (Phase 3.3 deprecation exercise).
+Prefer `rate_limit_per_minute`. Present for 180 days. */
+  rate_limit_rpm?: string;
+  scopes: string[];
 };
 
 export type DisableWebhookRequest = {
@@ -2658,7 +2680,7 @@ export type AnalyticsReconcileResponse = {
   mirror_count: number;
 };
 
-export type FactSource = "deal_stage_change" | "invoice_lifecycle" | "payment" | "expense" | "task_lifecycle" | "ai_usage" | "api_request" | "invoice_issued";
+export type FactSource = "deal_stage_change" | "invoice_lifecycle" | "payment" | "expense" | "task_lifecycle" | "time_entry" | "ai_usage" | "api_request" | "invoice_issued";
 
 export type MeasureKind = "sum" | "count" | "avg";
 
@@ -2717,6 +2739,8 @@ export type ReportDefinition = {
   metric: string;
   /** Must be present — query guard rejects missing org_id. */
   org_id?: string;
+  /** Must be present and match tenant home region (Phase 4.1 residency). */
+  region?: string;
   visualization?: string;
 };
 
