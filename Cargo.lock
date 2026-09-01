@@ -604,6 +604,7 @@ dependencies = [
  "chrono",
  "companyos-auth-token",
  "companyos-authz",
+ "companyos-crypto",
  "companyos-errors",
  "companyos-events",
  "companyos-ids",
@@ -671,6 +672,21 @@ dependencies = [
  "tracing",
  "utoipa",
  "uuid",
+]
+
+[[package]]
+name = "companyos-crypto"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "base64",
+ "chrono",
+ "hex",
+ "rand 0.8.8",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.20",
 ]
 
 [[package]]

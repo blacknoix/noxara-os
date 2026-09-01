@@ -23,6 +23,7 @@ use axum::{Json, Router};
 use companyos_auth_token::{decode_jwk_k, verify_access_token, AccessClaims, KeyRing, SigningKey};
 use companyos_authz::{self as authz, perms, Principal, Role};
 use companyos_errors::{AppError, ErrorCode};
+use companyos_gateway::network_gate;
 use companyos_gateway::region_gate::{self, CellBinding};
 use companyos_telemetry::init_tracing;
 use companyos_tenancy::{ControlPlane, RegionCode, REGION_HINT_HEADER};
@@ -181,6 +182,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/workspace/{*rest}", any(proxy_workspace))
         .route("/api/v1/control-plane/{*rest}", any(proxy_control_plane))
         .route("/api/v1/governance/{*rest}", any(proxy_governance))
+        .route("/api/v1/scim/{*rest}", any(proxy_scim))
         .route("/api/v1/sales/{*rest}", any(proxy_sales))
         .route("/api/v1/finance/{*rest}", any(proxy_finance))
         .route("/api/v1/operations/{*rest}", any(proxy_operations))
@@ -562,6 +564,18 @@ async fn proxy_to(
                 return e.into_response();
             }
         }
+        // Network allowlist fail-closed (Phase 4.2).
+        if let Err(e) = network_gate::gate_network(
+            &state.client,
+            &state.core_url,
+            &c.org_id,
+            &headers,
+            &request_id,
+        )
+        .await
+        {
+            return e.into_response();
+        }
         // Propagate resolved tenant + actor context for core (in addition to Bearer).
         if let Ok(v) = HeaderValue::from_str(&c.org_id) {
             headers.insert("x-companyos-org-id", v);
@@ -686,6 +700,13 @@ async fn proxy_governance(State(state): State<GatewayState>, req: Request) -> Re
     let path = req.uri().path().to_string();
     let upstream = with_query(&req, &path);
     proxy_to(&state, req, &upstream, &state.core_url, true, "core").await
+}
+
+/// SCIM uses dedicated bearer tokens (not session JWT / not API-key allowlist).
+async fn proxy_scim(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.core_url, false, "core").await
 }
 
 async fn proxy_sales(State(state): State<GatewayState>, req: Request) -> Response {

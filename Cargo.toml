@@ -10,6 +10,7 @@ members = [
     "crates/outbox",
     "crates/authz",
     "crates/auth-token",
+    "crates/crypto",
     "crates/testkit",
     "services/gateway",
     "services/core",
@@ -38,6 +39,7 @@ default-members = [
     "crates/outbox",
     "crates/authz",
     "crates/auth-token",
+    "crates/crypto",
     "crates/testkit",
     "services/gateway",
     "services/core",
@@ -75,6 +77,7 @@ companyos-events = { path = "crates/events" }
 companyos-outbox = { path = "crates/outbox" }
 companyos-authz = { path = "crates/authz" }
 companyos-auth-token = { path = "crates/auth-token" }
+companyos-crypto = { path = "crates/crypto" }
 companyos-testkit = { path = "crates/testkit" }
 
 # External

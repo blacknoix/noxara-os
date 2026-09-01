@@ -3,6 +3,7 @@
 pub mod auth;
 pub mod control_plane;
 pub mod dashboard;
+pub mod enterprise;
 pub mod governance;
 pub mod hello;
 pub mod openapi;
@@ -144,6 +145,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/005_sso_login.sql"),
             include_str!("../migrations/006_webhooks.sql"),
             include_str!("../migrations/007_region.sql"),
+            include_str!("../migrations/008_enterprise.sql"),
         ] {
             for stmt in split_sql(migration) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
@@ -175,6 +177,7 @@ pub fn build_router(state: AppState) -> Router {
         .merge(auth::router())
         .merge(workspace::router())
         .merge(governance::router())
+        .merge(enterprise::router())
         .merge(control_plane::router())
         .merge(dashboard::router())
         .merge(hello::router())

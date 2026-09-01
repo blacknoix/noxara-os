@@ -1573,6 +1573,8 @@ Empty / omitted for manual → generated UUID. */
 
 export type JournalEntryDto = {
   currency: string;
+  /** Finance entity public id (`ent_…`) when the entry is entity-scoped. */
+  entity_id?: string;
   entry_date: string;
   id: string;
   lines: JournalLineInput[];
@@ -2261,7 +2263,6 @@ export type CreateVendorBillRequest = {
 };
 
 export type PayVendorBillRequest = {
-  /** Defaults to the full outstanding balance when omitted. */
   amount_minor?: string;
   memo?: string;
 };

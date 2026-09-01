@@ -2,6 +2,7 @@
 
 use companyos_auth_token::KeyRing;
 use companyos_authz::PermissionSetCache;
+use companyos_crypto::MockKms;
 use sqlx::PgPool;
 use std::sync::Arc;
 
@@ -18,6 +19,8 @@ pub struct AppState {
     pub webhook_crypto: crate::webhook_crypto::WebhookEncryptor,
     /// In-process multi-region cell plane (CI / compose simulation).
     pub cell_plane: CellPlaneState,
+    /// Mock KMS for CMEK wrap/unwrap (CI); swap for AWS KMS in production.
+    pub kms: Arc<MockKms>,
 }
 
 impl AppState {
@@ -30,6 +33,7 @@ impl AppState {
             webhook_crypto: crate::webhook_crypto::WebhookEncryptor::from_env()
                 .expect("WEBHOOK_ENCRYPTION_KEY or local-dev fallback"),
             cell_plane: CellPlaneState::new(),
+            kms: Arc::new(MockKms::new()),
         }
     }
 }

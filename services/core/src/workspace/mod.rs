@@ -56,7 +56,7 @@ pub(crate) fn require_perm(
 /// rather than writing directly on `pool` (a bare pool connection has no
 /// session var set and the INSERT would be silently rejected by `FORCE ROW
 /// LEVEL SECURITY`).
-pub(crate) async fn audit_mutation(
+pub async fn audit_mutation(
     pool: &PgPool,
     org_id: uuid::Uuid,
     actor: uuid::Uuid,

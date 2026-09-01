@@ -1,0 +1,20 @@
+[package]
+name = "companyos-crypto"
+description = "Envelope encryption with pluggable KMS wrap (mock in CI, AWS later)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aes-gcm = "0.10"
+base64 = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

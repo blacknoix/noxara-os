@@ -4,6 +4,7 @@
 
 pub mod accounts;
 pub mod bank;
+pub mod consolidation;
 pub mod credit_notes;
 pub mod customers;
 pub mod dunning;
@@ -49,6 +50,7 @@ pub fn router() -> Router<AppState> {
         .merge(tax::router())
         .merge(dunning::router())
         .merge(entities::router())
+        .merge(consolidation::router())
 }
 
 /// Map a `sqlx::Error` to an internal `AppError`, capturing `request_id`.

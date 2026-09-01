@@ -413,6 +413,9 @@ pub struct JournalEntryDto {
     pub entry_date: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub period_id: Option<String>,
+    /// Finance entity public id (`ent_…`) when the entry is entity-scoped.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

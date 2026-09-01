@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–3.5 implemented; Phase 4.1 (this PR) multi-region foundations.
+Status: **Active** outline. Phase 0–4.1 implemented; Phase 4.2 (this PR) enterprise multi-tenancy.
 
 ## Completed
 
@@ -28,6 +28,16 @@ Status: **Active** outline. Phase 0–3.5 implemented; Phase 4.1 (this PR) multi
 | 3.4   | Marketplace skeleton: listings, review gate, scoped-consent installs, app tokens, mock OAuth, integrations alias                |
 | 3.5   | Depth / polish: CRM orders/contracts/territories; finance tax/dunning/entities; ops timesheets/capacity; AI insights/meetings; list_invoices N+1 fix + RED meters |
 | 4.1   | Multi-region foundations: region catalogue, org.region (ADR-015), cell routing, residency guards, failover drill (CI), control-plane region map |
+| 4.2   | Enterprise multi-tenancy: IC + consolidation, hierarchy grants/delegation, CMEK (mock KMS), SCIM (2 mock IdPs), network allowlist/infra tier, SLA, eDiscovery |
+
+## Phase 4.2 — Enterprise multi-tenancy (this PR)
+
+- Consolidation on existing `finance_entity` (3.5): intercompany balanced pairs, elimination runs (same currency)
+- Hierarchy inherited grants + membership delegation via sole PDP `crates/authz` + `policy_version`
+- CMEK: customer wrap key for per-org DEK (`companyos-crypto` MockKms in CI) — rotate + revoke
+- SCIM 2.0 Users/Groups with org-scoped bearer tokens (dedicated; not public API-key allowlist)
+- Network allowlist + `infra_tier` fail-closed (gateway → internal network-gate); SLA targets/report
+- Legal hold + durable `export_job` pack with audit hash-chain verification
 
 ## Phase 3.3 — Public API, SDKs & webhooks (done)
 

@@ -5,7 +5,17 @@ import { Button, EmptyState, ErrorState, Input, Table } from '@companyos/design-
 import { authFetch, getAccessToken } from '../../../lib/auth-client';
 import { useCapabilities } from '../../../lib/capabilities';
 
-type Tab = 'access-review' | 'audit' | 'retention' | 'api-keys' | 'sso';
+type Tab =
+  | 'access-review'
+  | 'audit'
+  | 'retention'
+  | 'api-keys'
+  | 'sso'
+  | 'scim'
+  | 'cmk'
+  | 'network'
+  | 'sla'
+  | 'ediscovery';
 
 type WhoRow = {
   user_id?: string;
@@ -69,6 +79,22 @@ export default function SecuritySettingsPage() {
   const canRetention = can('admin.retention.manage');
   const canApiKeys = can('admin.api_key.manage');
   const canSso = can('admin.sso.manage');
+  const canScim = can('admin.scim.manage');
+  const canCmk = can('admin.cmk.read') || can('admin.cmk.rotate');
+  const canNetwork = can('admin.network.manage');
+  const canSla = can('admin.sla.read') || can('admin.sla.manage');
+  const canEdiscovery = can('admin.ediscovery.export');
+
+  const [cmkStatus, setCmkStatus] = useState<string | null>(null);
+  const [scimTokens, setScimTokens] = useState<{ id: string; name: string; idp_label: string; token_prefix: string }[]>([]);
+  const [revealedScim, setRevealedScim] = useState<string | null>(null);
+  const [networkPolicy, setNetworkPolicy] = useState<{
+    infra_tier: string;
+    allowlist_enabled: boolean;
+    cidr_allowlist: string[];
+  } | null>(null);
+  const [slaReport, setSlaReport] = useState<string | null>(null);
+  const [exportJobs, setExportJobs] = useState<{ id: string; status: string; hash_chain_ok?: boolean }[]>([]);
 
   const denied = !capsLoading && !getAccessToken();
 
@@ -282,6 +308,11 @@ export default function SecuritySettingsPage() {
     { id: 'retention', label: 'Retention', show: canRetention },
     { id: 'api-keys', label: 'API keys', show: canApiKeys },
     { id: 'sso', label: 'SSO', show: canSso },
+    { id: 'scim', label: 'SCIM', show: canScim },
+    { id: 'cmk', label: 'CMEK', show: canCmk },
+    { id: 'network', label: 'Network', show: canNetwork },
+    { id: 'sla', label: 'SLA', show: canSla },
+    { id: 'ediscovery', label: 'eDiscovery', show: canEdiscovery },
   ];
 
   return (
@@ -470,7 +501,7 @@ export default function SecuritySettingsPage() {
         <section style={styles.section}>
           <h2 style={styles.h2}>Enterprise SSO</h2>
           <p style={styles.hint}>
-            OIDC configs are gated by enterprise plan / feature flag. SCIM is Phase 4.
+            OIDC configs are gated by enterprise plan / feature flag. SCIM tokens live in the SCIM tab.
           </p>
           {ssoConfigs.length === 0 ? (
             <EmptyState
@@ -492,6 +523,208 @@ export default function SecuritySettingsPage() {
               getRowKey={(c) => c.id}
             />
           )}
+        </section>
+      ) : null}
+
+      {tab === 'scim' && canScim ? (
+        <section style={styles.section}>
+          <h2 style={styles.h2}>SCIM provisioning</h2>
+          <p style={styles.hint}>
+            Org-scoped SCIM bearer tokens for IdP User/Group sync (not on the public API-key allowlist).
+          </p>
+          <Button
+            disabled={busy}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                setError(null);
+                const res = await authFetch('/api/v1/governance/scim/tokens', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ name: 'IdP token', idp_label: 'default' }),
+                });
+                setBusy(false);
+                if (!res.ok) {
+                  setError('Failed to create SCIM token');
+                  return;
+                }
+                const body = await res.json();
+                setRevealedScim(body.token ?? null);
+                const list = await authFetch('/api/v1/governance/scim/tokens');
+                if (list.ok) setScimTokens(await list.json());
+              })();
+            }}
+          >
+            Create SCIM token
+          </Button>
+          {revealedScim ? <p style={styles.secret}>Copy now: {revealedScim}</p> : null}
+          {scimTokens.length === 0 ? (
+            <EmptyState title="No SCIM tokens" description="Create a token for your IdP." />
+          ) : (
+            <Table
+              columns={[
+                { key: 'name', header: 'Name', cell: (t) => t.name },
+                { key: 'idp_label', header: 'IdP', cell: (t) => t.idp_label },
+                { key: 'token_prefix', header: 'Prefix', cell: (t) => t.token_prefix },
+              ]}
+              rows={scimTokens}
+              getRowKey={(t) => t.id}
+            />
+          )}
+        </section>
+      ) : null}
+
+      {tab === 'cmk' && canCmk ? (
+        <section style={styles.section}>
+          <h2 style={styles.h2}>Customer-managed keys</h2>
+          <p style={styles.hint}>
+            Envelope wrap key for org data keys. Rotate re-wraps the DEK; revoke fails subsequent decrypt.
+          </p>
+          <div style={styles.row}>
+            <Button
+              disabled={busy}
+              onClick={() => {
+                void (async () => {
+                  setBusy(true);
+                  const res = await authFetch('/api/v1/governance/cmk');
+                  setBusy(false);
+                  if (res.ok) setCmkStatus(JSON.stringify(await res.json(), null, 2));
+                })();
+              }}
+            >
+              Refresh status
+            </Button>
+            <Button
+              disabled={busy || !can('admin.cmk.rotate')}
+              onClick={() => {
+                void (async () => {
+                  setBusy(true);
+                  const res = await authFetch('/api/v1/governance/cmk', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ alias: 'org-cmk' }),
+                  });
+                  setBusy(false);
+                  if (!res.ok) setError('Provision failed (may already exist)');
+                  else setCmkStatus(JSON.stringify(await res.json(), null, 2));
+                })();
+              }}
+            >
+              Provision
+            </Button>
+            <Button
+              disabled={busy || !can('admin.cmk.rotate')}
+              onClick={() => {
+                void (async () => {
+                  setBusy(true);
+                  const res = await authFetch('/api/v1/governance/cmk/rotate', {
+                    method: 'POST',
+                  });
+                  setBusy(false);
+                  if (!res.ok) setError('Rotate failed');
+                  else setCmkStatus(JSON.stringify(await res.json(), null, 2));
+                })();
+              }}
+            >
+              Rotate
+            </Button>
+          </div>
+          {cmkStatus ? <pre style={styles.result}>{cmkStatus}</pre> : null}
+        </section>
+      ) : null}
+
+      {tab === 'network' && canNetwork ? (
+        <section style={styles.section}>
+          <h2 style={styles.h2}>Network allowlist</h2>
+          <p style={styles.hint}>
+            Fail-closed CIDR / mTLS allowlist when enabled. Dedicated tier is config-only (no live VPC).
+          </p>
+          <Button
+            disabled={busy}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                const res = await authFetch('/api/v1/governance/network');
+                setBusy(false);
+                if (res.ok) setNetworkPolicy(await res.json());
+              })();
+            }}
+          >
+            Load policy
+          </Button>
+          {networkPolicy ? (
+            <pre style={styles.result}>{JSON.stringify(networkPolicy, null, 2)}</pre>
+          ) : null}
+        </section>
+      ) : null}
+
+      {tab === 'sla' && canSla ? (
+        <section style={styles.section}>
+          <h2 style={styles.h2}>Tenant SLA</h2>
+          <Button
+            disabled={busy}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                const res = await authFetch('/api/v1/governance/sla/report');
+                setBusy(false);
+                if (res.ok) setSlaReport(JSON.stringify(await res.json(), null, 2));
+              })();
+            }}
+          >
+            Load report
+          </Button>
+          {slaReport ? <pre style={styles.result}>{slaReport}</pre> : null}
+        </section>
+      ) : null}
+
+      {tab === 'ediscovery' && canEdiscovery ? (
+        <section style={styles.section}>
+          <h2 style={styles.h2}>eDiscovery export</h2>
+          <p style={styles.hint}>Legal hold + audit export job with hash-chain verification.</p>
+          <Button
+            disabled={busy}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                setError(null);
+                await authFetch('/api/v1/governance/ediscovery/holds', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ reason: 'ui-hold' }),
+                });
+                const res = await authFetch('/api/v1/governance/ediscovery/exports', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ kind: 'ediscovery', include_contexts: ['audit'] }),
+                });
+                setBusy(false);
+                if (!res.ok) {
+                  setError('Export failed');
+                  return;
+                }
+                const job = await res.json();
+                setExportJobs((prev) => [job, ...prev]);
+              })();
+            }}
+          >
+            Run export
+          </Button>
+          {exportJobs.length > 0 ? (
+            <Table
+              columns={[
+                { key: 'id', header: 'Job', cell: (j) => j.id },
+                { key: 'status', header: 'Status', cell: (j) => j.status },
+                {
+                  key: 'hash',
+                  header: 'Hash chain',
+                  cell: (j) => (j.hash_chain_ok ? 'ok' : 'n/a'),
+                },
+              ]}
+              rows={exportJobs}
+              getRowKey={(j) => j.id}
+            />
+          ) : null}
         </section>
       ) : null}
     </main>

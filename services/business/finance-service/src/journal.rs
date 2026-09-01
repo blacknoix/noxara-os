@@ -37,6 +37,14 @@ pub mod codes {
     pub const DEPRECIATION_EXPENSE: &str = "5300";
     /// Accumulated depreciation (contra-asset; Phase 2.5).
     pub const ACCUMULATED_DEPRECIATION: &str = "1300";
+    /// Intercompany receivable (Phase 4.2).
+    pub const IC_RECEIVABLE: &str = "1500";
+    /// Intercompany payable (Phase 4.2).
+    pub const IC_PAYABLE: &str = "2500";
+    /// Intercompany revenue (Phase 4.2 eliminations).
+    pub const IC_REVENUE: &str = "4900";
+    /// Intercompany expense (Phase 4.2 eliminations).
+    pub const IC_EXPENSE: &str = "5900";
 }
 
 #[derive(Debug, Clone)]
@@ -372,6 +380,34 @@ pub async fn ensure_ledger_accounts(
             "asset",
             "credit",
             130,
+        ),
+        (
+            codes::IC_RECEIVABLE,
+            "Intercompany Receivable",
+            "asset",
+            "debit",
+            150,
+        ),
+        (
+            codes::IC_PAYABLE,
+            "Intercompany Payable",
+            "liability",
+            "credit",
+            250,
+        ),
+        (
+            codes::IC_REVENUE,
+            "Intercompany Revenue",
+            "revenue",
+            "credit",
+            490,
+        ),
+        (
+            codes::IC_EXPENSE,
+            "Intercompany Expense",
+            "expense",
+            "debit",
+            590,
         ),
     ];
     for (code, name, ty, normal, sort) in accounts {

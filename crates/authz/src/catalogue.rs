@@ -1453,6 +1453,111 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Create and update legal entities (multi-entity foundations)",
         sensitive: true,
     },
+    PermissionDef {
+        id: "finance.consolidation.run",
+        context: "finance",
+        resource: "consolidation",
+        action: "run",
+        description: "Run multi-entity consolidation with intercompany eliminations",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "finance.consolidation.read",
+        context: "finance",
+        resource: "consolidation",
+        action: "read",
+        description: "View consolidation runs and consolidated statements",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "finance.intercompany.manage",
+        context: "finance",
+        resource: "intercompany",
+        action: "manage",
+        description: "Create and post intercompany transaction pairs",
+        sensitive: true,
+    },
+    // Phase 4.2 — Enterprise admin
+    PermissionDef {
+        id: "admin.scim.manage",
+        context: "admin",
+        resource: "scim",
+        action: "manage",
+        description: "Manage SCIM tokens and view provisioning activity",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.cmk.read",
+        context: "admin",
+        resource: "cmk",
+        action: "read",
+        description: "View customer-managed encryption key status",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.cmk.rotate",
+        context: "admin",
+        resource: "cmk",
+        action: "rotate",
+        description: "Rotate the org customer-managed wrap key and re-wrap DEKs",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.cmk.revoke",
+        context: "admin",
+        resource: "cmk",
+        action: "revoke",
+        description: "Revoke a customer-managed wrap key (fails subsequent decrypt)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.network.manage",
+        context: "admin",
+        resource: "network",
+        action: "manage",
+        description: "Manage org network allowlist and infrastructure tier",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.sla.read",
+        context: "admin",
+        resource: "sla",
+        action: "read",
+        description: "View per-tenant SLA targets and reports",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "admin.sla.manage",
+        context: "admin",
+        resource: "sla",
+        action: "manage",
+        description: "Configure per-tenant SLA targets",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "admin.ediscovery.export",
+        context: "admin",
+        resource: "ediscovery",
+        action: "export",
+        description: "Place legal hold and export audit/eDiscovery packs",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "workspace.grant.delegate",
+        context: "workspace",
+        resource: "grant",
+        action: "delegate",
+        description: "Delegate a permission/scope to another membership with expiry",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "workspace.grant.inherit",
+        context: "workspace",
+        resource: "grant",
+        action: "inherit",
+        description: "Grant inherited role permissions down the team hierarchy",
+        sensitive: true,
+    },
     // Phase 3.5 — Operations depth
     PermissionDef {
         id: "operations.timesheet.read",
@@ -1588,6 +1693,17 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "finance.tax.manage",
     "finance.dunning.manage",
     "finance.entity.manage",
+    "finance.consolidation.run",
+    "finance.intercompany.manage",
+    "admin.scim.manage",
+    "admin.cmk.read",
+    "admin.cmk.rotate",
+    "admin.cmk.revoke",
+    "admin.network.manage",
+    "admin.sla.manage",
+    "admin.ediscovery.export",
+    "workspace.grant.delegate",
+    "workspace.grant.inherit",
     "operations.timesheet.approve",
     "operations.capacity.manage",
 ];
@@ -2133,6 +2249,45 @@ pub mod perms {
     }
     pub fn finance_entity_manage() -> PermissionId {
         PermissionId::from("finance.entity.manage")
+    }
+    pub fn finance_consolidation_run() -> PermissionId {
+        PermissionId::from("finance.consolidation.run")
+    }
+    pub fn finance_consolidation_read() -> PermissionId {
+        PermissionId::from("finance.consolidation.read")
+    }
+    pub fn finance_intercompany_manage() -> PermissionId {
+        PermissionId::from("finance.intercompany.manage")
+    }
+    pub fn admin_scim_manage() -> PermissionId {
+        PermissionId::from("admin.scim.manage")
+    }
+    pub fn admin_cmk_read() -> PermissionId {
+        PermissionId::from("admin.cmk.read")
+    }
+    pub fn admin_cmk_rotate() -> PermissionId {
+        PermissionId::from("admin.cmk.rotate")
+    }
+    pub fn admin_cmk_revoke() -> PermissionId {
+        PermissionId::from("admin.cmk.revoke")
+    }
+    pub fn admin_network_manage() -> PermissionId {
+        PermissionId::from("admin.network.manage")
+    }
+    pub fn admin_sla_read() -> PermissionId {
+        PermissionId::from("admin.sla.read")
+    }
+    pub fn admin_sla_manage() -> PermissionId {
+        PermissionId::from("admin.sla.manage")
+    }
+    pub fn admin_ediscovery_export() -> PermissionId {
+        PermissionId::from("admin.ediscovery.export")
+    }
+    pub fn workspace_grant_delegate() -> PermissionId {
+        PermissionId::from("workspace.grant.delegate")
+    }
+    pub fn workspace_grant_inherit() -> PermissionId {
+        PermissionId::from("workspace.grant.inherit")
     }
     pub fn operations_timesheet_read() -> PermissionId {
         PermissionId::from("operations.timesheet.read")
