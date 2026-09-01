@@ -1,5 +1,6 @@
-//! CompanyOS AI assistant (library) — Phase 1.9.
+//! CompanyOS AI assistant (library) — Phase 1.9 + 3.5 + 4.3 agents.
 
+pub mod agents;
 pub mod audit;
 pub mod auth;
 pub mod calendar;
@@ -40,6 +41,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
             include_str!("../migrations/001_ai.sql"),
             include_str!("../migrations/002_ai_depth.sql"),
             include_str!("../migrations/003_ai_depth_rls_fix.sql"),
+            include_str!("../migrations/004_ai_agents.sql"),
         ] {
             for stmt in split_sql(migration) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;

@@ -196,6 +196,14 @@ pub enum IdKind {
     MeetingSummary,
     /// AI proactive insight card (`ain_`).
     AiInsight,
+    /// Agent policy version (`agp_`).
+    AgentPolicy,
+    /// Autonomous agent run (`agrun_`).
+    AgentRun,
+    /// Governed AI write action (`aact_`).
+    AiAction,
+    /// Per-tenant AI prompt / routing pack (`tpp_`).
+    PromptPack,
 }
 
 impl IdKind {
@@ -309,6 +317,10 @@ impl IdKind {
             Self::CapacityAllocation => "cap_",
             Self::MeetingSummary => "mts_",
             Self::AiInsight => "ain_",
+            Self::AgentPolicy => "agp_",
+            Self::AgentRun => "agrun_",
+            Self::AiAction => "aact_",
+            Self::PromptPack => "tpp_",
         }
     }
 
@@ -422,6 +434,10 @@ impl IdKind {
             "cap_" => Some(Self::CapacityAllocation),
             "mts_" => Some(Self::MeetingSummary),
             "ain_" => Some(Self::AiInsight),
+            "agp_" => Some(Self::AgentPolicy),
+            "agrun_" => Some(Self::AgentRun),
+            "aact_" => Some(Self::AiAction),
+            "tpp_" => Some(Self::PromptPack),
             _ => None,
         }
     }
@@ -585,6 +601,10 @@ impl FromStr for PublicId {
             ("pdg_", IdKind::PermissionDelegation),
             ("exj_", IdKind::ExportJob),
             ("loh_", IdKind::LegalHold),
+            ("agrun_", IdKind::AgentRun),
+            ("agp_", IdKind::AgentPolicy),
+            ("aact_", IdKind::AiAction),
+            ("tpp_", IdKind::PromptPack),
             ("mts_", IdKind::MeetingSummary),
             ("ain_", IdKind::AiInsight),
         ];

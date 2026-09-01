@@ -5,6 +5,7 @@ use std::sync::Arc;
 use companyos_auth_token::KeyRing;
 use sqlx::PgPool;
 
+use crate::agents::kill_switch::KillSwitchCache;
 use crate::provider::{build_provider, LlmProvider};
 
 pub const PROMPT_TEMPLATE_VERSION: &str = "ai.chat.v1";
@@ -18,6 +19,7 @@ pub struct AppState {
     pub search_url: String,
     pub provider: Arc<dyn LlmProvider>,
     pub prompt_template_version: String,
+    pub kill_switch_cache: KillSwitchCache,
 }
 
 impl AppState {
@@ -34,6 +36,7 @@ impl AppState {
             search_url,
             provider: build_provider(),
             prompt_template_version: PROMPT_TEMPLATE_VERSION.into(),
+            kill_switch_cache: KillSwitchCache::default(),
         }
     }
 }

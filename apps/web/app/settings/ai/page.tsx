@@ -108,6 +108,10 @@ export default function AiSettingsPage() {
           <Link href="/settings/ai/meeting-summaries" style={{ color: 'var(--cos-color-accent)' }}>
             Meeting summaries
           </Link>
+          {' · '}
+          <Link href="/settings/ai/agents" style={{ color: 'var(--cos-color-accent)' }}>
+            Agents
+          </Link>
         </p>
       </header>
 

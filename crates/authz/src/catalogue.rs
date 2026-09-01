@@ -1624,6 +1624,39 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Accept a meeting summary suggestion (human commit)",
         sensitive: false,
     },
+    // Phase 4.3 — Autonomous agents
+    PermissionDef {
+        id: "ai.agent.read",
+        context: "ai",
+        resource: "agent",
+        action: "read",
+        description: "View agent policies, runs, monitor, and review reports",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "ai.agent.run",
+        context: "ai",
+        resource: "agent",
+        action: "run",
+        description: "Start governed autonomous agent runs within policy",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "ai.agent.manage",
+        context: "ai",
+        resource: "agent",
+        action: "manage",
+        description: "Create and version agent policies and tenant prompt packs",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "ai.agent.kill",
+        context: "ai",
+        resource: "agent",
+        action: "kill",
+        description: "Engage org-wide or per-agent kill switches",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -1706,6 +1739,9 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "workspace.grant.inherit",
     "operations.timesheet.approve",
     "operations.capacity.manage",
+    "ai.agent.run",
+    "ai.agent.manage",
+    "ai.agent.kill",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -2312,6 +2348,18 @@ pub mod perms {
     }
     pub fn ai_meeting_summary_accept() -> PermissionId {
         PermissionId::from("ai.meeting_summary.accept")
+    }
+    pub fn ai_agent_read() -> PermissionId {
+        PermissionId::from("ai.agent.read")
+    }
+    pub fn ai_agent_run() -> PermissionId {
+        PermissionId::from("ai.agent.run")
+    }
+    pub fn ai_agent_manage() -> PermissionId {
+        PermissionId::from("ai.agent.manage")
+    }
+    pub fn ai_agent_kill() -> PermissionId {
+        PermissionId::from("ai.agent.kill")
     }
 }
 

@@ -2,8 +2,16 @@ use axum::routing::get;
 use axum::{Json, Router};
 use utoipa::OpenApi;
 
+use crate::agents::action::AiActionView;
+use crate::agents::kill_switch::{KillSwitchView, SetKillSwitchRequest};
+use crate::agents::nl_workflow::{NlWorkflowDraft, NlWorkflowRequest};
+use crate::agents::policy::AgentPolicyDoc;
+use crate::agents::prompt_pack::{PromptPackDoc, PromptPackView};
+use crate::agents::review::{AgentReviewReport, AgentTypeStats};
+use crate::agents::runtime::{AgentRunOutcome, AgentRunView, StartRunRequest};
 use crate::handlers::{
-    ask, chat, documents, insights, meeting_summaries, proposals, sessions, settings, suggestions,
+    agents, ask, chat, documents, insights, meeting_summaries, proposals, sessions, settings,
+    suggestions,
 };
 use crate::state::AppState;
 use crate::types::*;
@@ -31,6 +39,20 @@ use crate::types::*;
         documents::extract_document,
         documents::get_document_review,
         suggestions::get_suggestions,
+        agents::get_policy,
+        agents::list_policies,
+        agents::publish_policy,
+        agents::get_kill,
+        agents::set_kill,
+        agents::list_runs,
+        agents::start_run,
+        agents::get_run,
+        agents::reverse_action,
+        agents::get_prompt_pack,
+        agents::put_prompt_pack,
+        agents::propose_workflow,
+        agents::get_review,
+        agents::seed_review_fixture,
     ),
     components(schemas(
         Citation,
@@ -63,14 +85,31 @@ use crate::types::*;
         MessageResponse,
         SuggestionChip,
         SuggestionsResponse,
+        AgentPolicyDoc,
+        agents::PolicyView,
+        agents::PolicyListResponse,
+        KillSwitchView,
+        SetKillSwitchRequest,
+        StartRunRequest,
+        AgentRunView,
+        AgentRunOutcome,
+        agents::RunsListResponse,
+        AiActionView,
+        PromptPackDoc,
+        PromptPackView,
+        NlWorkflowRequest,
+        NlWorkflowDraft,
+        AgentReviewReport,
+        AgentTypeStats,
     )),
     tags(
         (name = "ai", description = "CompanyOS AI copilot"),
+        (name = "ai-agents", description = "Phase 4.3 governed autonomous agents"),
     ),
     info(
         title = "CompanyOS AI API",
-        version = "0.3.5",
-        description = "Phase 3.5 — insights agents, meeting summaries, multi-context Q&A"
+        version = "0.4.3",
+        description = "Phase 4.3 — governed agents, kill switch, NL workflow drafts, review pack"
     )
 )]
 pub struct ApiDoc;
