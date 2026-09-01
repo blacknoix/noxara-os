@@ -14,7 +14,7 @@ import {
   Widget,
 } from '@companyos/design-system';
 import { authFetch, getAccessToken } from '../lib/auth-client';
-import { fetchInsights } from '../lib/ai-api';
+import { fetchInsights, refreshInsights } from '../lib/ai-api';
 import { citationHref, type InsightObservation } from '../lib/ai-types';
 
 type ChecklistItem = {
@@ -107,12 +107,15 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const loadInsights = useCallback(async () => {
+  const loadInsights = useCallback(async (refresh = false) => {
     if (!getAccessToken()) {
       setInsights({ status: 'idle', observations: [] });
       return;
     }
     setInsights((prev) => ({ ...prev, status: 'loading' }));
+    if (refresh) {
+      await refreshInsights();
+    }
     const data = await fetchInsights();
     if (!data) {
       setInsights({ status: 'empty', observations: [], emptyReason: 'Could not load insights' });
@@ -134,7 +137,7 @@ export default function DashboardPage() {
   }, [load, period]);
 
   useEffect(() => {
-    void loadInsights();
+    void loadInsights(false);
   }, [loadInsights]);
 
   return (
@@ -206,7 +209,7 @@ export default function DashboardPage() {
             status={insights.status === 'loading' ? 'loading' : insights.status}
             observations={insights.observations}
             emptyReason={insights.emptyReason}
-            onRefresh={() => void loadInsights()}
+            onRefresh={() => void loadInsights(true)}
           />
         </div>
       ) : null}
@@ -300,7 +303,9 @@ function AiInsightsWidget({
           >
             <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
               <strong style={{ fontSize: '0.95rem' }}>{obs.title}</strong>
+              {obs.insight_type ? <Badge tone="neutral">{obs.insight_type}</Badge> : null}
               {obs.estimate ? <Badge tone="neutral">Estimate</Badge> : null}
+              {obs.proposal_id ? <Badge tone="warning">Proposal pending</Badge> : null}
             </div>
             <p style={{ margin: '0.35rem 0', fontSize: '0.88rem', color: 'var(--cos-color-fg-muted)' }}>
               {obs.body}

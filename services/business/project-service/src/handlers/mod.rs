@@ -2,12 +2,14 @@
 
 pub mod board;
 pub mod calendar;
+pub mod capacity;
 pub mod comments;
 pub mod events;
 pub mod my_work;
 pub mod projects;
 pub mod summary;
 pub mod tasks;
+pub mod timesheets;
 
 use axum::http::HeaderMap;
 use axum::Router;
@@ -28,6 +30,8 @@ pub fn router() -> Router<AppState> {
         .merge(calendar::router())
         .merge(summary::router())
         .merge(events::router())
+        .merge(timesheets::router())
+        .merge(capacity::router())
         .merge(approvals::handlers::router())
 }
 

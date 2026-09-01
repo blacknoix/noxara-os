@@ -3,6 +3,8 @@ pub mod chat;
 pub mod common;
 pub mod documents;
 pub mod insights;
+pub mod insights_agents;
+pub mod meeting_summaries;
 pub mod proposals;
 pub mod sessions;
 pub mod settings;
@@ -18,6 +20,7 @@ pub fn router() -> Router<AppState> {
         .merge(sessions::router())
         .merge(settings::router())
         .merge(insights::router())
+        .merge(meeting_summaries::router())
         .merge(proposals::router())
         .merge(ask::router())
         .merge(documents::router())

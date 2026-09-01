@@ -30,6 +30,10 @@ pub struct InvoiceLineDto {
     pub tax_rate_bps: i64,
     pub tax_minor: i64,
     pub line_total_minor: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tax_rate_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tax_group_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -57,6 +61,8 @@ pub struct InvoiceDto {
     pub source_quote_id: Option<String>,
     pub notes: Option<String>,
     pub terms: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity_id: Option<String>,
     pub version: i32,
     pub lines: Vec<InvoiceLineDto>,
     pub created_at: String,
@@ -78,6 +84,12 @@ pub struct InvoiceLineInput {
     pub discount_minor: i64,
     #[serde(default)]
     pub tax_rate_bps: i64,
+    /// Optional tax rate public id (`txr_…`) — snapshotted at issue.
+    #[serde(default)]
+    pub tax_rate_id: Option<String>,
+    /// Optional tax group public id (`txg_…`) — resolved as-of issue date.
+    #[serde(default)]
+    pub tax_group_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -91,6 +103,9 @@ pub struct CreateInvoiceRequest {
     pub due_date: Option<String>,
     pub notes: Option<String>,
     pub terms: Option<String>,
+    /// Optional finance entity (`ent_…`); defaults to org default entity.
+    #[serde(default)]
+    pub entity_id: Option<String>,
 }
 
 fn default_base_currency() -> String {
@@ -268,6 +283,8 @@ pub struct ListQuery {
     pub offset: Option<i64>,
     pub status: Option<String>,
     pub customer_id: Option<String>,
+    /// Filter invoices by finance entity public id (`ent_…`).
+    pub entity_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -832,4 +849,169 @@ pub struct CreateReimbursementBatchRequest {
 pub struct DecideReimbursementRequest {
     pub approve: bool,
     pub note: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3.5 — Tax / dunning / entities
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TaxGroupDto {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TaxGroupListResponse {
+    pub items: Vec<TaxGroupDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateTaxGroupRequest {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TaxRateDto {
+    pub id: String,
+    pub name: String,
+    pub rate_bps: i64,
+    pub valid_from: String,
+    pub valid_to: Option<String>,
+    pub tax_group_id: Option<String>,
+    pub supersedes_id: Option<String>,
+    pub component_name: Option<String>,
+    pub is_component: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TaxRateListResponse {
+    pub items: Vec<TaxRateDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateTaxRateRequest {
+    pub name: String,
+    pub rate_bps: i64,
+    /// Required — start of validity window (YYYY-MM-DD).
+    pub valid_from: String,
+    pub valid_to: Option<String>,
+    pub tax_group_id: Option<String>,
+    /// Previous rate version public id (`txr_…`) when creating a successor.
+    pub supersedes_id: Option<String>,
+    pub component_name: Option<String>,
+    #[serde(default)]
+    pub is_component: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TaxResolveQuery {
+    pub group_id: Option<String>,
+    pub rate_id: Option<String>,
+    pub as_of: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TaxResolveResponse {
+    pub rate_bps: i64,
+    pub tax_rate_id: Option<String>,
+    pub tax_group_id: Option<String>,
+    pub as_of: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DunningStepDto {
+    pub offset_days: i32,
+    pub channel: String,
+    pub label: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DunningProfileDto {
+    pub id: String,
+    pub name: String,
+    pub is_default: bool,
+    pub steps: Vec<DunningStepDto>,
+    pub version: i32,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DunningProfileListResponse {
+    pub items: Vec<DunningProfileDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateDunningProfileRequest {
+    pub name: String,
+    pub steps: Vec<DunningStepDto>,
+    #[serde(default)]
+    pub is_default: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateDunningProfileRequest {
+    pub name: Option<String>,
+    pub steps: Option<Vec<DunningStepDto>>,
+    pub is_default: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct SetCustomerDunningProfileRequest {
+    pub profile_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DunningScheduleQuery {
+    pub invoice_id: Option<String>,
+    pub customer_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DunningScheduleResponse {
+    pub profile_id: String,
+    pub schedule_offsets_days: Vec<i32>,
+    pub steps: Vec<DunningStepDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct FinanceEntityDto {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub currency: String,
+    pub is_default: bool,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct FinanceEntityListResponse {
+    pub items: Vec<FinanceEntityDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateFinanceEntityRequest {
+    pub name: String,
+    pub code: String,
+    #[serde(default = "default_base_currency")]
+    pub currency: String,
+    #[serde(default)]
+    pub is_default: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateFinanceEntityRequest {
+    pub name: Option<String>,
+    pub code: Option<String>,
+    pub currency: Option<String>,
+    pub is_default: Option<bool>,
 }

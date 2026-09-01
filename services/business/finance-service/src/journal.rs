@@ -79,6 +79,8 @@ pub struct JournalDraft {
     /// Optional reversing link (immutable correction pattern).
     pub reverses_entry_id: Option<Uuid>,
     pub posted_by: Option<Uuid>,
+    /// Optional finance entity stamp (multi-entity foundations).
+    pub entity_id: Option<Uuid>,
 }
 
 impl JournalDraft {
@@ -122,6 +124,7 @@ pub fn invoice_issue_entry(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: None,
+        entity_id: None,
         lines: vec![
             LedgerLine::debit(codes::AR, total_minor, Some("Accounts receivable".into())),
             LedgerLine::credit(codes::REVENUE, net_minor, Some("Revenue".into())),
@@ -171,6 +174,7 @@ pub fn payment_entry(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: None,
+        entity_id: None,
         lines,
     };
     draft.assert_balanced()?;
@@ -212,6 +216,7 @@ pub fn credit_note_entry(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: None,
+        entity_id: None,
         lines,
     };
     draft.assert_balanced()?;
@@ -231,6 +236,7 @@ pub fn expense_entry(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: None,
+        entity_id: None,
         lines: vec![
             LedgerLine::debit(codes::EXPENSE, amount_minor, Some("Expense".into())),
             LedgerLine::credit(codes::CASH, amount_minor, Some("Cash".into())),
@@ -282,6 +288,7 @@ pub fn payroll_entry(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: None,
+        entity_id: None,
         lines,
     };
     draft.assert_balanced()?;
@@ -466,8 +473,8 @@ pub async fn post_journal(
         r#"
         INSERT INTO finance_journal_entry (
             id, org_id, public_id, entry_date, memo, source_type, source_id, currency,
-            period_id, reverses_entry_id, posted_by
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+            period_id, reverses_entry_id, posted_by, entity_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
         "#,
     )
     .bind(entry_id)
@@ -481,6 +488,7 @@ pub async fn post_journal(
     .bind(period.id)
     .bind(draft.reverses_entry_id)
     .bind(draft.posted_by)
+    .bind(draft.entity_id)
     .execute(&mut **tx)
     .await
     .map_err(|e| AppError::new(ErrorCode::Internal, request_id, format!("db error: {e}")))?;

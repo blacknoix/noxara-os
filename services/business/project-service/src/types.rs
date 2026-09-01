@@ -234,3 +234,150 @@ pub struct NotificationIntentDto {
     pub body_preview: Option<String>,
     pub created_at: String,
 }
+
+// ---------------------------------------------------------------------------
+// Phase 3.5 — Timesheets & capacity
+// ---------------------------------------------------------------------------
+
+pub const TIMESHEET_STATUSES: &[&str] = &["draft", "submitted", "approved", "rejected"];
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TimeEntryDto {
+    pub id: String,
+    pub membership_user_id: String,
+    pub project_id: String,
+    pub task_id: Option<String>,
+    pub entry_date: String,
+    pub minutes: i32,
+    pub billable: bool,
+    pub notes: Option<String>,
+    pub timesheet_id: Option<String>,
+    pub status: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TimesheetDto {
+    pub id: String,
+    pub membership_user_id: String,
+    pub week_start: String,
+    pub status: String,
+    pub submitted_at: Option<String>,
+    pub approved_at: Option<String>,
+    pub approved_by: Option<String>,
+    pub approval_id: Option<String>,
+    pub notes: Option<String>,
+    pub entries: Vec<TimeEntryDto>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TimesheetListResponse {
+    pub items: Vec<TimesheetDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateTimesheetRequest {
+    /// Monday of the week (YYYY-MM-DD). Non-Monday values are normalized to Monday.
+    pub week_start: String,
+    /// Target user (managers only); defaults to the caller.
+    pub membership_user_id: Option<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpsertTimeEntryRequest {
+    /// When set, updates an existing draft entry owned by the timesheet user.
+    pub id: Option<String>,
+    pub project_id: String,
+    pub task_id: Option<String>,
+    pub entry_date: String,
+    pub minutes: i32,
+    pub billable: Option<bool>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PatchTimeEntryRequest {
+    pub project_id: Option<String>,
+    pub task_id: Option<String>,
+    pub entry_date: Option<String>,
+    pub minutes: Option<i32>,
+    pub billable: Option<bool>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DecideTimesheetRequest {
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct TimesheetListQuery {
+    pub membership_user_id: Option<String>,
+    pub status: Option<String>,
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CapacityAllocationDto {
+    pub id: String,
+    pub membership_user_id: String,
+    pub project_id: Option<String>,
+    pub period_start: String,
+    pub period_end: String,
+    pub capacity_minutes: i32,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CapacityAllocationListResponse {
+    pub items: Vec<CapacityAllocationDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateCapacityAllocationRequest {
+    pub membership_user_id: String,
+    pub project_id: Option<String>,
+    pub period_start: String,
+    pub period_end: String,
+    pub capacity_minutes: i32,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct CapacityListQuery {
+    pub membership_user_id: Option<String>,
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Default)]
+pub struct OverloadQuery {
+    pub from: String,
+    pub to: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CapacityOverloadRow {
+    pub member_id: String,
+    pub capacity_minutes: i32,
+    pub booked_minutes: i32,
+    pub overload_minutes: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CapacityOverloadResponse {
+    pub items: Vec<CapacityOverloadRow>,
+}

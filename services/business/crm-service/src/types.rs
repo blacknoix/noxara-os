@@ -585,6 +585,229 @@ pub struct ReportSummaryResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Orders (Phase 3.5)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct OrderLineDto {
+    pub id: String,
+    pub position: i32,
+    pub product_id: Option<String>,
+    pub description: String,
+    pub quantity: i32,
+    pub unit_price_minor: i64,
+    pub discount_minor: i64,
+    pub tax_rate_bps: i32,
+    pub tax_minor: i64,
+    pub line_total_minor: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct OrderDto {
+    pub id: String,
+    pub customer_id: String,
+    pub deal_id: Option<String>,
+    pub quote_id: Option<String>,
+    pub status: String,
+    pub currency: String,
+    pub subtotal_minor: i64,
+    pub discount_minor: i64,
+    pub tax_minor: i64,
+    pub total_minor: i64,
+    pub owner_user_id: Option<String>,
+    pub territory_id: Option<String>,
+    pub notes: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+    pub lines: Vec<OrderLineDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct OrderListResponse {
+    pub items: Vec<OrderDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateOrderLineRequest {
+    pub product_id: Option<String>,
+    #[serde(default)]
+    pub description: String,
+    pub quantity: i32,
+    pub unit_price_minor: i64,
+    #[serde(default)]
+    pub discount_minor: i64,
+    #[serde(default)]
+    pub tax_rate_bps: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateOrderRequest {
+    pub customer_id: String,
+    pub deal_id: Option<String>,
+    pub quote_id: Option<String>,
+    pub currency: Option<String>,
+    pub notes: Option<String>,
+    pub owner_user_id: Option<String>,
+    pub territory_id: Option<String>,
+    #[serde(default)]
+    pub lines: Vec<CreateOrderLineRequest>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateOrderStatusRequest {
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct OrderFromQuoteRequest {
+    pub quote_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct OrderFromDealRequest {
+    pub deal_id: String,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct OrderListQuery {
+    pub status: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+// ---------------------------------------------------------------------------
+// Contracts (Phase 3.5)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ContractDto {
+    pub id: String,
+    pub customer_id: String,
+    pub deal_id: Option<String>,
+    pub order_id: Option<String>,
+    pub title: String,
+    pub status: String,
+    pub term_months: Option<i32>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub value_minor: i64,
+    pub currency: String,
+    pub auto_renew: bool,
+    pub renewal_notice_days: i32,
+    pub owner_user_id: Option<String>,
+    pub published_at: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ContractListResponse {
+    pub items: Vec<ContractDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateContractRequest {
+    pub customer_id: String,
+    pub deal_id: Option<String>,
+    pub order_id: Option<String>,
+    pub title: String,
+    pub term_months: Option<i32>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub value_minor: Option<i64>,
+    pub currency: Option<String>,
+    #[serde(default)]
+    pub auto_renew: bool,
+    pub renewal_notice_days: Option<i32>,
+    pub owner_user_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateContractRequest {
+    pub title: Option<String>,
+    pub term_months: Option<i32>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub value_minor: Option<i64>,
+    pub currency: Option<String>,
+    pub auto_renew: Option<bool>,
+    pub renewal_notice_days: Option<i32>,
+    pub owner_user_id: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ContractListQuery {
+    pub status: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct RenewalListQuery {
+    pub within_days: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RenewalPipelineResponse {
+    pub items: Vec<ContractDto>,
+    pub within_days: i32,
+}
+
+// ---------------------------------------------------------------------------
+// Territories (Phase 3.5)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TerritoryDto {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub owner_user_id: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub version: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TerritoryListResponse {
+    pub items: Vec<TerritoryDto>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateTerritoryRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub owner_user_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateTerritoryRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub owner_user_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AssignTerritoryRequest {
+    pub customer_id: Option<String>,
+    pub deal_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TerritoryAssignmentDto {
+    pub territory_id: String,
+    pub customer_id: Option<String>,
+    pub deal_id: Option<String>,
+    pub assigned_at: String,
+}
+
+// ---------------------------------------------------------------------------
 // Shared
 // ---------------------------------------------------------------------------
 

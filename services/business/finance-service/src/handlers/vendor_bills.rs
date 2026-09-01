@@ -458,6 +458,7 @@ pub async fn pay_vendor_bill(
         entry_date: None,
         reverses_entry_id: None,
         posted_by: Some(auth.ctx.actor.user_id),
+        entity_id: None,
         lines: vec![
             LedgerLine::debit(codes::AP_VENDORS, pay_amount, Some("AP settlement".into())),
             LedgerLine::credit(codes::CASH, pay_amount, Some("Cash paid".into())),

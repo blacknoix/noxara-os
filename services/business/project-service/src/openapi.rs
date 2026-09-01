@@ -6,7 +6,9 @@ use utoipa::OpenApi;
 
 use crate::approvals::handlers as approvals;
 use crate::approvals::types::*;
-use crate::handlers::{board, calendar, comments, events, my_work, projects, summary, tasks};
+use crate::handlers::{
+    board, calendar, capacity, comments, events, my_work, projects, summary, tasks, timesheets,
+};
 use crate::state::AppState;
 use crate::types::*;
 
@@ -32,6 +34,17 @@ use crate::types::*;
         calendar::get_calendar,
         summary::get_summary,
         events::apply_sales_event,
+        timesheets::list_timesheets,
+        timesheets::create_timesheet,
+        timesheets::get_timesheet,
+        timesheets::upsert_entry,
+        timesheets::patch_entry,
+        timesheets::submit_timesheet,
+        timesheets::approve_timesheet,
+        timesheets::reject_timesheet,
+        capacity::list_allocations,
+        capacity::create_allocation,
+        capacity::overload_view,
         approvals::list_approvals,
         approvals::create_approval,
         approvals::get_approval,
@@ -70,6 +83,18 @@ use crate::types::*;
         ApplySalesEventRequest,
         ApplySalesEventResponse,
         NotificationIntentDto,
+        TimeEntryDto,
+        TimesheetDto,
+        TimesheetListResponse,
+        CreateTimesheetRequest,
+        UpsertTimeEntryRequest,
+        PatchTimeEntryRequest,
+        DecideTimesheetRequest,
+        CapacityAllocationDto,
+        CapacityAllocationListResponse,
+        CreateCapacityAllocationRequest,
+        CapacityOverloadRow,
+        CapacityOverloadResponse,
         ApprovalMode,
         PolicyMatch,
         PolicyStepDef,
@@ -100,12 +125,14 @@ use crate::types::*;
         (name = "operations-calendar", description = "Due-date calendar"),
         (name = "operations-summary", description = "Dashboard aggregates"),
         (name = "operations-events", description = "In-process sales event apply"),
+        (name = "operations-timesheets", description = "Timesheets and time entries (Phase 3.5)"),
+        (name = "operations-capacity", description = "Capacity allocations and overload (Phase 3.5)"),
         (name = "operations-approvals", description = "Approval engine (Phase 1.7)"),
     ),
     info(
         title = "CompanyOS Operations API",
         version = "0.1.0",
-        description = "Phase 1.6 Projects & Tasks + Phase 1.7 Approval engine."
+        description = "Phase 1.6 Projects & Tasks + Phase 1.7 Approval engine + Phase 3.5 Timesheets."
     )
 )]
 pub struct ApiDoc;

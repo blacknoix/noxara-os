@@ -4,7 +4,9 @@ import type {
   AskResponse,
   ChatResponse,
   DocumentReview,
+  InsightsRefreshResponse,
   InsightsResponse,
+  MeetingSummaryView,
   ProposalView,
   SessionDetail,
   SessionSummary,
@@ -142,6 +144,39 @@ export async function fetchInsights(): Promise<InsightsResponse | null> {
   }
   if (!res.ok) return null;
   return (await res.json()) as InsightsResponse;
+}
+
+export async function refreshInsights(): Promise<InsightsRefreshResponse | null> {
+  const res = await authFetch('/api/v1/ai/insights/refresh', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as InsightsRefreshResponse;
+}
+
+export async function fetchMeetingSummaries(): Promise<MeetingSummaryView[]> {
+  const res = await authFetch('/api/v1/ai/meeting-summaries');
+  if (!res.ok) return [];
+  const body = (await res.json()) as { items: MeetingSummaryView[] };
+  return body.items ?? [];
+}
+
+export async function acceptMeetingSummary(id: string): Promise<MeetingSummaryView | null> {
+  const res = await authFetch(`/api/v1/ai/meeting-summaries/${encodeURIComponent(id)}/accept`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as MeetingSummaryView;
+}
+
+export async function rejectMeetingSummary(id: string): Promise<boolean> {
+  const res = await authFetch(`/api/v1/ai/meeting-summaries/${encodeURIComponent(id)}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return res.ok;
 }
 
 export async function fetchAiSettings(): Promise<AiSettings | null> {

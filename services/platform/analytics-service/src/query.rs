@@ -138,6 +138,7 @@ fn record_id_column(fact: FactSource) -> &'static str {
         FactSource::Payment => "payment_id",
         FactSource::Expense => "expense_id",
         FactSource::TaskLifecycle => "task_id",
+        FactSource::TimeEntry => "time_entry_id",
         FactSource::AiUsage => "usage_kind",
         FactSource::ApiRequest => "route",
     }

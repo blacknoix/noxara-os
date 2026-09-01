@@ -16,10 +16,13 @@ use sqlx::{Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use super::{
-    conflict, if_match_version, internal, normalize_paging, not_found, parse_public_id, validation,
+    conflict, if_match_version, internal, normalize_paging, not_found, parse_optional_public_id,
+    parse_public_id, validation,
 };
 use crate::audit::insert_audit;
 use crate::auth::AuthCtx;
+use crate::handlers::entities::resolve_entity_id;
+use crate::handlers::tax::resolve_rate_bps;
 use crate::idempotency;
 use crate::invoice_math::{compute_document_totals, convert_to_base, LineInput};
 use crate::journal::{ensure_ledger_accounts, invoice_issue_entry, post_journal};
@@ -84,6 +87,9 @@ struct InvoiceRow {
     source_quote_public_id: Option<String>,
     notes: Option<String>,
     terms: Option<String>,
+    entity_public_id: Option<String>,
+    #[allow(dead_code)]
+    entity_id: Option<Uuid>,
     version: i32,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
@@ -91,6 +97,7 @@ struct InvoiceRow {
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 struct LineRow {
+    invoice_id: Uuid,
     public_id: String,
     description: String,
     quantity: i64,
@@ -99,6 +106,8 @@ struct LineRow {
     tax_rate_bps: i64,
     tax_minor: i64,
     line_total_minor: i64,
+    tax_rate_public_id: Option<String>,
+    tax_group_public_id: Option<String>,
 }
 
 const INVOICE_SELECT: &str = r#"
@@ -107,6 +116,7 @@ const INVOICE_SELECT: &str = r#"
     i.fx_rate_date, i.subtotal_minor, i.discount_minor, i.tax_minor, i.total_minor,
     i.base_total_minor, i.amount_paid_minor, i.amount_credited_minor, i.balance_minor,
     i.issue_date, i.due_date, i.payment_url, i.source_quote_public_id, i.notes, i.terms,
+    e.public_id AS entity_public_id, i.entity_id,
     i.version, i.created_at, i.updated_at
 "#;
 
@@ -135,6 +145,7 @@ fn assemble_dto(row: InvoiceRow, lines: Vec<LineRow>) -> InvoiceDto {
         source_quote_id: row.source_quote_public_id,
         notes: row.notes,
         terms: row.terms,
+        entity_id: row.entity_public_id,
         version: row.version,
         lines: lines
             .into_iter()
@@ -147,6 +158,8 @@ fn assemble_dto(row: InvoiceRow, lines: Vec<LineRow>) -> InvoiceDto {
                 tax_rate_bps: l.tax_rate_bps,
                 tax_minor: l.tax_minor,
                 line_total_minor: l.line_total_minor,
+                tax_rate_id: l.tax_rate_public_id,
+                tax_group_id: l.tax_group_public_id,
             })
             .collect(),
         created_at: row.created_at.to_rfc3339(),
@@ -161,17 +174,54 @@ async fn fetch_lines(
 ) -> Result<Vec<LineRow>, sqlx::Error> {
     sqlx::query_as(
         r#"
-        SELECT public_id, description, quantity, unit_price_minor, discount_minor,
-               tax_rate_bps, tax_minor, line_total_minor
-        FROM finance_invoice_line
-        WHERE org_id = $1 AND invoice_id = $2
-        ORDER BY position ASC
+        SELECT l.invoice_id, l.public_id, l.description, l.quantity, l.unit_price_minor,
+               l.discount_minor, l.tax_rate_bps, l.tax_minor, l.line_total_minor,
+               tr.public_id AS tax_rate_public_id, tg.public_id AS tax_group_public_id
+        FROM finance_invoice_line l
+        LEFT JOIN finance_tax_rate tr ON tr.id = l.tax_rate_id
+        LEFT JOIN finance_tax_group tg ON tg.id = l.tax_group_id
+        WHERE l.org_id = $1 AND l.invoice_id = $2
+        ORDER BY l.position ASC
         "#,
     )
     .bind(org_id)
     .bind(invoice_id)
     .fetch_all(&mut **tx)
     .await
+}
+
+/// Batch-load lines for many invoices in one query (avoids N+1 in list_invoices).
+/// Before: 1 invoices query + N fetch_lines. After: 1 invoices + 1 batch lines.
+async fn fetch_lines_batch(
+    tx: &mut sqlx::Transaction<'_, Postgres>,
+    org_id: Uuid,
+    invoice_ids: &[Uuid],
+) -> Result<std::collections::HashMap<Uuid, Vec<LineRow>>, sqlx::Error> {
+    use std::collections::HashMap;
+    let mut map: HashMap<Uuid, Vec<LineRow>> = HashMap::new();
+    if invoice_ids.is_empty() {
+        return Ok(map);
+    }
+    let rows: Vec<LineRow> = sqlx::query_as(
+        r#"
+        SELECT l.invoice_id, l.public_id, l.description, l.quantity, l.unit_price_minor,
+               l.discount_minor, l.tax_rate_bps, l.tax_minor, l.line_total_minor,
+               tr.public_id AS tax_rate_public_id, tg.public_id AS tax_group_public_id
+        FROM finance_invoice_line l
+        LEFT JOIN finance_tax_rate tr ON tr.id = l.tax_rate_id
+        LEFT JOIN finance_tax_group tg ON tg.id = l.tax_group_id
+        WHERE l.org_id = $1 AND l.invoice_id = ANY($2)
+        ORDER BY l.invoice_id, l.position ASC
+        "#,
+    )
+    .bind(org_id)
+    .bind(invoice_ids)
+    .fetch_all(&mut **tx)
+    .await?;
+    for row in rows {
+        map.entry(row.invoice_id).or_default().push(row);
+    }
+    Ok(map)
 }
 
 async fn fetch_invoice_row(
@@ -182,6 +232,7 @@ async fn fetch_invoice_row(
     sqlx::query_as(&format!(
         "SELECT {INVOICE_SELECT} FROM finance_invoice i
          JOIN finance_customer c ON c.id = i.customer_id
+         LEFT JOIN finance_entity e ON e.id = i.entity_id
          WHERE i.org_id = $1 AND i.id = $2"
     ))
     .bind(org_id)
@@ -220,19 +271,24 @@ async fn insert_lines(
     invoice_id: Uuid,
     lines: &[InvoiceLineInput],
     computed: &[crate::invoice_math::LineTotals],
-) -> Result<(), sqlx::Error> {
+    request_id: &str,
+) -> Result<(), AppError> {
     for (position, (line, totals)) in lines.iter().zip(computed.iter()).enumerate() {
         let line_id = new_uuid_v7();
         let line_public = PublicId::new(IdKind::Invoice, line_id)
             .as_str()
             .replacen("inv_", "inl_", 1);
+        let tax_rate_uuid =
+            parse_optional_public_id(IdKind::TaxRate, line.tax_rate_id.as_deref(), request_id)?;
+        let tax_group_uuid =
+            parse_optional_public_id(IdKind::TaxGroup, line.tax_group_id.as_deref(), request_id)?;
         sqlx::query(
             r#"
             INSERT INTO finance_invoice_line (
                 id, org_id, invoice_id, public_id, position, description,
                 quantity, unit_price_minor, discount_minor, tax_rate_bps,
-                tax_minor, line_total_minor
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+                tax_minor, line_total_minor, tax_rate_id, tax_group_id
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
             "#,
         )
         .bind(line_id)
@@ -247,8 +303,11 @@ async fn insert_lines(
         .bind(line.tax_rate_bps)
         .bind(totals.tax_minor)
         .bind(totals.line_total_minor)
+        .bind(tax_rate_uuid)
+        .bind(tax_group_uuid)
         .execute(&mut **tx)
-        .await?;
+        .await
+        .map_err(internal(request_id))?;
     }
     Ok(())
 }
@@ -308,12 +367,121 @@ fn parse_date(
         .map_err(|_| validation(request_id, format!("{field} must be YYYY-MM-DD")))
 }
 
+/// At issue: resolve tax_group_id / tax_rate_id as of issue_date into tax_rate_bps
+/// snapshots, recompute line + document totals. Returns (tax_minor, total_minor).
+async fn snapshot_taxes_at_issue(
+    tx: &mut sqlx::Transaction<'_, Postgres>,
+    org_id: Uuid,
+    invoice_id: Uuid,
+    issue_date: NaiveDate,
+    row: &InvoiceRow,
+    request_id: &str,
+) -> Result<(i64, i64), AppError> {
+    #[derive(sqlx::FromRow)]
+    struct RawLine {
+        id: Uuid,
+        quantity: i64,
+        unit_price_minor: i64,
+        discount_minor: i64,
+        tax_rate_bps: i64,
+        tax_rate_id: Option<Uuid>,
+        tax_group_id: Option<Uuid>,
+    }
+
+    let raw_lines: Vec<RawLine> = sqlx::query_as(
+        r#"
+        SELECT id, quantity, unit_price_minor, discount_minor, tax_rate_bps,
+               tax_rate_id, tax_group_id
+        FROM finance_invoice_line
+        WHERE org_id = $1 AND invoice_id = $2
+        ORDER BY position ASC
+        "#,
+    )
+    .bind(org_id)
+    .bind(invoice_id)
+    .fetch_all(&mut **tx)
+    .await
+    .map_err(internal(request_id))?;
+
+    let mut inputs = Vec::with_capacity(raw_lines.len());
+    for line in &raw_lines {
+        let mut rate_bps = line.tax_rate_bps;
+        let mut resolved_rate_id = line.tax_rate_id;
+        if line.tax_group_id.is_some() || line.tax_rate_id.is_some() {
+            if let Some((rid, bps, _)) =
+                resolve_rate_bps(tx, org_id, line.tax_group_id, line.tax_rate_id, issue_date)
+                    .await
+                    .map_err(internal(request_id))?
+            {
+                rate_bps = bps;
+                resolved_rate_id = Some(rid);
+            }
+        }
+        inputs.push((
+            line.id,
+            resolved_rate_id,
+            LineInput {
+                quantity: line.quantity,
+                unit_price_minor: line.unit_price_minor,
+                discount_minor: line.discount_minor,
+                tax_rate_bps: rate_bps,
+            },
+        ));
+    }
+
+    let line_inputs_only: Vec<LineInput> = inputs.iter().map(|(_, _, i)| *i).collect();
+    let currency = Currency::new(&row.currency)
+        .map_err(|e| validation(request_id, format!("invalid currency: {e}")))?;
+    let (computed, doc) = compute_document_totals(&line_inputs_only, currency)
+        .map_err(|e| validation(request_id, format!("invalid line totals: {e}")))?;
+
+    for ((line_id, rate_id, input), totals) in inputs.iter().zip(computed.iter()) {
+        sqlx::query(
+            r#"
+            UPDATE finance_invoice_line SET
+                tax_rate_bps = $3, tax_rate_id = COALESCE($4, tax_rate_id),
+                tax_minor = $5, line_total_minor = $6
+            WHERE org_id = $1 AND id = $2
+            "#,
+        )
+        .bind(org_id)
+        .bind(line_id)
+        .bind(input.tax_rate_bps)
+        .bind(rate_id)
+        .bind(totals.tax_minor)
+        .bind(totals.line_total_minor)
+        .execute(&mut **tx)
+        .await
+        .map_err(internal(request_id))?;
+    }
+
+    sqlx::query(
+        r#"
+        UPDATE finance_invoice SET
+            subtotal_minor = $3, discount_minor = $4, tax_minor = $5, total_minor = $6
+        WHERE org_id = $1 AND id = $2
+        "#,
+    )
+    .bind(org_id)
+    .bind(invoice_id)
+    .bind(doc.subtotal_minor)
+    .bind(doc.discount_minor)
+    .bind(doc.tax_minor)
+    .bind(doc.total_minor)
+    .execute(&mut **tx)
+    .await
+    .map_err(internal(request_id))?;
+
+    Ok((doc.tax_minor, doc.total_minor))
+}
+
 /// GET /api/v1/finance/invoices
 #[utoipa::path(get, path = "/api/v1/finance/invoices", tag = "finance-invoices",
     params(
         ("q" = Option<String>, Query),
         ("status" = Option<String>, Query),
         ("customer_id" = Option<String>, Query),
+        ("entity_id" = Option<String>, Query),
         ("limit" = Option<i64>, Query),
         ("offset" = Option<i64>, Query),
     ),
@@ -325,6 +493,8 @@ pub async fn list_invoices(
 ) -> Result<Json<InvoiceListResponse>, AppError> {
     let request_id = auth.ctx.request_id.clone();
     let org_id = auth.ctx.org_id.as_uuid();
+    let org_public = auth.ctx.org_id.to_public().as_str().to_string();
+    let _timer = companyos_telemetry::RedTimer::start(format!("{org_public}:list_invoices"));
     let actor = auth.ctx.actor.user_id;
 
     let membership = load_membership_scope_for(&state.pool, &auth, &request_id).await?;
@@ -338,6 +508,9 @@ pub async fn list_invoices(
 
     if let Some(cus) = q.customer_id.as_deref() {
         let _ = parse_public_id(IdKind::Customer, cus, &request_id)?;
+    }
+    if let Some(ent) = q.entity_id.as_deref() {
+        let _ = parse_public_id(IdKind::FinanceEntity, ent, &request_id)?;
     }
 
     let mut tx = state.pool.begin().await.map_err(internal(&request_id))?;
@@ -367,6 +540,13 @@ pub async fn list_invoices(
         count_qb.push_bind(cus.clone());
         count_qb.push(")");
     }
+    if let Some(ref ent) = q.entity_id {
+        count_qb.push(" AND i.entity_id IN (SELECT id FROM finance_entity WHERE org_id = ");
+        count_qb.push_bind(org_id);
+        count_qb.push(" AND public_id = ");
+        count_qb.push_bind(ent.clone());
+        count_qb.push(")");
+    }
     if let Some(qtext) = q.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
         let pattern = format!("%{qtext}%");
         count_qb.push(" AND (i.invoice_number ILIKE ");
@@ -384,6 +564,7 @@ pub async fn list_invoices(
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(format!(
         "SELECT {INVOICE_SELECT} FROM finance_invoice i
          JOIN finance_customer c ON c.id = i.customer_id
+         LEFT JOIN finance_entity e ON e.id = i.entity_id
          WHERE i.org_id = "
     ));
     qb.push_bind(org_id);
@@ -402,6 +583,10 @@ pub async fn list_invoices(
     if let Some(ref cus) = q.customer_id {
         qb.push(" AND c.public_id = ");
         qb.push_bind(cus.clone());
+    }
+    if let Some(ref ent) = q.entity_id {
+        qb.push(" AND e.public_id = ");
+        qb.push_bind(ent.clone());
     }
     if let Some(qtext) = q.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
         let pattern = format!("%{qtext}%");
@@ -422,11 +607,14 @@ pub async fn list_invoices(
         .await
         .map_err(internal(&request_id))?;
 
+    let invoice_ids: Vec<Uuid> = rows.iter().map(|r| r.id).collect();
+    let mut lines_by_invoice = fetch_lines_batch(&mut tx, org_id, &invoice_ids)
+        .await
+        .map_err(internal(&request_id))?;
+
     let mut items = Vec::with_capacity(rows.len());
     for row in rows {
-        let lines = fetch_lines(&mut tx, org_id, row.id)
-            .await
-            .map_err(internal(&request_id))?;
+        let lines = lines_by_invoice.remove(&row.id).unwrap_or_default();
         items.push(assemble_dto(row, lines));
     }
     tx.commit().await.map_err(internal(&request_id))?;
@@ -492,14 +680,16 @@ pub async fn create_invoice(
     }
 
     let customer_id = resolve_customer_id(&mut tx, org_id, &body.customer_id, &request_id).await?;
+    let (entity_uuid, _) =
+        resolve_entity_id(&mut tx, org_id, body.entity_id.as_deref(), &request_id).await?;
 
     sqlx::query(
         r#"
         INSERT INTO finance_invoice (
             id, org_id, public_id, customer_id, owner_user_id, status,
             currency, base_currency, subtotal_minor, discount_minor, tax_minor,
-            total_minor, base_total_minor, balance_minor, due_date, notes, terms
-        ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8,$9,$10,$11,0,0,$12,$13,$14)
+            total_minor, base_total_minor, balance_minor, due_date, notes, terms, entity_id
+        ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8,$9,$10,$11,0,0,$12,$13,$14,$15)
         "#,
     )
     .bind(id)
@@ -516,13 +706,12 @@ pub async fn create_invoice(
     .bind(due_date)
     .bind(&body.notes)
     .bind(&body.terms)
+    .bind(entity_uuid)
     .execute(&mut *tx)
     .await
     .map_err(internal(&request_id))?;
 
-    insert_lines(&mut tx, org_id, id, &body.lines, &computed)
-        .await
-        .map_err(internal(&request_id))?;
+    insert_lines(&mut tx, org_id, id, &body.lines, &computed, &request_id).await?;
 
     let envelope = EventEnvelope::new(
         auth.ctx.org_id,
@@ -716,9 +905,7 @@ pub async fn update_invoice(
             .execute(&mut *tx)
             .await
             .map_err(internal(&request_id))?;
-        insert_lines(&mut tx, org_id, invoice_id, lines, &computed)
-            .await
-            .map_err(internal(&request_id))?;
+        insert_lines(&mut tx, org_id, invoice_id, lines, &computed, &request_id).await?;
         (
             doc.subtotal_minor,
             doc.discount_minor,
@@ -870,23 +1057,33 @@ pub async fn issue_invoice(
 
     let base_currency = Currency::new(&row.base_currency)
         .map_err(|e| validation(&request_id, format!("invalid base_currency: {e}")))?;
+
+    let invoice_number = next_invoice_number(&mut tx, org_id)
+        .await
+        .map_err(internal(&request_id))?;
+
+    // Resolve tax group/rate refs as of issue date and snapshot into tax_rate_bps.
+    let (tax_minor, total_minor) =
+        snapshot_taxes_at_issue(&mut tx, org_id, invoice_id, issue_date, &row, &request_id).await?;
+    if total_minor <= 0 {
+        return Err(validation(&request_id, "cannot issue zero-total invoice"));
+    }
+
     let base_total = convert_to_base(
-        row.total_minor,
+        total_minor,
         body.fx_rate_num,
         body.fx_rate_den,
         base_currency,
     )
     .map_err(|e| validation(&request_id, format!("fx conversion failed: {e}")))?;
 
-    let invoice_number = next_invoice_number(&mut tx, org_id)
-        .await
-        .map_err(internal(&request_id))?;
-
     let currency = Currency::new(&row.currency)
         .map_err(|e| validation(&request_id, format!("invalid currency: {e}")))?;
-    let net = row.total_minor - row.tax_minor;
-    let journal = invoice_issue_entry(invoice_id, currency, net, row.tax_minor, row.total_minor)
+    let net = total_minor - tax_minor;
+    let mut journal = invoice_issue_entry(invoice_id, currency, net, tax_minor, total_minor)
         .map_err(|e| validation(&request_id, format!("journal: {e}")))?;
+    journal.entity_id = row.entity_id;
+    journal.entry_date = Some(issue_date);
     post_journal(&mut tx, org_id, &journal, &request_id).await?;
 
     sqlx::query(
@@ -898,7 +1095,9 @@ pub async fn issue_invoice(
             fx_rate_den = $5,
             fx_rate_date = $6,
             base_total_minor = $7,
-            balance_minor = total_minor,
+            tax_minor = $10,
+            total_minor = $11,
+            balance_minor = $11,
             issue_date = $8,
             due_date = COALESCE($9, due_date),
             version = version + 1,
@@ -915,6 +1114,8 @@ pub async fn issue_invoice(
     .bind(base_total)
     .bind(issue_date)
     .bind(due_date)
+    .bind(tax_minor)
+    .bind(total_minor)
     .execute(&mut *tx)
     .await
     .map_err(internal(&request_id))?;
@@ -1218,6 +1419,8 @@ pub async fn create_from_quote(
             unit_price_minor: l.unit_price_minor,
             discount_minor: l.discount_minor,
             tax_rate_bps: l.tax_rate_bps,
+            tax_rate_id: None,
+            tax_group_id: None,
         })
         .collect();
     let inputs = line_inputs(&lines);
@@ -1257,6 +1460,7 @@ pub async fn create_from_quote(
     )
     .await
     .map_err(internal(&request_id))?;
+    let (entity_uuid, _) = resolve_entity_id(&mut tx, org_id, None, &request_id).await?;
 
     sqlx::query(
         r#"
@@ -1264,8 +1468,8 @@ pub async fn create_from_quote(
             id, org_id, public_id, customer_id, owner_user_id, status,
             currency, base_currency, subtotal_minor, discount_minor, tax_minor,
             total_minor, base_total_minor, balance_minor, notes, terms,
-            source_quote_public_id, source_quote_snapshot
-        ) VALUES ($1,$2,$3,$4,$5,'draft',$6,'USD',$7,$8,$9,$10,0,0,$11,$12,$13,$14)
+            source_quote_public_id, source_quote_snapshot, entity_id
+        ) VALUES ($1,$2,$3,$4,$5,'draft',$6,'USD',$7,$8,$9,$10,0,0,$11,$12,$13,$14,$15)
         "#,
     )
     .bind(id)
@@ -1282,13 +1486,12 @@ pub async fn create_from_quote(
     .bind(&body.terms)
     .bind(&body.quote_id)
     .bind(&snapshot)
+    .bind(entity_uuid)
     .execute(&mut *tx)
     .await
     .map_err(internal(&request_id))?;
 
-    insert_lines(&mut tx, org_id, id, &lines, &computed)
-        .await
-        .map_err(internal(&request_id))?;
+    insert_lines(&mut tx, org_id, id, &lines, &computed, &request_id).await?;
 
     let envelope = EventEnvelope::new(
         auth.ctx.org_id,

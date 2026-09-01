@@ -34,6 +34,8 @@ pub enum FactSource {
     Payment,
     Expense,
     TaskLifecycle,
+    /// Phase 3.5 — time entry / capacity facts.
+    TimeEntry,
     AiUsage,
     ApiRequest,
     /// Legacy Phase 1.8 invoice-issued mirror.
@@ -48,6 +50,7 @@ impl FactSource {
             Self::Payment => "fact_payment",
             Self::Expense => "fact_expense",
             Self::TaskLifecycle => "fact_task_lifecycle",
+            Self::TimeEntry => "fact_time_entry",
             Self::AiUsage => "fact_ai_usage",
             Self::ApiRequest => "fact_api_request",
             Self::InvoiceIssued => "fact_invoice_issued",
@@ -61,6 +64,7 @@ impl FactSource {
             Self::Payment => "analytics_fact_payment",
             Self::Expense => "analytics_fact_expense",
             Self::TaskLifecycle => "analytics_fact_task_lifecycle",
+            Self::TimeEntry => "analytics_fact_time_entry",
             Self::AiUsage => "analytics_fact_ai_usage",
             Self::ApiRequest => "analytics_fact_api_request",
             Self::InvoiceIssued => "analytics_fact_invoice_issued",
@@ -76,6 +80,7 @@ impl FactSource {
             }
             Self::Expense => PermissionId::from("finance.expense.read"),
             Self::TaskLifecycle => PermissionId::from("operations.task.read"),
+            Self::TimeEntry => PermissionId::from("operations.timesheet.read"),
             Self::AiUsage => PermissionId::from("ai.insights.read"),
             Self::ApiRequest => PermissionId::from("platform.analytics.read"),
         }
@@ -89,6 +94,7 @@ impl FactSource {
             Self::Payment => "analytics--fact-payment",
             Self::Expense => "analytics--fact-expense",
             Self::TaskLifecycle => "analytics--fact-task",
+            Self::TimeEntry => "analytics--fact-time-entry",
             Self::AiUsage => "analytics--fact-ai-usage",
             Self::ApiRequest => "analytics--fact-api-request",
             Self::InvoiceIssued => "analytics--fact-invoice-issued",
@@ -102,6 +108,7 @@ impl FactSource {
             Self::Payment => "/finance/invoices/{record_id}",
             Self::Expense => "/finance/expenses/{record_id}",
             Self::TaskLifecycle => "/ops/tasks/{record_id}",
+            Self::TimeEntry => "/ops/timesheets/{record_id}",
             Self::AiUsage => "/settings/ai",
             Self::ApiRequest => "/insights",
         }
@@ -221,6 +228,33 @@ fn defs() -> Vec<MetricDefinition> {
             required_permission: "operations.task.read".into(),
             drill_route: FactSource::TaskLifecycle.drill_route_template().into(),
             flagship: true,
+        },
+        MetricDefinition {
+            name: "billable_minutes".into(),
+            display_name: "Billable minutes".into(),
+            description: "Sum of billable minutes from time entry facts.".into(),
+            fact: FactSource::TimeEntry,
+            measure: MeasureKind::Sum,
+            measure_field: "billable_minutes".into(),
+            dimensions: vec!["project_id".into(), "membership_user_id".into()],
+            unit: MetricUnit::Count,
+            required_permission: "operations.timesheet.read".into(),
+            drill_route: FactSource::TimeEntry.drill_route_template().into(),
+            flagship: true,
+        },
+        MetricDefinition {
+            name: "capacity_booked_minutes".into(),
+            display_name: "Capacity booked minutes".into(),
+            description: "Sum of booked (submitted/approved) minutes from time entry facts."
+                .into(),
+            fact: FactSource::TimeEntry,
+            measure: MeasureKind::Sum,
+            measure_field: "minutes".into(),
+            dimensions: vec!["project_id".into(), "membership_user_id".into()],
+            unit: MetricUnit::Count,
+            required_permission: "operations.timesheet.read".into(),
+            drill_route: FactSource::TimeEntry.drill_route_template().into(),
+            flagship: false,
         },
     ]
 }

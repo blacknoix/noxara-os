@@ -88,6 +88,20 @@ fn purchase_request_default_definition() -> PolicyDefinition {
     }
 }
 
+fn timesheet_default_definition() -> PolicyDefinition {
+    PolicyDefinition {
+        mode: ApprovalMode::Any,
+        match_criteria: PolicyMatch::default(),
+        steps: vec![PolicyStepDef {
+            order: 1,
+            approver_role: Some("manager".into()),
+            approver_user_ids: vec![],
+            sla_seconds: Some(86_400),
+            escalate_to_role: Some("admin".into()),
+        }],
+    }
+}
+
 /// Ensure default expense + quote_discount + leave_request + payroll_run policies exist for an org.
 pub async fn ensure_default_policies(pool: &PgPool, org_id: Uuid) -> anyhow::Result<()> {
     let mut tx = pool.begin().await?;
@@ -132,6 +146,14 @@ pub async fn ensure_default_policies(pool: &PgPool, org_id: Uuid) -> anyhow::Res
         "Default purchase request approval",
         "purchase_request",
         &purchase_request_default_definition(),
+    )
+    .await?;
+    seed_one(
+        &mut tx,
+        org_id,
+        "Default timesheet approval",
+        "timesheet",
+        &timesheet_default_definition(),
     )
     .await?;
 

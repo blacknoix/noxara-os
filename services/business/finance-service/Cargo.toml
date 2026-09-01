@@ -46,6 +46,7 @@ proptest = { workspace = true }
 companyos-testkit = { workspace = true }
 companyos-core = { path = "../../core" }
 companyos-crm = { path = "../crm-service" }
+companyos-workflow-host = { path = "../../platform/workflow-host" }
 tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 axum = { workspace = true }

@@ -587,6 +587,7 @@ pub async fn post_journal_handler(
         entry_date,
         reverses_entry_id,
         posted_by: Some(auth.ctx.actor.user_id),
+        entity_id: None,
     };
     draft
         .assert_balanced()

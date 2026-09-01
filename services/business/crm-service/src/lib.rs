@@ -52,6 +52,7 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
         for migration in [
             include_str!("../migrations/001_crm.sql"),
             include_str!("../migrations/002_quote_approval.sql"),
+            include_str!("../migrations/003_crm_depth.sql"),
         ] {
             for stmt in split_sql(migration) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;

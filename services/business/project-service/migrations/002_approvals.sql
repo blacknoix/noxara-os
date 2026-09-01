@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS operations_approval_policy (
     name            TEXT NOT NULL,
     subject_type    TEXT NOT NULL CHECK (subject_type IN (
         'expense', 'quote_discount', 'generic',
-        'leave_request', 'payroll_run', 'purchase_request'
+        'leave_request', 'payroll_run', 'purchase_request',
+        'timesheet'
     )),
     -- When false, policy is not considered for new routing.
     is_active       BOOLEAN NOT NULL DEFAULT true,
@@ -29,12 +30,14 @@ CREATE INDEX IF NOT EXISTS operations_approval_policy_org_idx
     ON operations_approval_policy (org_id, subject_type)
     WHERE is_active;
 -- Widen subject_type for pre-existing databases created before HR/Payroll
--- (leave_request, payroll_run) and Inventory P2P (purchase_request) landed.
+-- (leave_request, payroll_run), Inventory P2P (purchase_request), and
+-- Phase 3.5 timesheets landed.
 ALTER TABLE operations_approval_policy DROP CONSTRAINT IF EXISTS operations_approval_policy_subject_type_check;
 ALTER TABLE operations_approval_policy ADD CONSTRAINT operations_approval_policy_subject_type_check
     CHECK (subject_type IN (
         'expense', 'quote_discount', 'generic',
-        'leave_request', 'payroll_run', 'purchase_request'
+        'leave_request', 'payroll_run', 'purchase_request',
+        'timesheet'
     ));
 ALTER TABLE operations_approval_policy ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operations_approval_policy FORCE ROW LEVEL SECURITY;

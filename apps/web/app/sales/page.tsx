@@ -68,6 +68,9 @@ const SALES_NAV = [
   { href: '/sales/leads', label: 'Leads', perm: 'sales.lead.read' },
   { href: '/sales/customers', label: 'Customers', perm: 'sales.customer.read' },
   { href: '/sales/quotes', label: 'Quotes', perm: 'sales.quote.read' },
+  { href: '/sales/orders', label: 'Orders', perm: 'sales.order.read' },
+  { href: '/sales/contracts', label: 'Contracts', perm: 'sales.contract.read' },
+  { href: '/sales/territories', label: 'Territories', perm: 'sales.territory.read' },
   { href: '/sales/reports', label: 'Reports', perm: 'sales.report.read' },
 ];
 
