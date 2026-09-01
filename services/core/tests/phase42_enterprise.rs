@@ -41,6 +41,8 @@ struct Seeded {
     pool: sqlx::PgPool,
     org: OrgId,
     org_public: String,
+    owner_id: Uuid,
+    owner_public: String,
     owner_token: String,
     member_token: String,
     member_membership_public: String,
@@ -211,11 +213,44 @@ async fn seed_org() -> Option<Seeded> {
         pool,
         org,
         org_public,
+        owner_id,
+        owner_public,
         owner_token: owner_issued.access_token,
         member_token: member_issued.access_token,
         member_membership_public: mem_public,
         member_id,
     })
+}
+
+/// Grants bump `policy_version` org-wide; re-mint so subsequent admin calls aren't 401.
+async fn reissue_owner_token(seed: &mut Seeded) {
+    let mut tx = seed.pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, seed.org).await.unwrap();
+    let mem: (Uuid, i64) = sqlx::query_as(
+        "SELECT id, policy_version FROM membership WHERE org_id = $1 AND user_id = $2",
+    )
+    .bind(seed.org.as_uuid())
+    .bind(seed.owner_id)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
+    let issued = companyos_core::auth::sessions::create_session_with_tokens(
+        &mut tx,
+        &seed.state.auth_keys.ring,
+        seed.owner_id,
+        &seed.owner_public,
+        seed.org,
+        mem.0,
+        &["owner".into()],
+        mem.1,
+        None,
+        None,
+        None,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+    seed.owner_token = issued.access_token;
 }
 
 async fn json_req(
@@ -490,7 +525,7 @@ async fn scim_two_idps_crud_and_deprovision() {
 
 #[tokio::test]
 async fn inheritance_delegation_expiry_and_deny() {
-    let Some(seed) = seed_org().await else {
+    let Some(mut seed) = seed_org().await else {
         eprintln!("skip: no TEST_DATABASE_URL");
         return;
     };
@@ -529,7 +564,7 @@ async fn inheritance_delegation_expiry_and_deny() {
         .unwrap();
     tx.commit().await.unwrap();
 
-    let (st, _) = json_req(
+    let (st, body) = json_req(
         &seed.state,
         "POST",
         "/api/v1/workspace/grants/inherit",
@@ -541,7 +576,8 @@ async fn inheritance_delegation_expiry_and_deny() {
         })),
     )
     .await;
-    assert_eq!(st, StatusCode::OK);
+    assert_eq!(st, StatusCode::OK, "{body}");
+    reissue_owner_token(&mut seed).await;
 
     let (principal, _, _) = workspace::load_principal(&seed.pool, seed.org, seed.member_id, "t")
         .await
@@ -551,7 +587,7 @@ async fn inheritance_delegation_expiry_and_deny() {
         &companyos_authz::perms::finance_report_read()
     ));
 
-    let (st, _) = json_req(
+    let (st, body) = json_req(
         &seed.state,
         "POST",
         "/api/v1/workspace/grants/inherit",
@@ -563,7 +599,9 @@ async fn inheritance_delegation_expiry_and_deny() {
         })),
     )
     .await;
-    assert_eq!(st, StatusCode::OK);
+    assert_eq!(st, StatusCode::OK, "{body}");
+    reissue_owner_token(&mut seed).await;
+
     let (principal, _, _) = workspace::load_principal(&seed.pool, seed.org, seed.member_id, "t")
         .await
         .unwrap();
@@ -580,11 +618,13 @@ async fn inheritance_delegation_expiry_and_deny() {
         Some(json!({
             "to_membership_id": seed.member_membership_public,
             "permission_id": "finance.ledger.read",
-            "expires_at": (Utc::now() + Duration::seconds(2)).to_rfc3339()
+            "expires_at": (Utc::now() + Duration::seconds(30)).to_rfc3339()
         })),
     )
     .await;
     assert_eq!(st, StatusCode::OK, "{del}");
+    reissue_owner_token(&mut seed).await;
+
     let (principal, _, _) = workspace::load_principal(&seed.pool, seed.org, seed.member_id, "t")
         .await
         .unwrap();
@@ -593,7 +633,25 @@ async fn inheritance_delegation_expiry_and_deny() {
         &companyos_authz::perms::finance_ledger_read()
     ));
 
-    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+    // Expire without sleeping: force expires_at into the past.
+    let mut tx = seed.pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, seed.org).await.unwrap();
+    sqlx::query(
+        r#"
+        UPDATE permission_delegation
+        SET expires_at = now() - interval '1 second'
+        WHERE org_id = $1 AND to_membership_id = (
+            SELECT id FROM membership WHERE org_id = $1 AND user_id = $2
+        )
+        "#,
+    )
+    .bind(seed.org.as_uuid())
+    .bind(seed.member_id)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+
     let (principal, _, _) = workspace::load_principal(&seed.pool, seed.org, seed.member_id, "t")
         .await
         .unwrap();
