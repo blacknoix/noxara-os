@@ -530,6 +530,16 @@ async fn system_role_deny_matrix_unit() {
                 assert!(is_allowed(&p, &PermissionId::from(*perm)));
                 continue;
             }
+            // Phase 4.3: Finance/Sales/Manager/Member may start agent runs inside policy;
+            // manage + kill stay Owner/Admin.
+            if matches!(
+                *role,
+                Role::Finance | Role::Sales | Role::Manager | Role::Member
+            ) && *perm == "ai.agent.run"
+            {
+                assert!(is_allowed(&p, &PermissionId::from(*perm)));
+                continue;
+            }
             assert!(
                 !is_allowed(&p, &PermissionId::from(*perm)),
                 "{role:?} must deny {perm}"
