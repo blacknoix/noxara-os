@@ -43,6 +43,7 @@ base64 = { workspace = true }
 [dev-dependencies]
 companyos-testkit = { workspace = true }
 companyos-core = { path = "../../core" }
+companyos-integration = { path = "../integration-service" }
 tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 axum = { workspace = true }

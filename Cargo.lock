@@ -703,6 +703,7 @@ dependencies = [
  "companyos-errors",
  "companyos-events",
  "companyos-ids",
+ "companyos-integration",
  "companyos-money",
  "companyos-outbox",
  "companyos-telemetry",

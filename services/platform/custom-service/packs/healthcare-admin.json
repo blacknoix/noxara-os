@@ -1,0 +1,72 @@
+{
+  "id": "healthcare-admin",
+  "name": "Healthcare admin",
+  "description": "People and appointment-style admin entities for clinic operations. Not an EHR and not clinical charting. Does not weaken HR/finance field-level perms or RLS.",
+  "version": "1.0.0",
+  "marketplace": {
+    "connector_key": "industry.healthcare-admin",
+    "slug": "industry.healthcare-admin",
+    "name": "Industry pack: Healthcare admin",
+    "description": "Appointment and admin-note custom entities. No PHI authz bypass.",
+    "requested_scopes": ["workspace.org.read", "custom.builder.read"]
+  },
+  "seed": {
+    "pipeline_stages": ["Referral", "Intake", "Scheduled", "Completed", "Follow-up", "Closed"],
+    "expense_categories": ["Medical supplies", "Facilities", "Software", "Training", "Insurance"]
+  },
+  "package": {
+    "format": "companyos.custom.package",
+    "format_version": 1,
+    "name": "industry.healthcare-admin",
+    "version": "1.0.0",
+    "entities": [
+      {
+        "slug": "appointment",
+        "label": "Appointment",
+        "description": "Administrative appointment slot — not clinical charting",
+        "fields": [
+          { "name": "subject", "label": "Subject", "type": "text", "required": true },
+          { "name": "patient_ref", "label": "Patient ref (opaque)", "type": "text", "required": true },
+          { "name": "scheduled_on", "label": "Scheduled on", "type": "date", "required": true },
+          { "name": "status", "label": "Status", "type": "select", "required": true, "options": ["scheduled", "checked_in", "completed", "cancelled", "no_show"] },
+          { "name": "provider", "label": "Provider", "type": "text" }
+        ]
+      },
+      {
+        "slug": "admin_note",
+        "label": "Admin note",
+        "description": "Operational admin note. Sensitive content still requires normal custom entity write perms — no PHI special-case bypass.",
+        "fields": [
+          { "name": "title", "label": "Title", "type": "text", "required": true },
+          { "name": "body", "label": "Body", "type": "text", "required": true },
+          { "name": "appointment_ref", "label": "Appointment", "type": "ref", "ref_target": "appointment" },
+          { "name": "sensitivity", "label": "Sensitivity", "type": "select", "required": true, "options": ["normal", "restricted"] }
+        ]
+      }
+    ],
+    "views": [
+      {
+        "entity_slug": "appointment",
+        "name": "Appointments",
+        "columns": ["subject", "patient_ref", "scheduled_on", "status", "provider"],
+        "filters": [],
+        "sort": [{ "field": "scheduled_on", "dir": "asc" }]
+      },
+      {
+        "entity_slug": "admin_note",
+        "name": "Admin notes",
+        "columns": ["title", "sensitivity", "appointment_ref"],
+        "filters": [],
+        "sort": [{ "field": "title", "dir": "asc" }]
+      }
+    ],
+    "layouts": [],
+    "scripts": [],
+    "permissions": [
+      "custom.appointment.read",
+      "custom.appointment.write",
+      "custom.admin_note.read",
+      "custom.admin_note.write"
+    ]
+  }
+}

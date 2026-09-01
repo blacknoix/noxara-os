@@ -224,6 +224,12 @@ const GROUPS: NavGroup[] = [
         short: 'C',
         perm: 'custom.builder.read',
       },
+      {
+        href: '/settings/industry-packs',
+        label: 'Industry packs',
+        short: 'Y',
+        perm: 'custom.builder.read',
+      },
       { href: '/developers', label: 'Developers', short: 'D', perm: null },
       { href: '/members', label: 'Members', short: 'P', perm: 'workspace.member.read' },
     ],

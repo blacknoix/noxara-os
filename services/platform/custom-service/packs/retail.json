@@ -1,0 +1,72 @@
+{
+  "id": "retail",
+  "name": "Retail",
+  "description": "Product catalogue defaults and POS-light session tracking. Not a hardware POS engine — inventory stays on companyos-inventory.",
+  "version": "1.0.0",
+  "marketplace": {
+    "connector_key": "industry.retail",
+    "slug": "industry.retail",
+    "name": "Industry pack: Retail",
+    "description": "Catalogue and POS-light custom entities for retail orgs.",
+    "requested_scopes": ["workspace.org.read", "custom.builder.read"]
+  },
+  "seed": {
+    "pipeline_stages": ["Inquiry", "Quote", "Order", "Fulfilled", "Closed"],
+    "expense_categories": ["Inventory", "Shipping", "Marketing", "Utilities", "Store supplies"]
+  },
+  "package": {
+    "format": "companyos.custom.package",
+    "format_version": 1,
+    "name": "industry.retail",
+    "version": "1.0.0",
+    "entities": [
+      {
+        "slug": "product_sku",
+        "label": "Product SKU",
+        "description": "Retail catalogue SKU overlay (links to inventory conceptually)",
+        "fields": [
+          { "name": "sku", "label": "SKU", "type": "text", "required": true },
+          { "name": "name", "label": "Name", "type": "text", "required": true },
+          { "name": "list_price", "label": "List price", "type": "money", "required": true },
+          { "name": "active", "label": "Active", "type": "bool", "required": true },
+          { "name": "category", "label": "Category", "type": "select", "options": ["general", "apparel", "electronics", "food", "other"] }
+        ]
+      },
+      {
+        "slug": "pos_session",
+        "label": "POS session",
+        "description": "Lightweight till/session log — not a full POS runtime",
+        "fields": [
+          { "name": "register_id", "label": "Register", "type": "text", "required": true },
+          { "name": "opened_at", "label": "Opened", "type": "date", "required": true },
+          { "name": "status", "label": "Status", "type": "select", "required": true, "options": ["open", "closed"] },
+          { "name": "sales_total", "label": "Sales total", "type": "money" }
+        ]
+      }
+    ],
+    "views": [
+      {
+        "entity_slug": "product_sku",
+        "name": "Catalogue",
+        "columns": ["sku", "name", "list_price", "category", "active"],
+        "filters": [],
+        "sort": [{ "field": "sku", "dir": "asc" }]
+      },
+      {
+        "entity_slug": "pos_session",
+        "name": "Sessions",
+        "columns": ["register_id", "opened_at", "status", "sales_total"],
+        "filters": [],
+        "sort": [{ "field": "opened_at", "dir": "desc" }]
+      }
+    ],
+    "layouts": [],
+    "scripts": [],
+    "permissions": [
+      "custom.product_sku.read",
+      "custom.product_sku.write",
+      "custom.pos_session.read",
+      "custom.pos_session.write"
+    ]
+  }
+}

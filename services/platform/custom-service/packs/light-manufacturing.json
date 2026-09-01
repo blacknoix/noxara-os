@@ -1,0 +1,72 @@
+{
+  "id": "light-manufacturing",
+  "name": "Light manufacturing",
+  "description": "Simple BOM lines and work orders as custom entities. Shop-floor MRP is explicitly out of scope.",
+  "version": "1.0.0",
+  "marketplace": {
+    "connector_key": "industry.light-manufacturing",
+    "slug": "industry.light-manufacturing",
+    "name": "Industry pack: Light manufacturing",
+    "description": "BOM and work-order custom entities for light manufacturing.",
+    "requested_scopes": ["workspace.org.read", "custom.builder.read"]
+  },
+  "seed": {
+    "pipeline_stages": ["Inquiry", "Quote", "Scheduled", "In production", "Shipped", "Closed"],
+    "expense_categories": ["Raw materials", "Tooling", "Shipping", "Utilities", "Maintenance"]
+  },
+  "package": {
+    "format": "companyos.custom.package",
+    "format_version": 1,
+    "name": "industry.light-manufacturing",
+    "version": "1.0.0",
+    "entities": [
+      {
+        "slug": "bom_line",
+        "label": "BOM line",
+        "description": "Bill of materials component line (not a full MRP engine)",
+        "fields": [
+          { "name": "parent_sku", "label": "Parent SKU", "type": "text", "required": true },
+          { "name": "component_sku", "label": "Component SKU", "type": "text", "required": true },
+          { "name": "qty", "label": "Quantity", "type": "number", "required": true },
+          { "name": "uom", "label": "UoM", "type": "text", "required": true }
+        ]
+      },
+      {
+        "slug": "work_order",
+        "label": "Work order",
+        "description": "Simple work order — not shop-floor scheduling",
+        "fields": [
+          { "name": "wo_number", "label": "WO number", "type": "text", "required": true },
+          { "name": "sku", "label": "SKU", "type": "text", "required": true },
+          { "name": "qty", "label": "Quantity", "type": "number", "required": true },
+          { "name": "status", "label": "Status", "type": "select", "required": true, "options": ["planned", "released", "done", "cancelled"] },
+          { "name": "due_date", "label": "Due date", "type": "date" }
+        ]
+      }
+    ],
+    "views": [
+      {
+        "entity_slug": "bom_line",
+        "name": "BOM lines",
+        "columns": ["parent_sku", "component_sku", "qty", "uom"],
+        "filters": [],
+        "sort": [{ "field": "parent_sku", "dir": "asc" }]
+      },
+      {
+        "entity_slug": "work_order",
+        "name": "Work orders",
+        "columns": ["wo_number", "sku", "qty", "status", "due_date"],
+        "filters": [],
+        "sort": [{ "field": "wo_number", "dir": "asc" }]
+      }
+    ],
+    "layouts": [],
+    "scripts": [],
+    "permissions": [
+      "custom.bom_line.read",
+      "custom.bom_line.write",
+      "custom.work_order.read",
+      "custom.work_order.write"
+    ]
+  }
+}

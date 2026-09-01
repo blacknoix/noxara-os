@@ -216,6 +216,8 @@ pub enum IdKind {
     CustomScript,
     /// Customisation package artifact (`cpkg_`).
     CustomPackage,
+    /// Industry pack install (`ipk_`).
+    IndustryPackInstall,
 }
 
 impl IdKind {
@@ -339,6 +341,7 @@ impl IdKind {
             Self::CustomLayout => "clay_",
             Self::CustomScript => "cscript_",
             Self::CustomPackage => "cpkg_",
+            Self::IndustryPackInstall => "ipk_",
         }
     }
 
@@ -462,6 +465,7 @@ impl IdKind {
             "clay_" => Some(Self::CustomLayout),
             "cscript_" => Some(Self::CustomScript),
             "cpkg_" => Some(Self::CustomPackage),
+            "ipk_" => Some(Self::IndustryPackInstall),
             _ => None,
         }
     }
@@ -637,6 +641,7 @@ impl FromStr for PublicId {
             ("cview_", IdKind::CustomView),
             ("clay_", IdKind::CustomLayout),
             ("cpkg_", IdKind::CustomPackage),
+            ("ipk_", IdKind::IndustryPackInstall),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {

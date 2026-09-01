@@ -1,6 +1,7 @@
 //! HTTP handlers for `/api/v1/custom/...`.
 
 pub mod entities;
+pub mod industry_packs;
 pub mod layouts;
 pub mod packages;
 pub mod records;
@@ -26,6 +27,7 @@ pub fn router() -> Router<AppState> {
         .merge(layouts::router())
         .merge(scripts::router())
         .merge(packages::router())
+        .merge(industry_packs::router())
 }
 
 pub(crate) fn internal(request_id: &str) -> impl Fn(sqlx::Error) -> AppError + '_ {

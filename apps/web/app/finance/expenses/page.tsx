@@ -13,6 +13,7 @@ import {
   Table,
 } from '@companyos/design-system';
 import { apiUrl, authFetch, getAccessToken } from '../../../lib/auth-client';
+import { offlineMutate } from '../../../lib/offline/client';
 
 type Expense = {
   id: string;
@@ -126,18 +127,30 @@ export default function ExpensesPage() {
           return;
         }
       }
-      const res = await authFetch('/api/v1/finance/expenses', {
+      const key = crypto.randomUUID();
+      const result = await offlineMutate({
         method: 'POST',
-        body: JSON.stringify({
+        path: '/api/v1/finance/expenses',
+        idempotencyKey: key,
+        label: 'Submit expense',
+        body: {
           currency,
           amount_minor: amountMinor,
           description: description.trim(),
           receipt_url: receiptUrl,
           incurred_at: new Date().toISOString().slice(0, 10),
-        }),
+        },
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+      if (result.queued) {
+        setDescription('');
+        setAmount('12.00');
+        setFile(null);
+        setFormError(null);
+        return;
+      }
+      const res = result.response;
+      if (!res || !res.ok) {
+        const body = res ? await res.json().catch(() => ({})) : {};
         setFormError(body.detail ?? 'Could not submit expense.');
         return;
       }

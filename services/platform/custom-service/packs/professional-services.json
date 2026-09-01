@@ -1,0 +1,78 @@
+{
+  "id": "professional-services",
+  "name": "Professional Services",
+  "description": "Projects, engagements, retainers, and timesheet-oriented defaults for agencies and consultancies. Configuration only — no CRM/finance forks.",
+  "version": "1.0.0",
+  "marketplace": {
+    "connector_key": "industry.professional-services",
+    "slug": "industry.professional-services",
+    "name": "Industry pack: Professional Services",
+    "description": "Custom entities and seed defaults for professional services orgs.",
+    "requested_scopes": ["workspace.org.read", "custom.builder.read"]
+  },
+  "seed": {
+    "pipeline_stages": ["Lead", "Discovery", "Proposal", "Engaged", "Retainer", "Closed"],
+    "expense_categories": ["Travel", "Software", "Contractors", "Client entertainment", "Office"]
+  },
+  "package": {
+    "format": "companyos.custom.package",
+    "format_version": 1,
+    "name": "industry.professional-services",
+    "version": "1.0.0",
+    "entities": [
+      {
+        "slug": "engagement",
+        "label": "Engagement",
+        "description": "Client engagement / statement of work",
+        "fields": [
+          { "name": "title", "label": "Title", "type": "text", "required": true },
+          { "name": "client_ref", "label": "Client ref", "type": "ref", "ref_target": "customer" },
+          { "name": "status", "label": "Status", "type": "select", "required": true, "options": ["draft", "active", "paused", "closed"] },
+          { "name": "start_date", "label": "Start date", "type": "date" },
+          { "name": "retainer_amount", "label": "Retainer (minor units)", "type": "money" }
+        ]
+      },
+      {
+        "slug": "retainer",
+        "label": "Retainer",
+        "description": "Recurring retainer agreement",
+        "fields": [
+          { "name": "name", "label": "Name", "type": "text", "required": true },
+          { "name": "engagement_ref", "label": "Engagement", "type": "ref", "ref_target": "engagement" },
+          { "name": "monthly_amount", "label": "Monthly amount", "type": "money", "required": true },
+          { "name": "active", "label": "Active", "type": "bool", "required": true }
+        ]
+      }
+    ],
+    "views": [
+      {
+        "entity_slug": "engagement",
+        "name": "Active engagements",
+        "columns": ["title", "status", "start_date", "retainer_amount"],
+        "filters": [{ "field": "status", "op": "eq", "value": "active" }],
+        "sort": [{ "field": "title", "dir": "asc" }]
+      },
+      {
+        "entity_slug": "retainer",
+        "name": "Retainers",
+        "columns": ["name", "monthly_amount", "active"],
+        "filters": [],
+        "sort": [{ "field": "name", "dir": "asc" }]
+      }
+    ],
+    "layouts": [
+      {
+        "entity_slug": "engagement",
+        "name": "Default",
+        "sections": [{ "title": "Basics", "fields": ["title", "client_ref", "status", "start_date", "retainer_amount"] }]
+      }
+    ],
+    "scripts": [],
+    "permissions": [
+      "custom.engagement.read",
+      "custom.engagement.write",
+      "custom.retainer.read",
+      "custom.retainer.write"
+    ]
+  }
+}
