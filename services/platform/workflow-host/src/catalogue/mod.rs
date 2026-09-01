@@ -1,5 +1,6 @@
 //! Workflow catalogue — Phase 1.8 + Phase 2.x + Phase 3.1 types hosted by companyos-workflow-host.
 
+pub mod agent_run;
 pub mod approval_process;
 pub mod data_import;
 pub mod employee_offboarding;
@@ -36,6 +37,8 @@ pub enum WorkflowType {
     UserWorkflow,
     /// Scheduled analytics report generation and delivery (Phase 3.2).
     ScheduledReportDelivery,
+    /// Governed autonomous agent run (Phase 4.3).
+    AgentRun,
 }
 
 impl WorkflowType {
@@ -55,6 +58,7 @@ impl WorkflowType {
             Self::PayrollRun => "PayrollRun",
             Self::UserWorkflow => "UserWorkflow",
             Self::ScheduledReportDelivery => "ScheduledReportDelivery",
+            Self::AgentRun => "AgentRun",
         }
     }
 
@@ -74,6 +78,7 @@ impl WorkflowType {
             Self::PayrollRun,
             Self::UserWorkflow,
             Self::ScheduledReportDelivery,
+            Self::AgentRun,
         ]
     }
 }

@@ -586,6 +586,38 @@ describe('a11y', () => {
     await expectNoSeriousAxeViolations(container);
   });
 
+  it('AI agents settings landmarks have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Agents</h1>
+        <p>Governed autonomous agents — scoped, budgeted, reversible, audited.</p>
+        <section aria-labelledby="kill-heading">
+          <h2 id="kill-heading">Kill switch</h2>
+          <label>
+            <input type="checkbox" /> Org-wide kill switch
+          </label>
+        </section>
+        <section aria-labelledby="policy-heading">
+          <h2 id="policy-heading">Agent policy</h2>
+          <form>
+            <Input label="Name" name="policy-name" defaultValue="default" />
+            <Input label="Allowed tools" name="allowed-tools" />
+            <button type="submit">Publish policy version</button>
+          </form>
+        </section>
+        <section aria-labelledby="monitor-heading">
+          <h2 id="monitor-heading">Monitor</h2>
+          <EmptyState title="No agent runs yet" description="Publish a policy, then start a run." />
+        </section>
+        <section aria-labelledby="nl-heading">
+          <h2 id="nl-heading">Natural-language workflow</h2>
+          <Textarea label="Describe the workflow" name="nl-prompt" />
+        </section>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
+
   it('workflows builder landmarks have no serious/critical violations', async () => {
     const { container } = render(
       <main>

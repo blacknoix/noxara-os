@@ -1,3 +1,4 @@
+pub mod agents;
 pub mod ask;
 pub mod chat;
 pub mod common;
@@ -25,4 +26,5 @@ pub fn router() -> Router<AppState> {
         .merge(ask::router())
         .merge(documents::router())
         .merge(suggestions::router())
+        .merge(agents::router())
 }

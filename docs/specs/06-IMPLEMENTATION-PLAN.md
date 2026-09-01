@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–4.1 implemented; Phase 4.2 (this PR) enterprise multi-tenancy.
+Status: **Active** outline. Phase 0–4.2 implemented; Phase 4.3 (this PR) AI automation and agents.
 
 ## Completed
 
@@ -29,8 +29,17 @@ Status: **Active** outline. Phase 0–4.1 implemented; Phase 4.2 (this PR) enter
 | 3.5   | Depth / polish: CRM orders/contracts/territories; finance tax/dunning/entities; ops timesheets/capacity; AI insights/meetings; list_invoices N+1 fix + RED meters |
 | 4.1   | Multi-region foundations: region catalogue, org.region (ADR-015), cell routing, residency guards, failover drill (CI), control-plane region map |
 | 4.2   | Enterprise multi-tenancy: IC + consolidation, hierarchy grants/delegation, CMEK (mock KMS), SCIM (2 mock IdPs), network allowlist/infra tier, SLA, eDiscovery |
+| 4.3   | AI automation and agents: governed policy, receivables chase, kill switch, NL workflow drafts, prompt packs, review pack |
 
-## Phase 4.2 — Enterprise multi-tenancy (this PR)
+## Phase 4.3 — AI automation and agents (this PR)
+
+- First governed exception to ADR-012 propose-then-commit: unattended writes only inside a declared policy
+- Effective perms = policy allow-list ∩ on_behalf_of ∩ org roles; sole PDP `crates/authz`; `ai_action` ledger
+- Receivables chase agent (mock LLM); org kill switch ≤ 2s CI bound; monthly budget hard-stop
+- NL → 3.1 workflow **draft** (human publishes); tenant prompt-pack (no real fine-tunes)
+- Review report + fixture for error-rate threshold; Settings → AI → Agents monitor
+
+## Phase 4.2 — Enterprise multi-tenancy (done)
 
 - Consolidation on existing `finance_entity` (3.5): intercompany balanced pairs, elimination runs (same currency)
 - Hierarchy inherited grants + membership delegation via sole PDP `crates/authz` + `policy_version`
@@ -83,8 +92,8 @@ only), cross-org publisher review staffing, and marketplace billing.
 | InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
 | Mobile         | Flutter / Tauri         |
-| 4.2            | SCIM, CMEK, consolidation, dedicated isolation (not started) |
-| 4.3+           | Autonomous agents, low-code, industry packs |
+| 4.4            | Low-code custom entities / scripts |
+| 4.5            | Industry packs / mobile parity |
 
 ## Cut order if needed
 
