@@ -6,9 +6,10 @@ use companyos_errors::{AppError, ErrorCode};
 use companyos_events::EventEnvelope;
 use companyos_ids::new_uuid_v7;
 
-use crate::mapping::doc_type_from_aggregate;
+use crate::mapping::{doc_type_from_aggregate, doc_type_from_custom_aggregate};
 use crate::state::{AppState, SearchDoc};
 use crate::types::IngestResponse;
+use companyos_events::Context;
 
 #[utoipa::path(
     post,
@@ -20,13 +21,19 @@ pub async fn ingest(
     State(state): State<AppState>,
     Json(envelope): Json<EventEnvelope>,
 ) -> Result<Json<IngestResponse>, AppError> {
-    let Some(doc_type) = doc_type_from_aggregate(&envelope.aggregate) else {
+    let doc_type = if envelope.context == Context::Custom {
+        Some(doc_type_from_custom_aggregate(&envelope.aggregate))
+    } else {
+        doc_type_from_aggregate(&envelope.aggregate).map(|s| s.to_string())
+    };
+    let Some(doc_type) = doc_type else {
         return Ok(Json(IngestResponse { upserted: false }));
     };
 
     let doc_id = envelope
         .payload
-        .get(format!("{}_id", envelope.aggregate))
+        .get("record_id")
+        .or_else(|| envelope.payload.get(format!("{}_id", envelope.aggregate)))
         .or_else(|| envelope.payload.get("id"))
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
@@ -34,10 +41,11 @@ pub async fn ingest(
 
     let title = envelope
         .payload
-        .get("name")
+        .get("search_text")
+        .or_else(|| envelope.payload.get("name"))
         .or_else(|| envelope.payload.get("title"))
         .and_then(|v| v.as_str())
-        .unwrap_or(doc_type)
+        .unwrap_or(doc_type.as_str())
         .to_string();
     let body = envelope
         .payload
@@ -54,7 +62,7 @@ pub async fn ingest(
     let doc = SearchDoc {
         org_id: envelope.org_id.as_uuid(),
         doc_id: doc_id.clone(),
-        doc_type: doc_type.to_string(),
+        doc_type: doc_type.clone(),
         title,
         body,
         href,

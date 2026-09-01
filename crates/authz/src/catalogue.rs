@@ -1657,6 +1657,56 @@ pub const PERMISSION_CATALOGUE: &[PermissionDef] = &[
         description: "Engage org-wide or per-agent kill switches",
         sensitive: true,
     },
+    // Phase 4.4 — Low-code builder (static catalogue + fixture slug for deny-matrix)
+    PermissionDef {
+        id: "custom.builder.read",
+        context: "custom",
+        resource: "builder",
+        action: "read",
+        description: "View custom entity definitions, views, and layouts",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "custom.builder.manage",
+        context: "custom",
+        resource: "builder",
+        action: "manage",
+        description:
+            "Define, publish, and delete custom entities (not granted to Member by default)",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "custom.package.export",
+        context: "custom",
+        resource: "package",
+        action: "export",
+        description: "Export customisation packages between environments",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "custom.package.import",
+        context: "custom",
+        resource: "package",
+        action: "import",
+        description: "Import customisation packages into this organization",
+        sensitive: true,
+    },
+    PermissionDef {
+        id: "custom.demo_asset.read",
+        context: "custom",
+        resource: "demo_asset",
+        action: "read",
+        description: "Fixture slug permission for deny-matrix / catalogue registration path tests",
+        sensitive: false,
+    },
+    PermissionDef {
+        id: "custom.demo_asset.write",
+        context: "custom",
+        resource: "demo_asset",
+        action: "write",
+        description: "Fixture slug write permission — Member denied by default",
+        sensitive: true,
+    },
 ];
 
 /// Sensitive permission IDs used by deny-matrix DoD tests.
@@ -1742,6 +1792,10 @@ pub const SENSITIVE_ACTIONS: &[&str] = &[
     "ai.agent.run",
     "ai.agent.manage",
     "ai.agent.kill",
+    "custom.builder.manage",
+    "custom.package.export",
+    "custom.package.import",
+    "custom.demo_asset.write",
 ];
 
 /// All permission IDs as strings (stable sort for CI diffs).
@@ -1749,6 +1803,38 @@ pub fn catalogue_ids() -> Vec<&'static str> {
     let mut ids: Vec<_> = PERMISSION_CATALOGUE.iter().map(|p| p.id).collect();
     ids.sort_unstable();
     ids
+}
+
+/// Reserved catalogue resources under `custom.*` that are not dynamic entity slugs.
+pub const CUSTOM_RESERVED_RESOURCES: &[&str] = &["builder", "package", "demo_asset"];
+
+/// True when `id` is a publish-time dynamic entity permission (`custom.{slug}.read|write`)
+/// and not a static catalogue entry under reserved resources.
+pub fn is_dynamic_custom_entity_permission(id: &str) -> bool {
+    let Some(rest) = id.strip_prefix("custom.") else {
+        return false;
+    };
+    let Some((resource, action)) = rest.rsplit_once('.') else {
+        return false;
+    };
+    if action != "read" && action != "write" {
+        return false;
+    }
+    if CUSTOM_RESERVED_RESOURCES.contains(&resource) {
+        return false;
+    }
+    // slug: [a-z][a-z0-9_]{0,63}
+    let mut chars = resource.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    if !first.is_ascii_lowercase() {
+        return false;
+    }
+    if resource.len() > 64 {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
 }
 
 /// Convenience constructors matching catalogue IDs.
@@ -2360,6 +2446,34 @@ pub mod perms {
     }
     pub fn ai_agent_kill() -> PermissionId {
         PermissionId::from("ai.agent.kill")
+    }
+    pub fn custom_builder_read() -> PermissionId {
+        PermissionId::from("custom.builder.read")
+    }
+    pub fn custom_builder_manage() -> PermissionId {
+        PermissionId::from("custom.builder.manage")
+    }
+    pub fn custom_package_export() -> PermissionId {
+        PermissionId::from("custom.package.export")
+    }
+    pub fn custom_package_import() -> PermissionId {
+        PermissionId::from("custom.package.import")
+    }
+    pub fn custom_demo_asset_read() -> PermissionId {
+        PermissionId::from("custom.demo_asset.read")
+    }
+    pub fn custom_demo_asset_write() -> PermissionId {
+        PermissionId::from("custom.demo_asset.write")
+    }
+
+    /// Dynamic per-entity permission registered when a custom entity is published.
+    pub fn custom_entity_read(slug: &str) -> PermissionId {
+        PermissionId(format!("custom.{slug}.read"))
+    }
+
+    /// Dynamic per-entity write permission registered when a custom entity is published.
+    pub fn custom_entity_write(slug: &str) -> PermissionId {
+        PermissionId(format!("custom.{slug}.write"))
     }
 }
 

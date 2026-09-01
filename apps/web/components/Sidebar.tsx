@@ -218,6 +218,12 @@ const GROUPS: NavGroup[] = [
         short: 'I',
         perm: 'admin.marketplace.read',
       },
+      {
+        href: '/settings/custom',
+        label: 'Custom apps',
+        short: 'C',
+        perm: 'custom.builder.read',
+      },
       { href: '/developers', label: 'Developers', short: 'D', perm: null },
       { href: '/members', label: 'Members', short: 'P', perm: 'workspace.member.read' },
     ],

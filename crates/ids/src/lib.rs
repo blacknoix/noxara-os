@@ -204,6 +204,18 @@ pub enum IdKind {
     AiAction,
     /// Per-tenant AI prompt / routing pack (`tpp_`).
     PromptPack,
+    /// Custom entity definition (`cent_`).
+    CustomEntity,
+    /// Custom entity record (`cusrec_`).
+    CustomRecord,
+    /// Custom list view (`cview_`).
+    CustomView,
+    /// Custom form layout (`clay_`).
+    CustomLayout,
+    /// Custom lifecycle script (`cscript_`).
+    CustomScript,
+    /// Customisation package artifact (`cpkg_`).
+    CustomPackage,
 }
 
 impl IdKind {
@@ -321,6 +333,12 @@ impl IdKind {
             Self::AgentRun => "agrun_",
             Self::AiAction => "aact_",
             Self::PromptPack => "tpp_",
+            Self::CustomEntity => "cent_",
+            Self::CustomRecord => "cusrec_",
+            Self::CustomView => "cview_",
+            Self::CustomLayout => "clay_",
+            Self::CustomScript => "cscript_",
+            Self::CustomPackage => "cpkg_",
         }
     }
 
@@ -438,6 +456,12 @@ impl IdKind {
             "agrun_" => Some(Self::AgentRun),
             "aact_" => Some(Self::AiAction),
             "tpp_" => Some(Self::PromptPack),
+            "cent_" => Some(Self::CustomEntity),
+            "cusrec_" => Some(Self::CustomRecord),
+            "cview_" => Some(Self::CustomView),
+            "clay_" => Some(Self::CustomLayout),
+            "cscript_" => Some(Self::CustomScript),
+            "cpkg_" => Some(Self::CustomPackage),
             _ => None,
         }
     }
@@ -607,6 +631,12 @@ impl FromStr for PublicId {
             ("tpp_", IdKind::PromptPack),
             ("mts_", IdKind::MeetingSummary),
             ("ain_", IdKind::AiInsight),
+            ("cusrec_", IdKind::CustomRecord),
+            ("cscript_", IdKind::CustomScript),
+            ("cent_", IdKind::CustomEntity),
+            ("cview_", IdKind::CustomView),
+            ("clay_", IdKind::CustomLayout),
+            ("cpkg_", IdKind::CustomPackage),
         ];
         for (prefix, kind) in PREFIXES {
             if let Some(rest) = s.strip_prefix(prefix) {

@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–4.2 implemented; Phase 4.3 (this PR) AI automation and agents.
+Status: **Active** outline. Phase 0–4.3 implemented; Phase 4.4 (this PR) low-code builder.
 
 ## Completed
 
@@ -30,8 +30,18 @@ Status: **Active** outline. Phase 0–4.2 implemented; Phase 4.3 (this PR) AI au
 | 4.1   | Multi-region foundations: region catalogue, org.region (ADR-015), cell routing, residency guards, failover drill (CI), control-plane region map |
 | 4.2   | Enterprise multi-tenancy: IC + consolidation, hierarchy grants/delegation, CMEK (mock KMS), SCIM (2 mock IdPs), network allowlist/infra tier, SLA, eDiscovery |
 | 4.3   | AI automation and agents: governed policy, receivables chase, kill switch, NL workflow drafts, prompt packs, review pack |
+| 4.4   | Low-code builder: custom entities/fields, views/layouts, formulas, capped script sandbox, packaging + upgrade rehearsal |
 
-## Phase 4.3 — AI automation and agents (this PR)
+## Phase 4.4 — Low-code builder (this PR)
+
+- New platform service `companyos-custom` (`/api/v1/custom/...`): entity definitions, records, views, layouts, scripts, packages
+- Dynamic authz `custom.{slug}.read|write` registered on publish; Member denied `custom.builder.manage` by default
+- Purpose-built JSON AST sandbox (CPU/memory/wall caps; no host eval; network/disk/env denied)
+- Deterministic same-record formulas; money as integer minor units
+- Versioned `companyos.custom.package` export/import; CI upgrade rehearsal via additive migrate `002`
+- Events `companyos.{org}.custom.{entity}.{event}.v1` + search doc path `custom:{slug}`
+
+## Phase 4.3 — AI automation and agents (done)
 
 - First governed exception to ADR-012 propose-then-commit: unattended writes only inside a declared policy
 - Effective perms = policy allow-list ∩ on_behalf_of ∩ org roles; sole PDP `crates/authz`; `ai_action` ledger
@@ -92,7 +102,6 @@ only), cross-org publisher review staffing, and marketplace billing.
 | InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
 | Mobile         | Flutter / Tauri         |
-| 4.4            | Low-code custom entities / scripts |
 | 4.5            | Industry packs / mobile parity |
 
 ## Cut order if needed

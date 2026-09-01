@@ -31,6 +31,8 @@ pub enum Context {
     Workflow,
     /// Analytics & reporting (Phase 3.2) lifecycle events.
     Analytics,
+    /// Low-code custom entities (Phase 4.4) lifecycle events.
+    Custom,
 }
 
 impl Context {
@@ -48,6 +50,7 @@ impl Context {
             Self::Inventory => "inventory",
             Self::Workflow => "workflow",
             Self::Analytics => "analytics",
+            Self::Custom => "custom",
         }
     }
 }

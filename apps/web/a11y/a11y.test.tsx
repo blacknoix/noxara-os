@@ -718,4 +718,22 @@ describe('a11y', () => {
     );
     await expectNoSeriousAxeViolations(container);
   });
+
+  it('custom apps builder landmarks have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Custom apps</h1>
+        <p>Define tenant-scoped entities and publish permissions.</p>
+        <section aria-labelledby="entities-heading">
+          <h2 id="entities-heading">Entities</h2>
+          <EmptyState title="No custom entities" description="Create a draft entity to get started." />
+        </section>
+        <form>
+          <Input label="Slug" name="slug" />
+          <button type="submit">Create draft</button>
+        </form>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
 });

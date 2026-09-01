@@ -18,7 +18,8 @@ pub mod catalogue;
 pub mod conditions;
 
 pub use catalogue::{
-    catalogue_ids, default_scope_for, perms, PermissionDef, PERMISSION_CATALOGUE, SENSITIVE_ACTIONS,
+    catalogue_ids, default_scope_for, is_dynamic_custom_entity_permission, perms, PermissionDef,
+    CUSTOM_RESERVED_RESOURCES, PERMISSION_CATALOGUE, SENSITIVE_ACTIONS,
 };
 pub use conditions::{conditions_match, AbacCondition, EvaluationContext};
 
@@ -189,6 +190,7 @@ impl Role {
                 perms::ai_meeting_summary_accept(),
                 perms::ai_agent_read(),
                 perms::ai_agent_run(),
+                perms::custom_builder_read(),
                 perms::hr_employee_read(),
                 perms::hr_employee_read_sensitive(),
                 perms::hr_field_compensation_read(),
@@ -462,6 +464,7 @@ impl Role {
                 perms::ai_meeting_summary_accept(),
                 perms::ai_agent_read(),
                 perms::ai_agent_run(),
+                perms::custom_builder_read(),
                 perms::platform_notification_read(),
                 perms::platform_search_read(),
                 perms::platform_file_read(),
@@ -522,6 +525,7 @@ impl Role {
                 perms::ai_settings_read(),
                 perms::ai_insights_read(),
                 perms::ai_agent_read(),
+                perms::custom_builder_read(),
                 perms::hr_employee_read(),
                 perms::hr_document_read(),
                 perms::hr_attendance_read(),
@@ -1260,6 +1264,21 @@ mod tests {
             ("ai.agent.kill", Role::Sales),
             ("ai.agent.kill", Role::Finance),
             ("ai.agent.kill", Role::Manager),
+            // Phase 4.4 — Member cannot define entities or write fixture slug
+            ("custom.builder.manage", Role::Member),
+            ("custom.builder.manage", Role::ReadOnly),
+            ("custom.builder.manage", Role::Sales),
+            ("custom.builder.manage", Role::Finance),
+            ("custom.builder.manage", Role::Manager),
+            ("custom.package.export", Role::Member),
+            ("custom.package.export", Role::ReadOnly),
+            ("custom.package.import", Role::Member),
+            ("custom.package.import", Role::ReadOnly),
+            ("custom.demo_asset.write", Role::Member),
+            ("custom.demo_asset.write", Role::ReadOnly),
+            ("custom.demo_asset.write", Role::Sales),
+            ("custom.demo_asset.write", Role::Finance),
+            ("custom.demo_asset.write", Role::Manager),
         ];
         for (perm, role) in deny_pairs {
             let p = Principal::with_roles(vec![*role]);
