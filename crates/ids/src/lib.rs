@@ -170,6 +170,22 @@ pub enum IdKind {
     DunningProfile,
     /// Finance legal entity within an org (`ent_`).
     FinanceEntity,
+    /// Intercompany transaction pair (`ict_`).
+    IntercompanyTxn,
+    /// Consolidation run (`csr_`).
+    ConsolidationRun,
+    /// Org customer-managed key (`cmk_`).
+    CustomerManagedKey,
+    /// SCIM bearer token (`scm_`).
+    ScimToken,
+    /// Permission inheritance grant (`pig_`).
+    PermissionInheritGrant,
+    /// Permission delegation (`pdg_`).
+    PermissionDelegation,
+    /// Durable export / eDiscovery job (`exj_`).
+    ExportJob,
+    /// Legal hold (`loh_`).
+    LegalHold,
     /// Operations time entry (`tme_`).
     TimeEntry,
     /// Operations timesheet week (`tms_`).
@@ -280,6 +296,14 @@ impl IdKind {
             Self::TaxComponent => "txc_",
             Self::DunningProfile => "dnp_",
             Self::FinanceEntity => "ent_",
+            Self::IntercompanyTxn => "ict_",
+            Self::ConsolidationRun => "csr_",
+            Self::CustomerManagedKey => "cmk_",
+            Self::ScimToken => "scm_",
+            Self::PermissionInheritGrant => "pig_",
+            Self::PermissionDelegation => "pdg_",
+            Self::ExportJob => "exj_",
+            Self::LegalHold => "loh_",
             Self::TimeEntry => "tme_",
             Self::Timesheet => "tms_",
             Self::CapacityAllocation => "cap_",
@@ -385,6 +409,14 @@ impl IdKind {
             "txc_" => Some(Self::TaxComponent),
             "dnp_" => Some(Self::DunningProfile),
             "ent_" => Some(Self::FinanceEntity),
+            "ict_" => Some(Self::IntercompanyTxn),
+            "csr_" => Some(Self::ConsolidationRun),
+            "cmk_" => Some(Self::CustomerManagedKey),
+            "scm_" => Some(Self::ScimToken),
+            "pig_" => Some(Self::PermissionInheritGrant),
+            "pdg_" => Some(Self::PermissionDelegation),
+            "exj_" => Some(Self::ExportJob),
+            "loh_" => Some(Self::LegalHold),
             "tme_" => Some(Self::TimeEntry),
             "tms_" => Some(Self::Timesheet),
             "cap_" => Some(Self::CapacityAllocation),
@@ -545,6 +577,14 @@ impl FromStr for PublicId {
             ("txc_", IdKind::TaxComponent),
             ("dnp_", IdKind::DunningProfile),
             ("ent_", IdKind::FinanceEntity),
+            ("ict_", IdKind::IntercompanyTxn),
+            ("csr_", IdKind::ConsolidationRun),
+            ("cmk_", IdKind::CustomerManagedKey),
+            ("scm_", IdKind::ScimToken),
+            ("pig_", IdKind::PermissionInheritGrant),
+            ("pdg_", IdKind::PermissionDelegation),
+            ("exj_", IdKind::ExportJob),
+            ("loh_", IdKind::LegalHold),
             ("mts_", IdKind::MeetingSummary),
             ("ain_", IdKind::AiInsight),
         ];

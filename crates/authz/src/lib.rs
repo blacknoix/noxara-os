@@ -222,6 +222,9 @@ impl Role {
                 perms::finance_dunning_manage(),
                 perms::finance_entity_read(),
                 perms::finance_entity_manage(),
+                perms::finance_consolidation_read(),
+                perms::finance_consolidation_run(),
+                perms::finance_intercompany_manage(),
             ]),
             Self::Sales => HashSet::from([
                 perms::workspace_dashboard_read(),
@@ -1183,6 +1186,46 @@ mod tests {
             ("finance.entity.manage", Role::ReadOnly),
             ("finance.entity.manage", Role::Sales),
             ("finance.entity.manage", Role::Manager),
+            // Phase 4.2 — Member cannot rotate keys, run consolidation, or manage SCIM
+            ("finance.consolidation.run", Role::Member),
+            ("finance.consolidation.run", Role::ReadOnly),
+            ("finance.consolidation.run", Role::Sales),
+            ("finance.consolidation.run", Role::Manager),
+            ("finance.intercompany.manage", Role::Member),
+            ("finance.intercompany.manage", Role::ReadOnly),
+            ("finance.intercompany.manage", Role::Sales),
+            ("finance.intercompany.manage", Role::Manager),
+            ("admin.scim.manage", Role::Member),
+            ("admin.scim.manage", Role::ReadOnly),
+            ("admin.scim.manage", Role::Sales),
+            ("admin.scim.manage", Role::Finance),
+            ("admin.scim.manage", Role::Manager),
+            ("admin.cmk.rotate", Role::Member),
+            ("admin.cmk.rotate", Role::ReadOnly),
+            ("admin.cmk.rotate", Role::Sales),
+            ("admin.cmk.rotate", Role::Finance),
+            ("admin.cmk.rotate", Role::Manager),
+            ("admin.cmk.revoke", Role::Member),
+            ("admin.cmk.revoke", Role::ReadOnly),
+            ("admin.cmk.revoke", Role::Sales),
+            ("admin.cmk.revoke", Role::Finance),
+            ("admin.cmk.revoke", Role::Manager),
+            ("admin.network.manage", Role::Member),
+            ("admin.network.manage", Role::ReadOnly),
+            ("admin.network.manage", Role::Sales),
+            ("admin.network.manage", Role::Finance),
+            ("admin.network.manage", Role::Manager),
+            ("admin.ediscovery.export", Role::Member),
+            ("admin.ediscovery.export", Role::ReadOnly),
+            ("admin.ediscovery.export", Role::Sales),
+            ("admin.ediscovery.export", Role::Finance),
+            ("admin.ediscovery.export", Role::Manager),
+            ("workspace.grant.delegate", Role::Member),
+            ("workspace.grant.delegate", Role::ReadOnly),
+            ("workspace.grant.delegate", Role::Sales),
+            ("workspace.grant.inherit", Role::Member),
+            ("workspace.grant.inherit", Role::ReadOnly),
+            ("workspace.grant.inherit", Role::Sales),
             ("sales.contract.publish", Role::Member),
             ("sales.contract.publish", Role::ReadOnly),
             ("sales.territory.manage", Role::Member),
@@ -1254,6 +1297,14 @@ mod tests {
         assert!(!is_allowed(&member, &perms::finance_dunning_manage()));
         assert!(!is_allowed(&member, &perms::sales_contract_publish()));
         assert!(!is_allowed(&member, &perms::operations_timesheet_approve()));
+        let admin = Principal::with_roles(vec![Role::Admin]);
+        // Phase 4.2
+        assert!(!is_allowed(&member, &perms::finance_consolidation_run()));
+        assert!(!is_allowed(&member, &perms::admin_scim_manage()));
+        assert!(!is_allowed(&member, &perms::admin_cmk_rotate()));
+        assert!(is_allowed(&finance, &perms::finance_consolidation_run()));
+        assert!(is_allowed(&admin, &perms::admin_scim_manage()));
+        assert!(is_allowed(&admin, &perms::admin_cmk_rotate()));
         assert!(is_allowed(&manager, &perms::operations_timesheet_approve()));
         assert!(is_allowed(&finance, &perms::finance_dunning_manage()));
         assert!(is_allowed(
@@ -1270,12 +1321,37 @@ mod tests {
         assert!(!is_allowed(&member, &perms::hr_payroll_run()));
         assert!(!is_allowed(&member, &perms::finance_journal_post()));
         // Admin can invite / assign / revoke / settings
-        let admin = Principal::with_roles(vec![Role::Admin]);
         assert!(is_allowed(&admin, &perms::workspace_member_invite()));
         assert!(is_allowed(&admin, &perms::workspace_role_assign()));
         assert!(is_allowed(&admin, &perms::workspace_member_revoke()));
         assert!(is_allowed(&admin, &perms::workspace_org_update_settings()));
         assert!(is_allowed(&admin, &perms::finance_invoice_issue()));
+    }
+
+    #[test]
+    fn inheritance_and_delegation_via_pdp_statements() {
+        // Child team inherits allow via statement; explicit deny wins; expired
+        // delegation is filtered before statements reach the PDP.
+        let mut child = Principal::with_roles(vec![Role::Member]);
+        child
+            .statements
+            .push(Statement::allow(perms::finance_report_read()));
+        assert!(is_allowed(&child, &perms::finance_report_read()));
+
+        child
+            .statements
+            .push(Statement::deny(perms::finance_report_read()));
+        assert!(!is_allowed(&child, &perms::finance_report_read()));
+
+        // Fresh principal with only a "live" delegation statement
+        let mut delegated = Principal::with_roles(vec![Role::Member]);
+        delegated
+            .statements
+            .push(Statement::allow(perms::finance_ledger_read()));
+        assert!(is_allowed(&delegated, &perms::finance_ledger_read()));
+        // After expiry the loader omits the statement — principal has no allow
+        let expired = Principal::with_roles(vec![Role::Member]);
+        assert!(!is_allowed(&expired, &perms::finance_ledger_read()));
     }
 
     #[test]

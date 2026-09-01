@@ -202,92 +202,160 @@ pub async fn list_journals(
         .await
         .map_err(|e| AppError::new(ErrorCode::Internal, request_id.clone(), e.to_string()))?;
 
+    // Entity ACL: when rows exist for this user, filter journals to those entities
+    // (unless caller can run consolidation / manage entities).
+    let allowed_entities: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT entity_id FROM finance_entity_access WHERE org_id = $1 AND user_id = $2",
+    )
+    .bind(org_id)
+    .bind(auth.ctx.actor.user_id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
+    let entity_filter = !allowed_entities.is_empty()
+        && !companyos_authz::is_allowed(&membership.principal, &perms::finance_consolidation_run())
+        && !companyos_authz::is_allowed(&membership.principal, &perms::finance_entity_manage());
+
     let period_uuid = if let Some(ref pid) = q.period_id {
         Some(parse_public_id(IdKind::FiscalPeriod, pid, &request_id)?)
     } else {
         None
     };
 
-    let total: i64 = match (q.source_type.as_deref(), period_uuid) {
-        (Some(st), Some(pid)) => sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND period_id = $3",
-        )
-        .bind(org_id)
-        .bind(st)
-        .bind(pid)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
-        (Some(st), None) => sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2",
-        )
-        .bind(org_id)
-        .bind(st)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
-        (None, Some(pid)) => sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND period_id = $2",
-        )
-        .bind(org_id)
-        .bind(pid)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
-        (None, None) => sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1",
-        )
-        .bind(org_id)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
+    let total: i64 = if entity_filter {
+        match (q.source_type.as_deref(), period_uuid) {
+            (Some(st), Some(pid)) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND period_id = $3 AND entity_id = ANY($4)",
+            )
+            .bind(org_id).bind(st).bind(pid).bind(&allowed_entities)
+            .fetch_one(&mut *tx).await.map_err(internal(&request_id))?,
+            (Some(st), None) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND entity_id = ANY($3)",
+            )
+            .bind(org_id).bind(st).bind(&allowed_entities)
+            .fetch_one(&mut *tx).await.map_err(internal(&request_id))?,
+            (None, Some(pid)) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND period_id = $2 AND entity_id = ANY($3)",
+            )
+            .bind(org_id).bind(pid).bind(&allowed_entities)
+            .fetch_one(&mut *tx).await.map_err(internal(&request_id))?,
+            (None, None) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND entity_id = ANY($2)",
+            )
+            .bind(org_id).bind(&allowed_entities)
+            .fetch_one(&mut *tx).await.map_err(internal(&request_id))?,
+        }
+    } else {
+        match (q.source_type.as_deref(), period_uuid) {
+            (Some(st), Some(pid)) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND period_id = $3",
+            )
+            .bind(org_id)
+            .bind(st)
+            .bind(pid)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+            (Some(st), None) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2",
+            )
+            .bind(org_id)
+            .bind(st)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+            (None, Some(pid)) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1 AND period_id = $2",
+            )
+            .bind(org_id)
+            .bind(pid)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+            (None, None) => sqlx::query_scalar(
+                "SELECT COUNT(*) FROM finance_journal_entry WHERE org_id = $1",
+            )
+            .bind(org_id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+        }
     };
 
-    let entry_ids: Vec<(Uuid,)> = match (q.source_type.as_deref(), period_uuid) {
-        (Some(st), Some(pid)) => sqlx::query_as(
-            "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND period_id = $3
-             ORDER BY entry_date DESC, created_at DESC LIMIT $4 OFFSET $5",
-        )
-        .bind(org_id)
-        .bind(st)
-        .bind(pid)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
-        (Some(st), None) => sqlx::query_as(
-            "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2
-             ORDER BY entry_date DESC, created_at DESC LIMIT $3 OFFSET $4",
-        )
-        .bind(org_id)
-        .bind(st)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
-        (None, Some(pid)) => sqlx::query_as(
-            "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND period_id = $2
-             ORDER BY entry_date DESC, created_at DESC LIMIT $3 OFFSET $4",
-        )
-        .bind(org_id)
-        .bind(pid)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
-        (None, None) => sqlx::query_as(
-            "SELECT id FROM finance_journal_entry WHERE org_id = $1
-             ORDER BY entry_date DESC, created_at DESC LIMIT $2 OFFSET $3",
-        )
-        .bind(org_id)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&mut *tx)
-        .await
-        .map_err(internal(&request_id))?,
+    let entry_ids: Vec<(Uuid,)> = if entity_filter {
+        match (q.source_type.as_deref(), period_uuid) {
+            (Some(st), Some(pid)) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND period_id = $3 AND entity_id = ANY($4)
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $5 OFFSET $6",
+            )
+            .bind(org_id).bind(st).bind(pid).bind(&allowed_entities).bind(limit).bind(offset)
+            .fetch_all(&mut *tx).await.map_err(internal(&request_id))?,
+            (Some(st), None) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND entity_id = ANY($3)
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $4 OFFSET $5",
+            )
+            .bind(org_id).bind(st).bind(&allowed_entities).bind(limit).bind(offset)
+            .fetch_all(&mut *tx).await.map_err(internal(&request_id))?,
+            (None, Some(pid)) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND period_id = $2 AND entity_id = ANY($3)
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $4 OFFSET $5",
+            )
+            .bind(org_id).bind(pid).bind(&allowed_entities).bind(limit).bind(offset)
+            .fetch_all(&mut *tx).await.map_err(internal(&request_id))?,
+            (None, None) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND entity_id = ANY($2)
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $3 OFFSET $4",
+            )
+            .bind(org_id).bind(&allowed_entities).bind(limit).bind(offset)
+            .fetch_all(&mut *tx).await.map_err(internal(&request_id))?,
+        }
+    } else {
+        match (q.source_type.as_deref(), period_uuid) {
+            (Some(st), Some(pid)) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2 AND period_id = $3
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $4 OFFSET $5",
+            )
+            .bind(org_id)
+            .bind(st)
+            .bind(pid)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+            (Some(st), None) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND source_type = $2
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $3 OFFSET $4",
+            )
+            .bind(org_id)
+            .bind(st)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+            (None, Some(pid)) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1 AND period_id = $2
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $3 OFFSET $4",
+            )
+            .bind(org_id)
+            .bind(pid)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+            (None, None) => sqlx::query_as(
+                "SELECT id FROM finance_journal_entry WHERE org_id = $1
+                 ORDER BY entry_date DESC, created_at DESC LIMIT $2 OFFSET $3",
+            )
+            .bind(org_id)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(internal(&request_id))?,
+        }
     };
 
     let mut items = Vec::with_capacity(entry_ids.len());
@@ -361,6 +429,39 @@ pub async fn get_journal(
         .await
         .map_err(internal(&request_id))?
         .ok_or_else(|| not_found(&request_id, "journal"))?;
+
+    let allowed_entities: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT entity_id FROM finance_entity_access WHERE org_id = $1 AND user_id = $2",
+    )
+    .bind(org_id)
+    .bind(auth.ctx.actor.user_id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(internal(&request_id))?;
+    if !allowed_entities.is_empty()
+        && !companyos_authz::is_allowed(&membership.principal, &perms::finance_consolidation_run())
+        && !companyos_authz::is_allowed(&membership.principal, &perms::finance_entity_manage())
+    {
+        let entity_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT entity_id FROM finance_journal_entry WHERE id = $1 AND org_id = $2",
+        )
+        .bind(entry_id)
+        .bind(org_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal(&request_id))?
+        .flatten();
+        if let Some(eid) = entity_id {
+            if !allowed_entities.contains(&eid) {
+                return Err(AppError::new(
+                    ErrorCode::Forbidden,
+                    request_id,
+                    "entity isolation: journal belongs to another entity",
+                ));
+            }
+        }
+    }
+
     if is_salary_adjacent(&dto.source_type) {
         insert_audit(
             &mut *tx,
