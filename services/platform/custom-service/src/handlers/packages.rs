@@ -177,7 +177,35 @@ pub async fn import_package(
     let rid = auth.ctx.request_id.as_str();
     require_perm(&state, &auth, perms::custom_package_import()).await?;
 
-    let pkg = body.package;
+    let mut tx = state.pool.begin().await.map_err(internal(rid))?;
+    set_org(&mut tx, auth.ctx.org_id, rid).await?;
+
+    let result = apply_package_import(
+        &mut tx,
+        auth.ctx.org_id,
+        auth.ctx.actor.on_behalf_of,
+        auth.ctx.actor.user_id,
+        auth.ctx.actor.is_ai,
+        &body.package,
+        rid,
+    )
+    .await?;
+
+    tx.commit().await.map_err(internal(rid))?;
+
+    Ok((StatusCode::CREATED, Json(result)))
+}
+
+/// Additive package import used by `/packages/import` and industry pack install.
+pub async fn apply_package_import(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    org_id: companyos_tenancy::OrgId,
+    actor: uuid::Uuid,
+    audit_user: uuid::Uuid,
+    is_ai: bool,
+    pkg: &CustomPackage,
+    rid: &str,
+) -> Result<ImportPackageResponse, AppError> {
     if pkg.format != PACKAGE_FORMAT {
         return Err(validation(
             rid,
@@ -196,12 +224,8 @@ pub async fn import_package(
 
     let install_id = new_uuid_v7();
     let install_public = PublicId::new(IdKind::CustomPackage, install_id);
-    let actor = auth.ctx.actor.on_behalf_of;
-    let artifact = serde_json::to_value(&pkg)
+    let artifact = serde_json::to_value(pkg)
         .map_err(|e| AppError::new(ErrorCode::Internal, rid, e.to_string()))?;
-
-    let mut tx = state.pool.begin().await.map_err(internal(rid))?;
-    set_org(&mut tx, auth.ctx.org_id, rid).await?;
 
     let mut entities_imported = 0usize;
     let mut permissions = Vec::new();
@@ -217,14 +241,13 @@ pub async fn import_package(
             WHERE org_id = $1 AND slug = $2 AND deleted_at IS NULL
             "#,
         )
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(&ent.slug)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(internal(rid))?;
 
         let entity_id = if let Some((id,)) = existing {
-            // Additive: leave existing definition as-is; still ensure published + perms.
             id
         } else {
             let id = new_uuid_v7();
@@ -238,14 +261,14 @@ pub async fn import_package(
                 "#,
             )
             .bind(id)
-            .bind(auth.ctx.org_id.as_uuid())
+            .bind(org_id.as_uuid())
             .bind(public_id.as_str())
             .bind(&ent.slug)
             .bind(&ent.label)
             .bind(&ent.description)
             .bind(&fields_json)
             .bind(actor)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await
             .map_err(internal(rid))?;
             entities_imported += 1;
@@ -262,14 +285,14 @@ pub async fn import_package(
             WHERE org_id = $1 AND id = $2 AND deleted_at IS NULL
             "#,
         )
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(entity_id)
         .bind(actor)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         .map_err(internal(rid))?;
 
-        let (read_id, write_id) = register_entity_permissions(&mut tx, auth.ctx.org_id, &ent.slug)
+        let (read_id, write_id) = register_entity_permissions(tx, org_id, &ent.slug)
             .await
             .map_err(internal(rid))?;
         permissions.push(read_id);
@@ -279,17 +302,16 @@ pub async fn import_package(
     for view in &pkg.views {
         let id = new_uuid_v7();
         let public_id = PublicId::new(IdKind::CustomView, id);
-        // Additive: skip if a view with same name already exists for the slug.
         let exists: Option<(uuid::Uuid,)> = sqlx::query_as(
             r#"
             SELECT id FROM custom_view
             WHERE org_id = $1 AND entity_slug = $2 AND name = $3
             "#,
         )
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(&view.entity_slug)
         .bind(&view.name)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(internal(rid))?;
         if exists.is_some() {
@@ -303,7 +325,7 @@ pub async fn import_package(
             "#,
         )
         .bind(id)
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(public_id.as_str())
         .bind(&view.entity_slug)
         .bind(&view.name)
@@ -311,7 +333,7 @@ pub async fn import_package(
         .bind(&view.filters)
         .bind(&view.sort)
         .bind(actor)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         .map_err(internal(rid))?;
     }
@@ -323,9 +345,9 @@ pub async fn import_package(
             WHERE org_id = $1 AND entity_slug = $2
             "#,
         )
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(&layout.entity_slug)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(internal(rid))?;
         if exists.is_some() {
@@ -341,13 +363,13 @@ pub async fn import_package(
             "#,
         )
         .bind(id)
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(public_id.as_str())
         .bind(&layout.entity_slug)
         .bind(&layout.name)
         .bind(&layout.sections)
         .bind(actor)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         .map_err(internal(rid))?;
     }
@@ -359,10 +381,10 @@ pub async fn import_package(
             WHERE org_id = $1 AND entity_slug = $2 AND hook = $3
             "#,
         )
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(&script.entity_slug)
         .bind(&script.hook)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(internal(rid))?;
         if exists.is_some() {
@@ -378,13 +400,13 @@ pub async fn import_package(
             "#,
         )
         .bind(id)
-        .bind(auth.ctx.org_id.as_uuid())
+        .bind(org_id.as_uuid())
         .bind(public_id.as_str())
         .bind(&script.entity_slug)
         .bind(&script.hook)
         .bind(&script.source)
         .bind(actor)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         .map_err(internal(rid))?;
     }
@@ -398,22 +420,22 @@ pub async fn import_package(
         "#,
     )
     .bind(install_id)
-    .bind(auth.ctx.org_id.as_uuid())
+    .bind(org_id.as_uuid())
     .bind(install_public.as_str())
     .bind(&pkg.name)
     .bind(&pkg.version)
     .bind(&artifact)
     .bind(actor)
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await
     .map_err(internal(rid))?;
 
     crate::audit::insert_audit(
-        &mut *tx,
-        auth.ctx.org_id.as_uuid(),
-        auth.ctx.actor.user_id,
-        auth.ctx.actor.on_behalf_of,
-        auth.ctx.actor.is_ai,
+        &mut **tx,
+        org_id.as_uuid(),
+        audit_user,
+        actor,
+        is_ai,
         "custom.package.import",
         "custom_package",
         &install_public.as_str(),
@@ -426,17 +448,12 @@ pub async fn import_package(
     .await
     .map_err(internal(rid))?;
 
-    tx.commit().await.map_err(internal(rid))?;
-
     permissions.sort();
     permissions.dedup();
 
-    Ok((
-        StatusCode::CREATED,
-        Json(ImportPackageResponse {
-            package_id: install_public.as_str(),
-            entities_imported,
-            permissions,
-        }),
-    ))
+    Ok(ImportPackageResponse {
+        package_id: install_public.as_str(),
+        entities_imported,
+        permissions,
+    })
 }

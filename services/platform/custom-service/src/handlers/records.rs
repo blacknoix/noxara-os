@@ -1,7 +1,7 @@
 //! `/api/v1/custom/records/{slug}` — custom record CRUD with formulas + scripts.
 
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::routing::get;
 use axum::{Json, Router};
 use chrono::{DateTime, Utc};
@@ -15,7 +15,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::{
-    enforce_opt, internal, load_authz_principal, not_found, parse_public_id, set_org, validation,
+    conflict, enforce_opt, internal, load_authz_principal, not_found, parse_public_id, set_org,
+    validation,
 };
 use crate::auth::AuthCtx;
 use crate::formula::apply_formulas;
@@ -41,7 +42,20 @@ pub struct RecordListResponse {
     pub items: Vec<CustomRecordDto>,
 }
 
-type RecordRow = (String, String, Value, DateTime<Utc>, DateTime<Utc>);
+type RecordRow = (String, String, Value, i32, DateTime<Utc>, DateTime<Utc>);
+
+fn require_if_match(headers: &HeaderMap, request_id: &str) -> Result<i32, AppError> {
+    headers
+        .get("if-match")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim().trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            validation(
+                request_id,
+                "If-Match header with integer version is required",
+            )
+        })
+}
 
 async fn load_published_entity(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
@@ -218,8 +232,9 @@ fn to_dto(row: RecordRow) -> CustomRecordDto {
         id: row.0,
         entity_slug: row.1,
         values: row.2,
-        created_at: row.3,
-        updated_at: row.4,
+        version: row.3,
+        created_at: row.4,
+        updated_at: row.5,
     }
 }
 
@@ -245,7 +260,7 @@ pub async fn list_records(
 
     let rows: Vec<RecordRow> = sqlx::query_as(
         r#"
-        SELECT public_id, entity_slug, "values", created_at, updated_at
+        SELECT public_id, entity_slug, "values", version, created_at, updated_at
         FROM custom_record
         WHERE org_id = $1 AND entity_slug = $2 AND deleted_at IS NULL
         ORDER BY updated_at DESC
@@ -400,6 +415,7 @@ pub async fn create_record(
             id: public_id.as_str(),
             entity_slug: slug,
             values: values_json,
+            version: 1,
             created_at: now,
             updated_at: now,
         }),
@@ -428,7 +444,7 @@ pub async fn get_record(
 
     let row: Option<RecordRow> = sqlx::query_as(
         r#"
-        SELECT public_id, entity_slug, "values", created_at, updated_at
+        SELECT public_id, entity_slug, "values", version, created_at, updated_at
         FROM custom_record
         WHERE org_id = $1 AND id = $2 AND entity_slug = $3 AND deleted_at IS NULL
         "#,
@@ -449,18 +465,20 @@ pub async fn get_record(
     path = "/api/v1/custom/records/{slug}/{id}",
     tag = "custom-records",
     request_body = UpsertRecordRequest,
-    responses((status = 200, body = CustomRecordDto))
+    responses((status = 200, body = CustomRecordDto), (status = 409))
 )]
 pub async fn update_record(
     State(state): State<AppState>,
     auth: AuthCtx,
     Path((slug, id)): Path<(String, String)>,
+    headers: HeaderMap,
     Json(body): Json<UpsertRecordRequest>,
 ) -> Result<Json<CustomRecordDto>, AppError> {
     let rid = auth.ctx.request_id.as_str();
     let principal = load_authz_principal(&state, &auth).await?;
     enforce_opt(&principal, perms::custom_entity_write(&slug), rid)?;
     let record_id = parse_public_id(IdKind::CustomRecord, &id, rid)?;
+    let expected_version = require_if_match(&headers, rid)?;
     let org_public = auth.ctx.org_id.to_public().as_str();
 
     let mut tx = state.pool.begin().await.map_err(internal(rid))?;
@@ -469,9 +487,9 @@ pub async fn update_record(
     let (_entity_id, fields) =
         load_published_entity(&mut tx, auth.ctx.org_id.as_uuid(), &slug, rid).await?;
 
-    let existing: Option<(String, Value)> = sqlx::query_as(
+    let existing: Option<(String, Value, i32)> = sqlx::query_as(
         r#"
-        SELECT public_id, "values" FROM custom_record
+        SELECT public_id, "values", version FROM custom_record
         WHERE org_id = $1 AND id = $2 AND entity_slug = $3 AND deleted_at IS NULL
         FOR UPDATE
         "#,
@@ -482,7 +500,15 @@ pub async fn update_record(
     .fetch_optional(&mut *tx)
     .await
     .map_err(internal(rid))?;
-    let (public_id, existing_values) = existing.ok_or_else(|| not_found(rid, "record"))?;
+    let (public_id, existing_values, current_version) =
+        existing.ok_or_else(|| not_found(rid, "record"))?;
+
+    if expected_version != current_version {
+        return Err(conflict(
+            rid,
+            format!("version mismatch: expected {expected_version}, current {current_version}"),
+        ));
+    }
 
     let mut values = existing_values.as_object().cloned().unwrap_or_default();
     for (k, v) in body.values {
@@ -503,11 +529,13 @@ pub async fn update_record(
     let search_text = build_search_text(&values);
     let values_json = Value::Object(values.clone());
 
-    sqlx::query(
+    let updated = sqlx::query(
         r#"
         UPDATE custom_record
-        SET "values" = $4, search_text = $5, updated_by = $6, updated_at = now()
-        WHERE org_id = $1 AND id = $2 AND entity_slug = $3 AND deleted_at IS NULL
+        SET "values" = $4, search_text = $5, updated_by = $6,
+            version = version + 1, updated_at = now()
+        WHERE org_id = $1 AND id = $2 AND entity_slug = $3
+          AND deleted_at IS NULL AND version = $7
         "#,
     )
     .bind(auth.ctx.org_id.as_uuid())
@@ -516,9 +544,17 @@ pub async fn update_record(
     .bind(&values_json)
     .bind(&search_text)
     .bind(auth.ctx.actor.on_behalf_of)
+    .bind(expected_version)
     .execute(&mut *tx)
     .await
     .map_err(internal(rid))?;
+
+    if updated.rows_affected() == 0 {
+        return Err(conflict(
+            rid,
+            format!("version mismatch: expected {expected_version}, current changed concurrently"),
+        ));
+    }
 
     if let Some(src) = load_script(&mut tx, auth.ctx.org_id.as_uuid(), &slug, "after_save")
         .await
@@ -559,6 +595,7 @@ pub async fn update_record(
             "entity_slug": slug,
             "search_text": search_text,
             "search_doc": search_doc,
+            "version": expected_version + 1,
         }),
     );
     companyos_outbox::insert_event(&mut *tx, &envelope)
@@ -574,14 +611,14 @@ pub async fn update_record(
         "custom.record.update",
         "custom_record",
         &public_id,
-        serde_json::json!({ "entity_slug": slug }),
+        serde_json::json!({ "entity_slug": slug, "version": expected_version + 1 }),
     )
     .await
     .map_err(internal(rid))?;
 
     let row: RecordRow = sqlx::query_as(
         r#"
-        SELECT public_id, entity_slug, "values", created_at, updated_at
+        SELECT public_id, entity_slug, "values", version, created_at, updated_at
         FROM custom_record WHERE org_id = $1 AND id = $2
         "#,
     )
@@ -618,7 +655,7 @@ pub async fn delete_record(
 
     let row: Option<RecordRow> = sqlx::query_as(
         r#"
-        SELECT public_id, entity_slug, "values", created_at, updated_at
+        SELECT public_id, entity_slug, "values", version, created_at, updated_at
         FROM custom_record
         WHERE org_id = $1 AND id = $2 AND entity_slug = $3 AND deleted_at IS NULL
         FOR UPDATE

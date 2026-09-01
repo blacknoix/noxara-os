@@ -4,7 +4,8 @@ use axum::routing::get;
 use axum::{Json, Router};
 use utoipa::OpenApi;
 
-use crate::handlers::{entities, layouts, packages, records, scripts, views};
+use crate::handlers::{entities, industry_packs, layouts, packages, records, scripts, views};
+use crate::packs::{IndustryPackSummary, PackMarketplace, PackSeed};
 use crate::state::AppState;
 use crate::types::*;
 
@@ -30,6 +31,10 @@ use crate::types::*;
         scripts::upsert_script,
         packages::export_package,
         packages::import_package,
+        industry_packs::list_packs,
+        industry_packs::get_pack,
+        industry_packs::install_pack,
+        industry_packs::uninstall_pack,
     ),
     components(schemas(
         FieldType,
@@ -58,6 +63,13 @@ use crate::types::*;
         PackageScript,
         ImportPackageRequest,
         ImportPackageResponse,
+        IndustryPackSummary,
+        PackMarketplace,
+        PackSeed,
+        industry_packs::IndustryPackListResponse,
+        industry_packs::IndustryPackDetail,
+        industry_packs::InstallPackResponse,
+        industry_packs::UninstallPackResponse,
     )),
     tags(
         (name = "custom-entities", description = "Custom entity definition CRUD + publish"),
@@ -66,11 +78,12 @@ use crate::types::*;
         (name = "custom-layouts", description = "Form layouts"),
         (name = "custom-scripts", description = "Lifecycle scripts (before_save / after_save)"),
         (name = "custom-packages", description = "Export / additive import packages"),
+        (name = "custom-industry-packs", description = "Phase 4.5 industry vertical packs"),
     ),
     info(
         title = "CompanyOS Custom / Low-code API",
         version = "0.1.0",
-        description = "Phase 4.4 — custom entities, records, formulas, scripts, views, layouts, and packages."
+        description = "Phase 4.4/4.5 — custom entities, packages, and industry packs."
     )
 )]
 pub struct ApiDoc;

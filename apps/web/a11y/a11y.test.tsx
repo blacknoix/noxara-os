@@ -736,4 +736,20 @@ describe('a11y', () => {
     );
     await expectNoSeriousAxeViolations(container);
   });
+
+  it('industry packs and offline conflict UI have no serious/critical violations', async () => {
+    const { container } = render(
+      <main>
+        <h1>Industry packs</h1>
+        <p>Vertical configuration packs — install is data only.</p>
+        <InlineAlert tone="danger" title="Sync conflict">
+          Stale If-Match was rejected. Last-write-wins with version — loser not silently dropped.
+        </InlineAlert>
+        <InlineAlert tone="warning" title="Install restricted">
+          Member cannot install org-wide packs without custom.package.import.
+        </InlineAlert>
+      </main>,
+    );
+    await expectNoSeriousAxeViolations(container);
+  });
 });

@@ -9,6 +9,7 @@ import './globals.css';
 export const metadata = {
   title: 'CompanyOS',
   description: 'AI-native Business Operating System',
+  manifest: '/manifest.webmanifest',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

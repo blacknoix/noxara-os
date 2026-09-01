@@ -1,21 +1,39 @@
-# companyos-custom — Phase 4.4 Low-code builder
+# companyos-custom — Phase 4.4 / 4.5 Low-code builder + industry packs
 
 Tenant-scoped custom entities, records, views/layouts, formula fields, a
-capped scripting sandbox, and versioned customisation packages.
+capped scripting sandbox, versioned customisation packages, and industry
+vertical packs (configuration + marketplace listings — not domain forks).
 
 ## Routes
 
 | Area | Path |
 |------|------|
 | Definitions | `/api/v1/custom/entities` |
-| Records | `/api/v1/custom/records/{slug}` |
+| Records | `/api/v1/custom/records/{slug}` (PATCH requires `If-Match` version) |
 | Views / layouts / scripts | `/api/v1/custom/views|layouts|scripts/{slug}` |
 | Packages | `/api/v1/custom/packages/export\|import` |
+| Industry packs | `/api/v1/custom/industry-packs` (+ `/{id}/install|uninstall`) |
+
+## Industry packs (4.5)
+
+Shipped packs (embedded JSON under `packs/`):
+
+1. `professional-services` — engagements / retainers
+2. `retail` — product SKU + POS-light session
+3. `light-manufacturing` — BOM line + work order (not MRP)
+4. `healthcare-admin` — appointments + admin notes (not EHR; no PHI authz bypass)
+
+Install imports `companyos.custom.package`, applies OrgProvisioning-style seed
+rows, and best-effort installs the matching marketplace listing
+(`industry.*` connector keys). Uninstall does **not** delete tenant data.
+
+Domain services under `services/business/**` must not branch on pack id —
+enforced by `phase45_industry_packs` grep test.
 
 ## Authz
 
 - Builder: `custom.builder.read` / `custom.builder.manage` (Member denied manage by default)
-- Packages: `custom.package.export` / `custom.package.import`
+- Packages / pack install: `custom.package.export` / `custom.package.import`
 - Per entity (registered on publish): `custom.{slug}.read` / `custom.{slug}.write`
 - Fixture slug for deny-matrix: `custom.demo_asset.*`
 

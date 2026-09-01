@@ -7,6 +7,8 @@ import { TopBar } from './TopBar';
 import { Sidebar } from './Sidebar';
 import { ContextPanel } from './ContextPanel';
 import { CommandBarHost } from './CommandBarHost';
+import { OfflineBadge } from './offline/OfflineBadge';
+import { ServiceWorkerRegister } from './offline/ServiceWorkerRegister';
 
 const AUTH_PATHS = [
   '/login',
@@ -157,6 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <a href="#main-content" className="cos-skip-link">
         Skip to content
       </a>
+      <ServiceWorkerRegister />
       <TopBar
         onTogglePanel={togglePanel}
         onToggleSidebar={toggleSidebar}
@@ -211,6 +214,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             overflow: 'auto',
           }}
         >
+          <OfflineBadge />
           {children}
         </main>
 

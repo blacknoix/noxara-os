@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–4.3 implemented; Phase 4.4 (this PR) low-code builder.
+Status: **Active** outline. Phase 0–4.4 implemented; Phase 4.5 (this PR) industry packs + client parity.
 
 ## Completed
 
@@ -31,8 +31,18 @@ Status: **Active** outline. Phase 0–4.3 implemented; Phase 4.4 (this PR) low-c
 | 4.2   | Enterprise multi-tenancy: IC + consolidation, hierarchy grants/delegation, CMEK (mock KMS), SCIM (2 mock IdPs), network allowlist/infra tier, SLA, eDiscovery |
 | 4.3   | AI automation and agents: governed policy, receivables chase, kill switch, NL workflow drafts, prompt packs, review pack |
 | 4.4   | Low-code builder: custom entities/fields, views/layouts, formulas, capped script sandbox, packaging + upgrade rehearsal |
+| 4.5   | Industry packs (config + marketplace) + web offline/conflict parity matrix (Flutter/Tauri not shipped) |
 
-## Phase 4.4 — Low-code builder (this PR)
+## Phase 4.5 — Industry packs / client parity (this PR)
+
+- Four vertical packs as `companyos.custom.package` + seed + marketplace `industry.*` listings — **no** CRM/finance/HR/inventory forks
+- Install / uninstall via `/api/v1/custom/industry-packs/...` (Member denied; uninstall retains tenant data)
+- Grep lint: business services must not `match industry` / `if pack ==`
+- Client parity matrix in `docs/clients/parity-matrix.md` (web implemented; native shells not-yet)
+- Web offline-first: read cache, mutation queue with `Idempotency-Key`, reconnect replay, user-visible conflict UI (last-write-wins + `If-Match`)
+- Custom record PATCH requires `If-Match` version
+
+## Phase 4.4 — Low-code builder (done)
 
 - New platform service `companyos-custom` (`/api/v1/custom/...`): entity definitions, records, views, layouts, scripts, packages
 - Dynamic authz `custom.{slug}.read|write` registered on publish; Member denied `custom.builder.manage` by default
@@ -92,6 +102,8 @@ Implemented in `companyos-integration` (`src/marketplace/`, `migrations/001_mark
 - Web UI: catalogue, listing consent, installs, publisher, reviewer, and Settings →
   Integrations (first-party connectors via the same install APIs).
 
+Phase 4.5 adds industry pack listings (`industry.*`) as first-party catalogue entries.
+
 Not yet done: a real connector runtime (the five seeded connectors are catalogue entries
 only), cross-org publisher review staffing, and marketplace billing.
 
@@ -101,8 +113,7 @@ only), cross-org publisher review staffing, and marketplace billing.
 | -------------- | ----------------------- |
 | InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
-| Mobile         | Flutter / Tauri         |
-| 4.5            | Industry packs / mobile parity |
+| Mobile         | Flutter / Tauri (parity matrix in 4.5; shells not shipped) |
 
 ## Cut order if needed
 

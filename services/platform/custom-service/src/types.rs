@@ -75,8 +75,15 @@ pub struct CustomRecordDto {
     pub id: String,
     pub entity_slug: String,
     pub values: serde_json::Value,
+    /// Optimistic concurrency version (If-Match on PATCH).
+    #[serde(default = "default_version")]
+    pub version: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+fn default_version() -> i32 {
+    1
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

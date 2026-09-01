@@ -1,13 +1,14 @@
-//! CompanyOS Low-code builder service (library) — Phase 4.4.
+//! CompanyOS Low-code builder service (library) — Phase 4.4 / 4.5.
 //!
 //! Custom entity definitions, records, formulas, scripts, views, layouts,
-//! and versioned customisation packages under `/api/v1/custom/...`.
+//! versioned customisation packages, and industry packs under `/api/v1/custom/...`.
 
 pub mod audit;
 pub mod auth;
 pub mod formula;
 pub mod handlers;
 pub mod openapi;
+pub mod packs;
 pub mod permissions;
 pub mod principal;
 pub mod sandbox;
@@ -71,9 +72,16 @@ async fn run_migration_files(pool: &sqlx::PgPool, files: &[&str]) -> anyhow::Res
     .await
 }
 
-/// Base custom-service schema (definitions, records, views, scripts, packages).
+/// Base custom-service schema (definitions, records, views, scripts, packages, industry packs).
 pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    run_migration_files(pool, &[include_str!("../migrations/001_custom.sql")]).await
+    run_migration_files(
+        pool,
+        &[
+            include_str!("../migrations/001_custom.sql"),
+            include_str!("../migrations/003_industry_packs.sql"),
+        ],
+    )
+    .await
 }
 
 /// Additive platform bump used by the Phase 4.4 upgrade rehearsal.

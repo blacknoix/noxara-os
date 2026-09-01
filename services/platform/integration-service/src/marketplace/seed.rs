@@ -68,6 +68,34 @@ pub const FIRST_PARTY_CATALOGUE: &[FirstPartyConnector] = &[
     },
 ];
 
+/// Phase 4.5 industry packs as first-party marketplace listings (config apps, not forks).
+pub const INDUSTRY_PACK_CATALOGUE: &[FirstPartyConnector] = &[
+    FirstPartyConnector {
+        connector_key: "industry.professional-services",
+        name: "Industry pack: Professional Services",
+        description: "Custom entities and seed defaults for professional services orgs.",
+        requested_scopes: &["workspace.org.read", "custom.builder.read"],
+    },
+    FirstPartyConnector {
+        connector_key: "industry.retail",
+        name: "Industry pack: Retail",
+        description: "Catalogue and POS-light custom entities for retail orgs.",
+        requested_scopes: &["workspace.org.read", "custom.builder.read"],
+    },
+    FirstPartyConnector {
+        connector_key: "industry.light-manufacturing",
+        name: "Industry pack: Light manufacturing",
+        description: "BOM and work-order custom entities for light manufacturing.",
+        requested_scopes: &["workspace.org.read", "custom.builder.read"],
+    },
+    FirstPartyConnector {
+        connector_key: "industry.healthcare-admin",
+        name: "Industry pack: Healthcare admin",
+        description: "Appointment and admin-note custom entities. No PHI authz bypass.",
+        requested_scopes: &["workspace.org.read", "custom.builder.read"],
+    },
+];
+
 #[derive(Debug, Clone)]
 pub struct SeededListing {
     pub id: Uuid,
@@ -77,15 +105,20 @@ pub struct SeededListing {
     pub connector_key: String,
 }
 
-/// Upsert the five first-party listings as published, owned by `publisher_org_id`.
+/// Upsert first-party connector + industry-pack listings as published, owned by
+/// `publisher_org_id`.
 ///
 /// Safe to call repeatedly and from concurrent test binaries.
 pub async fn seed_first_party_catalogue(
     pool: &PgPool,
     publisher_org_id: OrgId,
 ) -> anyhow::Result<Vec<SeededListing>> {
-    let mut seeded = Vec::with_capacity(FIRST_PARTY_CATALOGUE.len());
-    for connector in FIRST_PARTY_CATALOGUE {
+    let mut seeded =
+        Vec::with_capacity(FIRST_PARTY_CATALOGUE.len() + INDUSTRY_PACK_CATALOGUE.len());
+    for connector in FIRST_PARTY_CATALOGUE
+        .iter()
+        .chain(INDUSTRY_PACK_CATALOGUE.iter())
+    {
         seeded.push(seed_one(pool, publisher_org_id, connector).await?);
     }
     Ok(seeded)
