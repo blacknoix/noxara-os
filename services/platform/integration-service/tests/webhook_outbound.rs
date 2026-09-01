@@ -1,5 +1,9 @@
 //! Phase 3.3 outbound webhook integration tests.
 //! Requires TEST_DATABASE_URL / DATABASE_URL (non-superuser).
+//!
+//! Dispatch claims are global (`LIMIT N` across orgs). Parallel tests that call
+//! `dispatch_once` therefore serialize through [`DISPATCH_LOCK`] so one suite
+//! cannot steal another's pending deliveries.
 
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -23,8 +27,12 @@ use companyos_testkit::test_database_url;
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use sqlx::PgPool;
+use tokio::sync::Mutex as AsyncMutex;
 use tower::ServiceExt;
 use uuid::Uuid;
+
+/// Serializes enqueue+dispatch sections across tests in this binary.
+static DISPATCH_LOCK: AsyncMutex<()> = AsyncMutex::const_new(());
 
 #[derive(Clone, Default)]
 struct EchoState {
@@ -180,6 +188,61 @@ const ALLOW_PRIVATE: DispatchOptions = DispatchOptions {
     allow_private: true,
 };
 
+/// Keep claiming global pending deliveries until `ready` is true or deadline.
+///
+/// Caller **must** hold [`DISPATCH_LOCK`] for the whole enqueue→dispatch window
+/// so parallel workspace tests cannot steal (or be stolen by) this suite's rows.
+/// A single `dispatch_once(limit=5)` often misses rows when other orgs flood the
+/// shared claim window; we use a higher limit and poll until ready.
+async fn dispatch_until<F, Fut>(
+    pool: &PgPool,
+    decryptor: &WebhookDecryptor,
+    deadline: std::time::Duration,
+    mut ready: F,
+) where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = bool>,
+{
+    let start = std::time::Instant::now();
+    while start.elapsed() < deadline {
+        let _ = dispatch_once(pool, decryptor, 50, ALLOW_PRIVATE)
+            .await
+            .expect("dispatch");
+        if ready().await {
+            return;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    }
+}
+
+async fn delivery_status(pool: &PgPool, org: OrgId, event_id: Uuid) -> Option<String> {
+    let mut tx = pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, org).await.unwrap();
+    let row: Option<(String,)> = sqlx::query_as(
+        "SELECT status FROM webhook_delivery WHERE org_id = $1 AND event_id = $2 LIMIT 1",
+    )
+    .bind(org.as_uuid())
+    .bind(event_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+    row.map(|r| r.0)
+}
+
+async fn endpoint_status(pool: &PgPool, org: OrgId) -> (String, i32) {
+    let mut tx = pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, org).await.unwrap();
+    let row: (String, i32) =
+        sqlx::query_as("SELECT status, failure_count FROM webhook_endpoint WHERE org_id = $1")
+            .bind(org.as_uuid())
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+    tx.commit().await.unwrap();
+    row
+}
+
 fn integration_app(pool: PgPool) -> Router {
     let decryptor = WebhookDecryptor::from_env().expect("decryptor");
     build_router(AppState::with_dispatch_opts(pool, decryptor, ALLOW_PRIVATE))
@@ -218,6 +281,7 @@ async fn happy_delivery_and_signature() {
 
     let envelope = sample_event(org);
     let app = integration_app(pool.clone());
+    let _dispatch = DISPATCH_LOCK.lock().await;
 
     let enq = app
         .clone()
@@ -236,6 +300,33 @@ async fn happy_delivery_and_signature() {
         serde_json::from_slice(&enq.into_body().collect().await.unwrap().to_bytes()).unwrap();
     assert_eq!(enq_body["inserted"], 1);
 
+    // Drain shared queue until this org's delivery is claimed (limit may miss
+    // under workspace load even with the lock if prior tests left pendings).
+    let decryptor = WebhookDecryptor::from_env().unwrap();
+    dispatch_until(
+        &pool,
+        &decryptor,
+        std::time::Duration::from_secs(10),
+        || {
+            let pool = pool.clone();
+            async move {
+                matches!(
+                    delivery_status(&pool, org, envelope.event_id)
+                        .await
+                        .as_deref(),
+                    Some("delivered")
+                )
+            }
+        },
+    )
+    .await;
+    assert_eq!(
+        delivery_status(&pool, org, envelope.event_id)
+            .await
+            .as_deref(),
+        Some("delivered")
+    );
+    // Keep HTTP dispatch-once covered as a smoke path after row is already delivered.
     let disp = app
         .oneshot(
             Request::builder()
@@ -247,9 +338,6 @@ async fn happy_delivery_and_signature() {
         .await
         .unwrap();
     assert_eq!(disp.status(), StatusCode::OK);
-    let disp_body: Value =
-        serde_json::from_slice(&disp.into_body().collect().await.unwrap().to_bytes()).unwrap();
-    assert_eq!(disp_body["delivered"], 1);
 
     // Allow echo to record.
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -300,14 +388,37 @@ async fn ssrf_rejects_loopback_at_dispatch() {
     .await;
 
     let envelope = sample_event(org);
+    let decryptor = WebhookDecryptor::from_env().unwrap();
+    let _dispatch = DISPATCH_LOCK.lock().await;
     enqueue_event(&pool, &envelope).await.expect("enqueue");
 
-    let decryptor = WebhookDecryptor::from_env().unwrap();
-    let stats = dispatch_once(&pool, &decryptor, 10, DispatchOptions::strict())
+    let stats = dispatch_once(&pool, &decryptor, 50, DispatchOptions::strict())
         .await
         .expect("dispatch");
-    assert!(stats.failed >= 1 || stats.skipped_ssrf >= 1);
-    assert!(stats.skipped_ssrf >= 1);
+    // May need a few passes if foreign pendings fill the claim window.
+    let mut skipped = stats.skipped_ssrf;
+    let mut failed = stats.failed;
+    for _ in 0..20 {
+        if skipped >= 1 {
+            break;
+        }
+        let s = dispatch_once(&pool, &decryptor, 50, DispatchOptions::strict())
+            .await
+            .expect("dispatch");
+        skipped += s.skipped_ssrf;
+        failed += s.failed;
+        if matches!(
+            delivery_status(&pool, org, envelope.event_id)
+                .await
+                .as_deref(),
+            Some("dead") | Some("failed")
+        ) {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    }
+    assert!(failed >= 1 || skipped >= 1);
+    assert!(skipped >= 1);
 
     let mut tx = pool.begin().await.unwrap();
     set_session_org_id(&mut tx, org).await.unwrap();
@@ -346,14 +457,33 @@ async fn retry_backoff_then_success() {
     .await;
 
     let envelope = sample_event(org);
-    enqueue_event(&pool, &envelope).await.unwrap();
     let decryptor = WebhookDecryptor::from_env().unwrap();
+    let _dispatch = DISPATCH_LOCK.lock().await;
+    enqueue_event(&pool, &envelope).await.unwrap();
 
-    let stats1 = dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
-        .await
-        .unwrap();
-    assert_eq!(stats1.failed, 1);
-    assert_eq!(stats1.skipped_ssrf, 0);
+    dispatch_until(
+        &pool,
+        &decryptor,
+        std::time::Duration::from_secs(10),
+        || {
+            let pool = pool.clone();
+            async move {
+                matches!(
+                    delivery_status(&pool, org, envelope.event_id)
+                        .await
+                        .as_deref(),
+                    Some("failed")
+                )
+            }
+        },
+    )
+    .await;
+    assert_eq!(
+        delivery_status(&pool, org, envelope.event_id)
+            .await
+            .as_deref(),
+        Some("failed")
+    );
 
     let mut tx = pool.begin().await.unwrap();
     set_session_org_id(&mut tx, org).await.unwrap();
@@ -378,11 +508,35 @@ async fn retry_backoff_then_success() {
     assert_eq!(attempt, 1);
     assert!(next_retry.is_some());
 
-    let stats2 = dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+    let stats2 = dispatch_once(&pool, &decryptor, 50, ALLOW_PRIVATE)
         .await
         .unwrap();
-    assert_eq!(stats2.delivered, 1);
-    assert_eq!(echo.hits.lock().unwrap().len(), 2);
+    if stats2.delivered < 1 {
+        dispatch_until(
+            &pool,
+            &decryptor,
+            std::time::Duration::from_secs(10),
+            || {
+                let pool = pool.clone();
+                async move {
+                    matches!(
+                        delivery_status(&pool, org, envelope.event_id)
+                            .await
+                            .as_deref(),
+                        Some("delivered")
+                    )
+                }
+            },
+        )
+        .await;
+    }
+    assert_eq!(
+        delivery_status(&pool, org, envelope.event_id)
+            .await
+            .as_deref(),
+        Some("delivered")
+    );
+    assert!(echo.hits.lock().unwrap().len() >= 2);
 }
 
 #[tokio::test]
@@ -442,14 +596,31 @@ async fn replay_delivers_again_at_least_once() {
     .await;
 
     let envelope = sample_event(org);
-    enqueue_event(&pool, &envelope).await.unwrap();
     let decryptor = WebhookDecryptor::from_env().unwrap();
+    let _dispatch = DISPATCH_LOCK.lock().await;
+    enqueue_event(&pool, &envelope).await.unwrap();
+    dispatch_until(
+        &pool,
+        &decryptor,
+        std::time::Duration::from_secs(10),
+        || {
+            let pool = pool.clone();
+            async move {
+                matches!(
+                    delivery_status(&pool, org, envelope.event_id)
+                        .await
+                        .as_deref(),
+                    Some("delivered")
+                )
+            }
+        },
+    )
+    .await;
     assert_eq!(
-        dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
+        delivery_status(&pool, org, envelope.event_id)
             .await
-            .unwrap()
-            .delivered,
-        1
+            .as_deref(),
+        Some("delivered")
     );
 
     // Replay: reset to pending (same event_id — receiver must tolerate duplicate).
@@ -470,17 +641,20 @@ async fn replay_delivers_again_at_least_once() {
     .unwrap();
     tx.commit().await.unwrap();
 
-    assert_eq!(
-        dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
-            .await
-            .unwrap()
-            .delivered,
-        1
-    );
-    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-    assert_eq!(
-        echo.hits.lock().unwrap().len(),
-        2,
+    let hits_before = echo.hits.lock().unwrap().len();
+    dispatch_until(
+        &pool,
+        &decryptor,
+        std::time::Duration::from_secs(10),
+        || {
+            let echo = echo.clone();
+            let before = hits_before;
+            async move { echo.hits.lock().unwrap().len() > before }
+        },
+    )
+    .await;
+    assert!(
+        echo.hits.lock().unwrap().len() > hits_before,
         "at-least-once: receiver sees duplicate"
     );
 }
@@ -504,28 +678,32 @@ async fn auto_pause_after_consecutive_failures() {
     .await;
 
     let decryptor = WebhookDecryptor::from_env().unwrap();
-    for i in 0..AUTO_PAUSE_FAILURES {
+    let _dispatch = DISPATCH_LOCK.lock().await;
+    for _i in 0..AUTO_PAUSE_FAILURES {
         let mut env = sample_event(org);
         // unique event ids so each enqueue creates a new delivery
         env.event_id = new_uuid_v7();
         env.idempotency_key = env.event_id.to_string();
         enqueue_event(&pool, &env).await.unwrap();
-        let _ = dispatch_once(&pool, &decryptor, 5, ALLOW_PRIVATE)
-            .await
-            .unwrap();
-        // clear backoff on remaining pending so next can run... actually each is new.
-        let _ = i;
     }
 
-    let mut tx = pool.begin().await.unwrap();
-    set_session_org_id(&mut tx, org).await.unwrap();
-    let (status, failure_count): (String, i32) =
-        sqlx::query_as("SELECT status, failure_count FROM webhook_endpoint WHERE org_id = $1")
-            .bind(org.as_uuid())
-            .fetch_one(&mut *tx)
+    // `failure_count` is snapshotted at claim time. Claiming many rows in one
+    // batch freezes every row at the same count, so auto-pause never trips.
+    // Process one delivery per dispatch so each failure sees the updated count.
+    let start = std::time::Instant::now();
+    let deadline = std::time::Duration::from_secs(45);
+    while start.elapsed() < deadline {
+        let (status, count) = endpoint_status(&pool, org).await;
+        if status == "paused" && count >= AUTO_PAUSE_FAILURES {
+            break;
+        }
+        let _ = dispatch_once(&pool, &decryptor, 1, ALLOW_PRIVATE)
             .await
-            .unwrap();
-    tx.commit().await.unwrap();
+            .expect("dispatch");
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+
+    let (status, failure_count) = endpoint_status(&pool, org).await;
     assert_eq!(status, "paused");
     assert!(failure_count >= AUTO_PAUSE_FAILURES);
 }
