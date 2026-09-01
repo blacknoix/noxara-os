@@ -59,3 +59,31 @@ pub struct IngestResponse {
     pub notified: u32,
     pub skipped: u32,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RegisterDeviceRequest {
+    /// ios | android | web | desktop | fake | test
+    pub platform: String,
+    pub push_token: String,
+    pub device_label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RegisterDeviceResponse {
+    pub id: String,
+    pub platform: String,
+    pub registered: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DeviceDto {
+    pub id: String,
+    pub platform: String,
+    pub push_token: String,
+    pub device_label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DeviceListResponse {
+    pub items: Vec<DeviceDto>,
+}

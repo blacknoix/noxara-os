@@ -97,3 +97,45 @@ jobs:
       - run: pnpm fixture:third-party
       - run: pnpm test:a11y
       - run: pnpm test:unit
+
+  # Phase 1.11 — Flutter mobile shell (Linux CI). Does not require Xcode / signed iOS.
+  flutter:
+    name: Flutter (analyze, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.29.2"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+      - name: Android APK debug (unsigned, best-effort)
+        continue-on-error: true
+        run: |
+          flutter build apk --debug
+          echo "Signed Play/App Store artifacts and crash reporting are follow-ups (not this job)."
+
+  # Phase 1.11 — Tauri desktop shell-core (pure Rust; no webkit / signed macOS).
+  desktop-shell:
+    name: Desktop shell-core (deep links, offline cache)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/shell-core
+      - name: shell-core unit tests
+        working-directory: apps/desktop/shell-core
+        run: cargo test
+      - name: Note on full Tauri GUI / signed macOS
+        run: |
+          echo "Full Tauri GUI build needs Linux WebKitGTK (dev) or Xcode (macOS)."
+          echo "Store-signed macOS/Windows and live crash reporting are follow-ups."
+          echo "Tray, Alt+Space hotkey, and companyos:// deep links live in apps/desktop/src-tauri."

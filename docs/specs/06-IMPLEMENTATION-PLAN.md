@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–4.4 implemented; Phase 4.5 (this PR) industry packs + client parity.
+Status: **Active** outline. Phase 0–4.5 implemented; Phase 1.11 mobile/desktop shells.
 
 ## Completed
 
@@ -16,6 +16,7 @@ Status: **Active** outline. Phase 0–4.4 implemented; Phase 4.5 (this PR) indus
 | 1.7   | Approval engine (operations / Temporal)                                                                                         |
 | 1.8   | Platform events, notifications, search, analytics, files, outbox relay                                                          |
 | 1.9   | AI Assistant MVP (copilot, proposals, retrieval)                                                                                |
+| 1.11  | Flutter mobile + Tauri desktop shells (high-frequency set; push/biometric fakes in CI)                                          |
 | 2.1   | People / HR v1 (employees, onboarding/offboarding)                                                                              |
 | 2.2   | Attendance & Leave (People / hr-service)                                                                                        |
 | 2.3   | Payroll basics (`companyos-hr`): draft → calculate → approve → paid, journals via Finance HTTP, Temporal `PayrollRun` (ADR 021) |
@@ -31,14 +32,23 @@ Status: **Active** outline. Phase 0–4.4 implemented; Phase 4.5 (this PR) indus
 | 4.2   | Enterprise multi-tenancy: IC + consolidation, hierarchy grants/delegation, CMEK (mock KMS), SCIM (2 mock IdPs), network allowlist/infra tier, SLA, eDiscovery |
 | 4.3   | AI automation and agents: governed policy, receivables chase, kill switch, NL workflow drafts, prompt packs, review pack |
 | 4.4   | Low-code builder: custom entities/fields, views/layouts, formulas, capped script sandbox, packaging + upgrade rehearsal |
-| 4.5   | Industry packs (config + marketplace) + web offline/conflict parity matrix (Flutter/Tauri not shipped) |
+| 4.5   | Industry packs (config + marketplace) + web offline/conflict parity matrix (Flutter/Tauri deferred to 1.11) |
+
+## Phase 1.11 — Mobile and desktop shells (this PR)
+
+- Flutter (`apps/mobile`): auth, org switch, dashboard, approvals, tasks, deal quick-updates, camera-first expense capture, push + biometric **interfaces with fakes**, offline read cache + queued mutations with stable `Idempotency-Key`
+- Bottom tabs: Home · Work · Create · Inbox · More; pull-to-refresh; native-feel tab transitions
+- Tauri (`apps/desktop`): wraps existing web app — system tray, native notifications API, global copilot hotkey Alt+Space, deep links `companyos://record/{id}`, offline shell with last cached dashboard
+- Backend minimum: `POST/GET/DELETE /api/v1/notifications/devices` push token registration (no live FCM/APNs)
+- CI: Flutter analyze + tests (+ optional unsigned Android APK); desktop `shell-core` unit tests. Store-signed iOS/macOS and crash reporting are follow-ups
+- Parity matrix updated in `docs/clients/parity-matrix.md`
 
 ## Phase 4.5 — Industry packs / client parity (this PR)
 
 - Four vertical packs as `companyos.custom.package` + seed + marketplace `industry.*` listings — **no** CRM/finance/HR/inventory forks
 - Install / uninstall via `/api/v1/custom/industry-packs/...` (Member denied; uninstall retains tenant data)
 - Grep lint: business services must not `match industry` / `if pack ==`
-- Client parity matrix in `docs/clients/parity-matrix.md` (web implemented; native shells not-yet)
+- Client parity matrix in `docs/clients/parity-matrix.md` (web implemented; native shells shipped in 1.11)
 - Web offline-first: read cache, mutation queue with `Idempotency-Key`, reconnect replay, user-visible conflict UI (last-write-wins + `If-Match`)
 - Custom record PATCH requires `If-Match` version
 
@@ -113,7 +123,7 @@ only), cross-org publisher review staffing, and marketplace billing.
 | -------------- | ----------------------- |
 | InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
-| Mobile         | Flutter / Tauri (parity matrix in 4.5; shells not shipped) |
+| Client parity  | Broader Flutter feature depth vs Phase 2–4 modules; store signing |
 
 ## Cut order if needed
 

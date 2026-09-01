@@ -1,0 +1,17 @@
+[package]
+name = "companyos-desktop-shell"
+version = "0.1.0"
+description = "Pure desktop shell logic (deep links, offline cache) — Phase 1.11"
+edition = "2021"
+license = "Proprietary"
+
+# Keep out of the monorepo Rust workspace so desktop deps cannot flake core CI.
+[workspace]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"

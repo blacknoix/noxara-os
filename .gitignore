@@ -58,3 +58,26 @@ logs/
 # Test artifacts
 test-results/
 playwright-report/
+
+# Flutter
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/.packages
+apps/mobile/build/
+apps/mobile/.idea/
+apps/mobile/**/local.properties
+apps/mobile/**/Flutter/ephemeral/
+apps/mobile/**/Generated.xcconfig
+apps/mobile/**/flutter_export_environment.sh
+apps/mobile/**/GeneratedPluginRegistrant.java
+apps/mobile/**/GeneratedPluginRegistrant.swift
+apps/mobile/*.iml
+apps/mobile/android/*.iml
+
+# Tauri / desktop shell (isolated Cargo projects)
+apps/desktop/shell-core/target/
+apps/desktop/src-tauri/target/
+apps/desktop/node_modules/
+apps/desktop/src-tauri/gen/
+

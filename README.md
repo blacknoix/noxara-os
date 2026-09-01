@@ -19,7 +19,7 @@ Product name in docs: **CompanyOS**. Crate/npm names may use `companyos-*` / `@c
 - **Phase 1.8** (merged): Platform spine — outbox→NATS relay, notifications, search, analytics, files, workflow catalogue.
 - **Phase 1.9** (this line of work): AI copilot (`companyos-ai`) — chat/ask, retrieval, propose-then-commit writes, insights, gateway proxy.
 
-Not in scope yet: web push, malware scan/PDF render, full TenantDeletion purge, Flutter/Tauri, live payment provider keys.
+Not in scope yet: live web push providers, malware scan/PDF render, full TenantDeletion purge, live payment provider keys, App Store / Play Store submission.
 
 ## Non-negotiable invariants
 
@@ -29,6 +29,8 @@ See [docs/00-INDEX.md](docs/00-INDEX.md).
 
 ```text
 apps/web/                 Next.js App Router (auth pages + shell)
+apps/mobile/              Flutter Phase 1.11 high-frequency shell
+apps/desktop/             Tauri wrapper + shell-core (tray, hotkey, deep links)
 services/gateway/         Axum BFF — JWT authN, tenant headers, coarse authz, domain + platform proxy + SSE
 services/core/            Auth + org/user/audit home + hello slice + dashboard BFF
 services/business/crm-service/  CRM / Sales API (`/api/v1/sales/...`)
