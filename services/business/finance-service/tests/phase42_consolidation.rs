@@ -235,7 +235,8 @@ async fn intercompany_consolidation_eliminates_to_zero() {
         );
     }
 
-    // Entity isolation: grant member access only to A, create member token
+    // Entity isolation: ledger-reader with access only to A must not see B journals.
+    // Do NOT use Finance system role — it has consolidation/entity.manage and bypasses ACL.
     let member_id = new_uuid_v7();
     let member_public = companyos_ids::PublicId::new(companyos_ids::IdKind::User, member_id);
     let (hash, salt) =
@@ -258,16 +259,40 @@ async fn intercompany_consolidation_eliminates_to_zero() {
     .unwrap();
 
     let mem_id = new_uuid_v7();
+    let role_id = new_uuid_v7();
     let mut tx = pool.begin().await.unwrap();
     companyos_tenancy::set_session_org_id(&mut tx, org)
         .await
         .unwrap();
-    let role_id: uuid::Uuid =
-        sqlx::query_scalar("SELECT id FROM org_role WHERE org_id = $1 AND system_key = 'member'")
-            .bind(org.as_uuid())
-            .fetch_one(&mut *tx)
-            .await
-            .unwrap();
+    sqlx::query(
+        r#"
+        INSERT INTO org_role (id, org_id, public_id, name, description, is_system)
+        VALUES ($1,$2,$3,$4,'ledger read only', false)
+        "#,
+    )
+    .bind(role_id)
+    .bind(org.as_uuid())
+    .bind(
+        companyos_ids::PublicId::new(companyos_ids::IdKind::Role, role_id)
+            .as_str()
+            .to_string(),
+    )
+    .bind(format!("ledger-reader-{}", &new_uuid_v7().to_string()[..8]))
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    sqlx::query(
+        r#"
+        INSERT INTO role_permission (id, org_id, role_id, permission_id, effect, scope)
+        VALUES ($1,$2,$3,'finance.ledger.read','allow','organization')
+        "#,
+    )
+    .bind(new_uuid_v7())
+    .bind(org.as_uuid())
+    .bind(role_id)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
     sqlx::query(
         r#"
         INSERT INTO membership (id, org_id, user_id, public_id, role, role_id, status, policy_version)
@@ -282,17 +307,9 @@ async fn intercompany_consolidation_eliminates_to_zero() {
     .execute(&mut *tx)
     .await
     .unwrap();
-    // Grant finance.ledger.read via role is not on Member — use Finance role instead for read
-    sqlx::query("UPDATE membership SET role = 'finance', role_id = (SELECT id FROM org_role WHERE org_id = $1 AND system_key = 'finance') WHERE id = $2")
-        .bind(org.as_uuid())
-        .bind(mem_id)
-        .execute(&mut *tx)
-        .await
-        .unwrap();
     tx.commit().await.unwrap();
 
-    let ent_a_uuid = ent_a.parse::<companyos_ids::PublicId>().unwrap().uuid();
-    let (st, _) = call(
+    let (st, grant) = call(
         &state,
         "POST",
         &format!("/api/v1/finance/entities/{ent_a}/access"),
@@ -300,7 +317,7 @@ async fn intercompany_consolidation_eliminates_to_zero() {
         Some(json!({ "user_id": member_public.to_string() })),
     )
     .await;
-    assert!(st.is_success(), "grant access");
+    assert!(st.is_success(), "grant access: {grant}");
 
     let mut tx = pool.begin().await.unwrap();
     let issued = companyos_core::auth::sessions::create_session_with_tokens(
@@ -310,7 +327,7 @@ async fn intercompany_consolidation_eliminates_to_zero() {
         &member_public.to_string(),
         org,
         mem_id,
-        &["finance".into()],
+        &["member".into()],
         1,
         None,
         None,
@@ -329,13 +346,30 @@ async fn intercompany_consolidation_eliminates_to_zero() {
     )
     .await;
     assert!(st.is_success(), "{list}");
-    // All returned journals should be entity A (or none from B)
-    for item in list["items"].as_array().unwrap_or(&vec![]) {
-        // entity stamp may appear in DTO — if present must be A
-        if let Some(eid) = item.get("entity_id").and_then(|v| v.as_str()) {
-            assert_eq!(eid, ent_a);
-        }
+    let items = list["items"].as_array().unwrap();
+    assert!(
+        !items.is_empty(),
+        "entity A journals should be visible: {list}"
+    );
+    assert_eq!(
+        list["total"].as_i64().unwrap() as usize,
+        items.len(),
+        "{list}"
+    );
+    for item in items {
+        let eid = item["entity_id"]
+            .as_str()
+            .expect("entity_id required on journal DTO for isolation assert");
+        assert_eq!(eid, ent_a, "must not see entity B journals: {item}");
     }
 
-    let _ = (user_public, ent_a_uuid);
+    // Owner (privileged) still sees both entities
+    let (st, all) = call(&state, "GET", "/api/v1/finance/journals", &token, None).await;
+    assert!(st.is_success(), "{all}");
+    assert!(
+        all["total"].as_i64().unwrap() >= 2,
+        "owner should see IC journals for both entities: {all}"
+    );
+
+    let _ = user_public;
 }

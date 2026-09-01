@@ -16419,7 +16419,10 @@
           "envelope"
         ],
         "properties": {
-          "envelope": {}
+          "envelope": {
+            "type": "object",
+            "description": "Full event envelope JSON (same shape as outbox payload)."
+          }
         }
       },
       "ApplySalesEventResponse": {
@@ -16430,12 +16433,6 @@
         "properties": {
           "applied": {
             "type": "boolean"
-          },
-          "project_id": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         }
       },
@@ -18060,6 +18057,13 @@
           "currency": {
             "type": "string"
           },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Finance entity public id (`ent_\u2026`) when the entry is entity-scoped."
+          },
           "entry_date": {
             "type": "string"
           },
@@ -18375,8 +18379,7 @@
               "integer",
               "null"
             ],
-            "format": "int64",
-            "description": "Defaults to the full outstanding balance when omitted."
+            "format": "int64"
           },
           "memo": {
             "type": [

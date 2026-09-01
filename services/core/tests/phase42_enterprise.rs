@@ -395,6 +395,42 @@ async fn scim_two_idps_crud_and_deprovision() {
     )
     .await;
     assert_eq!(st, StatusCode::CREATED, "{u}");
+    let alice_user_id = u["companyos:userId"]
+        .as_str()
+        .expect("companyos:userId")
+        .to_string();
+    let alice_uuid = alice_user_id
+        .parse::<companyos_ids::PublicId>()
+        .unwrap()
+        .uuid();
+
+    // Establish a live session so deprovision can prove session revoke.
+    let mut tx = seed.pool.begin().await.unwrap();
+    set_session_org_id(&mut tx, seed.org).await.unwrap();
+    let alice_mem: (Uuid, i64) = sqlx::query_as(
+        "SELECT id, policy_version FROM membership WHERE org_id = $1 AND user_id = $2",
+    )
+    .bind(seed.org.as_uuid())
+    .bind(alice_uuid)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
+    let _alice_session = companyos_core::auth::sessions::create_session_with_tokens(
+        &mut tx,
+        &seed.state.auth_keys.ring,
+        alice_uuid,
+        &alice_user_id,
+        seed.org,
+        alice_mem.0,
+        &["member".into()],
+        alice_mem.1,
+        None,
+        None,
+        None,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
 
     let (st, g) = scim(
         &seed.state,
@@ -433,8 +469,23 @@ async fn scim_two_idps_crud_and_deprovision() {
     .fetch_one(&mut *tx)
     .await
     .unwrap();
+    let open_sessions: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*) FROM auth_session
+        WHERE org_id = $1 AND user_id = $2 AND revoked_at IS NULL
+        "#,
+    )
+    .bind(seed.org.as_uuid())
+    .bind(alice_uuid)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
     tx.commit().await.unwrap();
     assert_eq!(status, "revoked");
+    assert_eq!(
+        open_sessions, 0,
+        "deprovision must revoke sessions immediately"
+    );
 }
 
 #[tokio::test]

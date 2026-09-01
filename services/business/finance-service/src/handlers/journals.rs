@@ -84,12 +84,14 @@ async fn load_entry_dto(
         String,
         NaiveDate,
         Option<String>,
+        Option<String>,
     )> = sqlx::query_as(
         r#"
         SELECT je.public_id, je.memo, je.source_type, je.source_id, je.currency,
-               je.entry_date, fp.public_id
+               je.entry_date, fp.public_id, fe.public_id
         FROM finance_journal_entry je
         LEFT JOIN finance_fiscal_period fp ON fp.id = je.period_id
+        LEFT JOIN finance_entity fe ON fe.id = je.entity_id
         WHERE je.org_id = $1 AND je.id = $2
         "#,
     )
@@ -98,7 +100,8 @@ async fn load_entry_dto(
     .fetch_optional(&mut **tx)
     .await?;
 
-    let Some((public_id, memo, st, source_id, currency, entry_date, period_id)) = row else {
+    let Some((public_id, memo, st, source_id, currency, entry_date, period_id, entity_id)) = row
+    else {
         return Ok(None);
     };
 
@@ -124,6 +127,7 @@ async fn load_entry_dto(
         currency,
         entry_date: entry_date.to_string(),
         period_id,
+        entity_id,
         lines: lines
             .into_iter()
             .map(
