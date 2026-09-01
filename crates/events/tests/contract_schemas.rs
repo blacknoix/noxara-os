@@ -37,6 +37,8 @@ fn parse_schema_name(stem: &str) -> (Context, &str, &str, u32) {
         "auth" => Context::Auth,
         "workflow" => Context::Workflow,
         "analytics" => Context::Analytics,
+        "custom" => Context::Custom,
+        "ai" => Context::Ai,
         other => panic!("unknown context {other}"),
     };
     (context, parts[1], parts[2], version)
@@ -149,6 +151,13 @@ fn sample_payload(aggregate: &str, event_type: &str) -> Value {
                 "version_id": "wfv_test"
             })
         }
+        ("demo_asset", "created" | "updated" | "deleted") => serde_json::json!({
+            "id": "cusrec_test",
+            "record_id": "cusrec_test",
+            "entity_slug": "demo_asset",
+            "search_text": "name:fixture",
+            "search_doc": { "doc_type": "custom:demo_asset" }
+        }),
         _ => panic!("add sample_payload for {aggregate}.{event_type}"),
     }
 }

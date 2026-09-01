@@ -75,12 +75,11 @@ impl ScriptHost for RecordHost {
 
     fn set_field(&mut self, name: &str, value: Value) -> Result<(), SandboxError> {
         let new_bytes = approx_bytes(&value);
-        let old = self
-            .values
-            .get(name)
-            .map(approx_bytes)
-            .unwrap_or(0);
-        let next = self.bytes_used.saturating_sub(old).saturating_add(new_bytes);
+        let old = self.values.get(name).map(approx_bytes).unwrap_or(0);
+        let next = self
+            .bytes_used
+            .saturating_sub(old)
+            .saturating_add(new_bytes);
         if next > self.max_bytes {
             return Err(SandboxError::MemoryLimit(self.max_bytes));
         }
@@ -109,7 +108,11 @@ pub enum Stmt {
     /// Allocate a string of `size` bytes into `field` (memory-limit tests).
     Alloc { field: String, size: usize },
     /// Call a host function by name (allow-list only).
-    Call { name: String, #[serde(default)] args: Vec<Expr> },
+    Call {
+        name: String,
+        #[serde(default)]
+        args: Vec<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

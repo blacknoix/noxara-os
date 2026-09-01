@@ -2263,6 +2263,7 @@ export type CreateVendorBillRequest = {
 };
 
 export type PayVendorBillRequest = {
+  /** Defaults to the full outstanding balance when omitted. */
   amount_minor?: string;
   memo?: string;
 };

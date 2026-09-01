@@ -112,7 +112,10 @@ pub fn validate_slug(slug: &str) -> Result<(), String> {
         return Err("slug may only contain [a-z0-9_]".into());
     }
     if companyos_authz::CUSTOM_RESERVED_RESOURCES.contains(&slug)
-        || matches!(slug, "entities" | "records" | "packages" | "views" | "layouts" | "scripts")
+        || matches!(
+            slug,
+            "entities" | "records" | "packages" | "views" | "layouts" | "scripts"
+        )
     {
         return Err("slug is reserved".into());
     }

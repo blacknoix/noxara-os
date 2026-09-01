@@ -269,10 +269,9 @@ pub async fn import_package(
         .await
         .map_err(internal(rid))?;
 
-        let (read_id, write_id) =
-            register_entity_permissions(&mut tx, auth.ctx.org_id, &ent.slug)
-                .await
-                .map_err(internal(rid))?;
+        let (read_id, write_id) = register_entity_permissions(&mut tx, auth.ctx.org_id, &ent.slug)
+            .await
+            .map_err(internal(rid))?;
         permissions.push(read_id);
         permissions.push(write_id);
     }

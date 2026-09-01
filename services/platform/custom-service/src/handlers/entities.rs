@@ -14,15 +14,13 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::{
-    conflict, enforce_opt, internal, load_authz_principal, not_found, parse_public_id, require_perm,
-    set_org, validation,
+    conflict, enforce_opt, internal, load_authz_principal, not_found, parse_public_id,
+    require_perm, set_org, validation,
 };
 use crate::auth::AuthCtx;
 use crate::permissions::{register_entity_permissions, validate_slug};
 use crate::state::AppState;
-use crate::types::{
-    CreateEntityRequest, EntityDefinitionDto, FieldDef, UpdateEntityRequest,
-};
+use crate::types::{CreateEntityRequest, EntityDefinitionDto, FieldDef, UpdateEntityRequest};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -32,14 +30,9 @@ pub fn router() -> Router<AppState> {
         )
         .route(
             "/api/v1/custom/entities/{id}",
-            get(get_entity)
-                .patch(update_entity)
-                .delete(delete_entity),
+            get(get_entity).patch(update_entity).delete(delete_entity),
         )
-        .route(
-            "/api/v1/custom/entities/{id}/publish",
-            post(publish_entity),
-        )
+        .route("/api/v1/custom/entities/{id}/publish", post(publish_entity))
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -181,7 +174,10 @@ pub async fn create_entity(
 
     if let Err(e) = res {
         if is_unique(&e) {
-            return Err(conflict(rid, format!("entity slug '{}' already exists", body.slug)));
+            return Err(conflict(
+                rid,
+                format!("entity slug '{}' already exists", body.slug),
+            ));
         }
         return Err(internal(rid)(e));
     }
@@ -299,8 +295,9 @@ pub async fn update_entity(
         .unwrap_or(row.3.as_str());
     let description = body.description.as_deref().unwrap_or(row.4.as_str());
     let fields_json = match &body.fields {
-        Some(f) => serde_json::to_value(f)
-            .map_err(|e| AppError::new(companyos_errors::ErrorCode::Internal, rid, e.to_string()))?,
+        Some(f) => serde_json::to_value(f).map_err(|e| {
+            AppError::new(companyos_errors::ErrorCode::Internal, rid, e.to_string())
+        })?,
         None => row.5.clone(),
     };
 

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "custom.demo_asset.created.v1",
+  "type": "object",
+  "required": [
+    "event_id",
+    "subject",
+    "org_id",
+    "context",
+    "aggregate",
+    "event_type",
+    "version",
+    "occurred_at",
+    "actor",
+    "payload",
+    "idempotency_key"
+  ],
+  "properties": {
+    "context": { "const": "custom" },
+    "aggregate": { "const": "demo_asset" },
+    "event_type": { "const": "created" },
+    "version": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["id", "record_id", "entity_slug"],
+      "properties": {
+        "id": { "type": "string" },
+        "record_id": { "type": "string" },
+        "entity_slug": { "type": "string" },
+        "search_text": { "type": "string" },
+        "search_doc": { "type": "object" }
+      }
+    }
+  }
+}

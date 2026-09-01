@@ -59,13 +59,9 @@ pub fn split_sql(sql: &str) -> Vec<String> {
     stmts
 }
 
-/// Run custom-service schema migrations (`001` then `002`).
-pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+async fn run_migration_files(pool: &sqlx::PgPool, files: &[&str]) -> anyhow::Result<()> {
     companyos_tenancy::with_schema_migration_lock(pool, || async {
-        for file in [
-            include_str!("../migrations/001_custom.sql"),
-            include_str!("../migrations/002_platform_bump.sql"),
-        ] {
+        for file in files {
             for stmt in split_sql(file) {
                 companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
             }
@@ -73,6 +69,16 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
         Ok(())
     })
     .await
+}
+
+/// Base custom-service schema (definitions, records, views, scripts, packages).
+pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+    run_migration_files(pool, &[include_str!("../migrations/001_custom.sql")]).await
+}
+
+/// Additive platform bump used by the Phase 4.4 upgrade rehearsal.
+pub async fn migrate_platform_bump(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+    run_migration_files(pool, &[include_str!("../migrations/002_platform_bump.sql")]).await
 }
 
 /// Build the full custom axum router: `/api/v1/custom/...` + OpenAPI + health.
@@ -107,7 +113,8 @@ mod tests {
 
     #[test]
     fn split_sql_respects_dollar_quotes() {
-        let sql = "CREATE FUNCTION f() RETURNS void AS $$\nBEGIN\nSELECT 1;\nEND;\n$$ LANGUAGE plpgsql;";
+        let sql =
+            "CREATE FUNCTION f() RETURNS void AS $$\nBEGIN\nSELECT 1;\nEND;\n$$ LANGUAGE plpgsql;";
         let stmts = split_sql(sql);
         assert_eq!(stmts.len(), 1);
         assert!(stmts[0].contains("SELECT 1;"));

@@ -64,14 +64,16 @@ pub async fn list_views(
     Ok(Json(ViewListResponse {
         items: rows
             .into_iter()
-            .map(|(id, entity_slug, name, columns, filters, sort)| CustomViewDto {
-                id,
-                entity_slug,
-                name,
-                columns,
-                filters,
-                sort,
-            })
+            .map(
+                |(id, entity_slug, name, columns, filters, sort)| CustomViewDto {
+                    id,
+                    entity_slug,
+                    name,
+                    columns,
+                    filters,
+                    sort,
+                },
+            )
             .collect(),
     }))
 }

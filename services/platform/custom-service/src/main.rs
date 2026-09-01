@@ -4,7 +4,7 @@
 
 use std::net::SocketAddr;
 
-use companyos_custom::{auth, build_router, migrate, state::AppState};
+use companyos_custom::{auth, build_router, migrate, migrate_platform_bump, state::AppState};
 use companyos_telemetry::init_tracing;
 use tracing::info;
 
@@ -21,6 +21,7 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     migrate(&pool).await?;
+    migrate_platform_bump(&pool).await?;
     companyos_outbox::migrate(&pool).await?;
     companyos_outbox::spawn::spawn_embedded_relay_if_configured(pool.clone());
 

@@ -53,6 +53,7 @@ struct GatewayState {
     inventory_url: String,
     workflow_url: String,
     integration_url: String,
+    custom_url: String,
     redis_url: Option<String>,
     client: reqwest::Client,
     keyring: KeyRing,
@@ -104,6 +105,8 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8094".into());
     let integration_url =
         std::env::var("INTEGRATION_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8095".into());
+    let custom_url =
+        std::env::var("CUSTOM_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8096".into());
     let redis_url = std::env::var("REDIS_URL").ok().filter(|s| !s.is_empty());
     let secret = std::env::var("AUTH_JWT_SECRET").unwrap_or_else(|_| "dev-gateway-shared".into());
     let keyring = KeyRing::from_secret(secret);
@@ -126,6 +129,7 @@ async fn main() -> anyhow::Result<()> {
         inventory_url,
         workflow_url,
         integration_url,
+        custom_url,
         redis_url,
         client: reqwest::Client::new(),
         keyring,
@@ -189,6 +193,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/people/{*rest}", any(proxy_people))
         .route("/api/v1/inventory/{*rest}", any(proxy_inventory))
         .route("/api/v1/workflows/{*rest}", any(proxy_workflows))
+        .route("/api/v1/custom", any(proxy_custom))
+        .route("/api/v1/custom/{*rest}", any(proxy_custom))
         // Platform (Phase 1.8) — SSE stream registered before the catch-all.
         .route("/api/v1/notifications/stream", get(notifications_stream))
         .route("/api/v1/notifications/{*rest}", any(proxy_notifications))
@@ -759,6 +765,12 @@ async fn proxy_workflows(State(state): State<GatewayState>, req: Request) -> Res
         "workflow",
     )
     .await
+}
+
+async fn proxy_custom(State(state): State<GatewayState>, req: Request) -> Response {
+    let path = req.uri().path().to_string();
+    let upstream = with_query(&req, &path);
+    proxy_to(&state, req, &upstream, &state.custom_url, true, "custom").await
 }
 
 async fn proxy_notifications(State(state): State<GatewayState>, req: Request) -> Response {

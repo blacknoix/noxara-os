@@ -101,6 +101,10 @@ Restricted fields (compensation, government IDs, bank/tax) are never included in
 
 Stock valuation uses weighted-average cost (ADR 023). Goods receipt posting and asset depreciation post journals through Finance HTTP APIs (`source_type` inventory receipts / depreciation). Schemas: [`schemas/`](./schemas/).
 
+## Custom / low-code (Phase 4.4)
+
+See [`custom.md`](./custom.md). Subject form: `companyos.{org_}.custom.{entity_slug}.{created|updated|deleted}.v1`.
+
 ## Platform consumers (Phase 1.8)
 
 - Outbox → NATS via `companyos-outbox-relay` (`scripts/nats-bootstrap.sh` creates

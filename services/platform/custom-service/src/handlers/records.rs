@@ -32,9 +32,7 @@ pub fn router() -> Router<AppState> {
         )
         .route(
             "/api/v1/custom/records/{slug}/{id}",
-            get(get_record)
-                .patch(update_record)
-                .delete(delete_record),
+            get(get_record).patch(update_record).delete(delete_record),
         )
 }
 
@@ -164,10 +162,7 @@ fn validate_money(v: &Value, name: &str, rid: &str) -> Result<(), AppError> {
             format!("field '{name}' currency must be a 3-letter code"),
         ));
     }
-    if obj
-        .keys()
-        .any(|k| k != "amount_minor" && k != "currency")
-    {
+    if obj.keys().any(|k| k != "amount_minor" && k != "currency") {
         return Err(validation(
             rid,
             format!("field '{name}' money object may only contain amount_minor and currency"),
@@ -372,7 +367,9 @@ pub async fn create_record(
         auth.ctx.actor.clone(),
         serde_json::json!({
             "id": public_id.as_str(),
+            "record_id": public_id.as_str(),
             "entity_slug": slug,
+            "search_text": search_text,
             "search_doc": search_doc,
         }),
     );
@@ -558,7 +555,9 @@ pub async fn update_record(
         auth.ctx.actor.clone(),
         serde_json::json!({
             "id": public_id,
+            "record_id": public_id,
             "entity_slug": slug,
+            "search_text": search_text,
             "search_doc": search_doc,
         }),
     );

@@ -108,6 +108,74 @@ class AgeingBucket(BaseModel):
     amount_minor: int
     label: str
 
+class AgentPolicyDoc(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_types: list[str]
+    allowed_permissions: list[str]
+    allowed_resource_scopes: list[str]
+    allowed_tools: list[str]
+    max_steps: int
+    name: str
+    require_human_above: str
+    spend_budget_tokens: int
+
+class AgentReviewReport(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    by_agent_type: list[AgentTypeStats]
+    error_rate: float
+    failures: int
+    max_error_rate: float
+    period_end: str
+    period_start: str
+    reversals: int
+    total_actions: int
+    within_threshold: bool
+
+class AgentRunOutcome(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    action_ids: list[str]
+    run: AgentRunView
+    tool_trace: list[ToolTraceEntry]
+
+class AgentRunView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_type: str
+    cost_estimate_minor: int
+    error_message: str | None = None
+    finished_at: str | None = None
+    id: str
+    last_actions: str
+    policy_version: int
+    public_id: str
+    started_at: str
+    status: str
+    steps_taken: int
+    temporal_workflow_id: str
+    tokens_used: int
+
+class AgentTypeStats(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_type: str
+    failures: int
+    reversals: int
+    total: int
+
+class AiActionView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_type: str
+    created_at: str
+    error: bool
+    id: str
+    model: str
+    permission: str
+    prompt_template_version: str
+    public_id: str
+    reversed_at: str | None = None
+    reversible: bool
+    run_id: str | None = None
+    status: str
+    tool_name: str
+
 class AiSettings(BaseModel):
     model_config = ConfigDict(extra="allow")
     auto_execute_allow_list: list[str]
@@ -800,6 +868,13 @@ class CreateEmployeeRequest(BaseModel):
     user_id: str | None = None
     work_email: str | None = None
 
+class CreateEntityRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    fields: list[FieldDef] | None = None
+    label: str
+    slug: str
+
 class CreateFinanceEntityRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     code: str
@@ -1216,6 +1291,50 @@ class CreditNoteListResponse(BaseModel):
     items: list[CreditNoteDto]
     total: int
 
+class CustomLayoutDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    entity_slug: str
+    id: str
+    name: str
+    sections: str
+
+class CustomPackage(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    entities: list[PackageEntity]
+    format: str
+    format_version: int
+    layouts: list[PackageLayout] | None = None
+    name: str
+    permissions: list[str] | None = None
+    scripts: list[PackageScript] | None = None
+    version: str
+    views: list[PackageView] | None = None
+
+class CustomRecordDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created_at: str
+    entity_slug: str
+    id: str
+    updated_at: str
+    values: str
+
+class CustomScriptDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    enabled: bool
+    entity_slug: str
+    hook: str
+    id: str
+    source: str
+
+class CustomViewDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    columns: str
+    entity_slug: str
+    filters: str
+    id: str
+    name: str
+    sort: str
+
 class CustomerDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     billing_address: str | None = None
@@ -1345,6 +1464,10 @@ class DelegationDto(BaseModel):
     revoked_at: str | None = None
     starts_at: str
     to_user_id: str
+
+class DeleteEntityRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    confirm_slug: str
 
 class DepartmentListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1514,6 +1637,22 @@ class EntitlementRow(BaseModel):
     role_key: str
     user_id: str
 
+class EntityDefinitionDto(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    created_at: str
+    description: str
+    fields: list[FieldDef]
+    id: str
+    label: str
+    published_version: int
+    slug: str
+    status: str
+    updated_at: str
+
+class EntityListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[EntityDefinitionDto]
+
 class ExpenseDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     amount_minor: int
@@ -1569,6 +1708,19 @@ class FactsResponse(BaseModel):
 class FeedResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[NotificationItemDto]
+
+class FieldDef(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    formula: str | None = None
+    label: str
+    name: str
+    options: str | None = None
+    ref_target: str | None = None
+    required: bool | None = None
+    type: FieldType
+
+class FieldType(BaseModel):
+    model_config = ConfigDict(extra="allow")
 
 class FileMetaResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -1785,6 +1937,16 @@ class ImportConfirmResponse(BaseModel):
     job_id: str
     skipped: int
 
+class ImportPackageRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    package: CustomPackage
+
+class ImportPackageResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    entities_imported: int
+    package_id: str
+    permissions: list[str]
+
 class ImportPreviewRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     csv: str
@@ -1996,6 +2158,7 @@ class IssueInvoiceRequest(BaseModel):
 class JournalEntryDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     currency: str
+    entity_id: str | None = None
     entry_date: str
     id: str
     lines: list[JournalLineInput]
@@ -2022,6 +2185,14 @@ class JournalListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[JournalEntryDto]
     total: int
+
+class KillSwitchView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_type: str
+    engaged: bool
+    engaged_at: str | None = None
+    org_wide: bool
+    reason: str | None = None
 
 class LeadDto(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2380,6 +2551,19 @@ class MyWorkResponse(BaseModel):
     mentions: list[TaskCommentDto]
     total_assigned: int
 
+class NlWorkflowDraft(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    definition: str
+    filtered_actions: list[str]
+    id: str
+    note: str
+    prompt: str
+    status: str
+
+class NlWorkflowRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    prompt: str
+
 class NotificationIntentDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     body_preview: str | None = None
@@ -2501,6 +2685,33 @@ class OrgResponse(BaseModel):
     plan: str
     region: str
     timezone: str
+
+class PackageEntity(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    fields: list[FieldDef]
+    label: str
+    slug: str
+
+class PackageLayout(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    entity_slug: str
+    name: str
+    sections: str
+
+class PackageScript(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    entity_slug: str
+    hook: str
+    source: str
+
+class PackageView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    columns: str
+    entity_slug: str
+    filters: str
+    name: str
+    sort: str
 
 class PasswordResetConfirm(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2664,7 +2875,7 @@ class PolicyDefinition(BaseModel):
 
 class PolicyListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
-    items: list[ApprovalPolicyDto]
+    items: list[PolicyView]
 
 class PolicyMatch(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2682,6 +2893,13 @@ class PolicyStepDef(BaseModel):
     escalate_to_role: str | None = None
     order: int
     sla_seconds: str | None = None
+
+class PolicyView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    id: str
+    policy: AgentPolicyDoc
+    public_id: str
+    version: int
 
 class PostJournalRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2762,6 +2980,25 @@ class ProjectListResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     items: list[ProjectDto]
     total: int
+
+class PromptPackDoc(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    allowed_models: list[str]
+    name: str
+    system_preamble: str
+    temperature: float
+    tool_subset: list[str]
+
+class PromptPackView(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    active: bool
+    allowed_models: list[str]
+    id: str
+    name: str
+    public_id: str
+    system_preamble: str
+    temperature: float
+    tool_subset: list[str]
 
 class ProposalView(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -2965,6 +3202,10 @@ class RecordAttendanceRequest(BaseModel):
     reverses_id: str | None = None
     source: str | None = None
     timezone: str | None = None
+
+class RecordListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[CustomRecordDto]
 
 class RecordPaymentRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3182,6 +3423,10 @@ class RunReportResponse(BaseModel):
     result: QueryResult
     run_id: str
 
+class RunsListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[AgentRunView]
+
 class ScheduleDto(BaseModel):
     model_config = ConfigDict(extra="allow")
     channel: str
@@ -3196,6 +3441,10 @@ class ScheduleDto(BaseModel):
     report_id: str
     timezone: str
     updated_at: str
+
+class ScriptListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[CustomScriptDto]
 
 class SearchHit(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3242,6 +3491,12 @@ class SessionsListResponse(BaseModel):
 class SetCustomerDunningProfileRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     profile_id: str
+
+class SetKillSwitchRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_type: str | None = None
+    engaged: bool
+    reason: str | None = None
 
 class SimulateQueryRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3306,6 +3561,12 @@ class StageSummary(BaseModel):
     open_deal_count: int
     stage_id: str
     stage_name: str
+
+class StartRunRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    agent_type: str
+    scheduled: bool | None = None
+    step_delay_ms: int | None = None
 
 class StartWorkflowRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3747,6 +4008,12 @@ class UpdateEmployeeRequest(BaseModel):
     user_id: str | None = None
     work_email: str | None = None
 
+class UpdateEntityRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    description: str | None = None
+    fields: str | None = None
+    label: str | None = None
+
 class UpdateFinanceEntityRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     code: str | None = None
@@ -3924,6 +4191,15 @@ class UpsertExpensePolicyRequest(BaseModel):
     per_diem_minor: str | None = None
     require_receipt_over_minor: str | None = None
 
+class UpsertLayoutRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    sections: str | None = None
+
+class UpsertRecordRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    values: dict[str, Any]
+
 class UpsertRoleRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     approval_limit_amount_minor: str | None = None
@@ -3931,6 +4207,12 @@ class UpsertRoleRequest(BaseModel):
     description: str | None = None
     name: str
     permissions: list[RolePermissionInput]
+
+class UpsertScriptRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    enabled: bool | None = None
+    hook: str
+    source: str
 
 class UpsertSsoRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3948,6 +4230,13 @@ class UpsertTimeEntryRequest(BaseModel):
     notes: str | None = None
     project_id: str
     task_id: str | None = None
+
+class UpsertViewRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    columns: str | None = None
+    filters: str | None = None
+    name: str
+    sort: str | None = None
 
 class UpsertWidgetRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -3994,6 +4283,10 @@ class VendorBillProxyDto(BaseModel):
 class VerifyEmailRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     token: str
+
+class ViewListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    items: list[CustomViewDto]
 
 class WarehouseDto(BaseModel):
     model_config = ConfigDict(extra="allow")
