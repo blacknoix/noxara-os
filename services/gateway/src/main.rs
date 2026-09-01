@@ -5,9 +5,6 @@
 //! enforces cell residency for data-plane routes, attaches request context
 //! headers, and proxies to core, CRM, Finance, Operations, platform, and AI.
 
-mod api_key_auth;
-mod public_routes;
-
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -23,6 +20,10 @@ use axum::{Json, Router};
 use companyos_auth_token::{decode_jwk_k, verify_access_token, AccessClaims, KeyRing, SigningKey};
 use companyos_authz::{self as authz, perms, Principal, Role};
 use companyos_errors::{AppError, ErrorCode};
+use companyos_gateway::api_key_auth::{
+    apply_deprecation_headers, check_rate_limit, enforce_api_key_route, exchange_api_key,
+    log_api_key_usage, rate_limited_response, ApiKeyAuthContext, ApiKeyRateLimiter, RateLimitInfo,
+};
 use companyos_gateway::network_gate;
 use companyos_gateway::region_gate::{self, CellBinding};
 use companyos_telemetry::init_tracing;
@@ -32,11 +33,6 @@ use tokio::sync::RwLock;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
-
-use api_key_auth::{
-    apply_deprecation_headers, check_rate_limit, enforce_api_key_route, exchange_api_key,
-    log_api_key_usage, rate_limited_response, ApiKeyAuthContext, ApiKeyRateLimiter, RateLimitInfo,
-};
 
 #[derive(Clone)]
 struct GatewayState {

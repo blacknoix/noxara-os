@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use serde::Deserialize;
+use tracing::warn;
 
 use crate::auth::AuthCtx;
 use crate::state::AppState;
@@ -46,11 +47,37 @@ pub async fn freshness(
     .map_err(internal(request_id))?;
     tx.commit().await.map_err(internal(request_id))?;
     let (last_event_at, last_ingest_at, lag_seconds) = row.unwrap_or((None, None, 0));
+    let clickhouse_degraded = probe_clickhouse_degraded(&state).await;
     Ok(Json(FreshnessResponse {
         org_id: query.org_id,
         last_event_at,
         last_ingest_at,
         lag_seconds,
         eventually_consistent: true,
+        backend: "postgres_mirror".into(),
+        clickhouse_degraded,
     }))
+}
+
+/// When CLICKHOUSE_URL is unset, CH is not in the path (not degraded).
+/// When set, a failed probe marks dashboards as serving stale/mirror-only data.
+pub async fn probe_clickhouse_degraded(state: &AppState) -> bool {
+    let Some(url) = &state.clickhouse_url else {
+        return false;
+    };
+    if std::env::var("CLICKHOUSE_FORCE_DOWN").ok().as_deref() == Some("1") {
+        return true;
+    }
+    let probe = format!("{}/ping", url.trim_end_matches('/'));
+    match state.http.get(&probe).send().await {
+        Ok(resp) if resp.status().is_success() => false,
+        Ok(resp) => {
+            warn!(status = %resp.status(), "ClickHouse ping non-success; mirror-only");
+            true
+        }
+        Err(e) => {
+            warn!(error = %e, "ClickHouse unreachable; serving Postgres mirror");
+            true
+        }
+    }
 }

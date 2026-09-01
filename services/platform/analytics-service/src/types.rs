@@ -259,6 +259,16 @@ pub struct FreshnessResponse {
     pub last_ingest_at: Option<DateTime<Utc>>,
     pub lag_seconds: i64,
     pub eventually_consistent: bool,
+    /// Always `postgres_mirror` today — queries never require live ClickHouse.
+    #[serde(default = "default_analytics_backend")]
+    pub backend: String,
+    /// True when `CLICKHOUSE_URL` is set but a health probe failed.
+    #[serde(default)]
+    pub clickhouse_degraded: bool,
+}
+
+fn default_analytics_backend() -> String {
+    "postgres_mirror".into()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

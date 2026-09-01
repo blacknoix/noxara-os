@@ -5,8 +5,9 @@ use axum::Json;
 use companyos_authz::perms;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_ids::PublicId;
-use companyos_tenancy::OrgId;
+use companyos_tenancy::{set_session_org_id, OrgId};
 use serde::Deserialize;
+use tracing::warn;
 
 use crate::auth::AuthCtx;
 use crate::mapping::permission_for_doc_type;
@@ -92,7 +93,7 @@ pub async fn query(
     };
 
     let q = params.q.unwrap_or_default().to_ascii_lowercase();
-    let candidates = fetch_candidates(&state, org_id, &q).await?;
+    let (candidates, degraded) = fetch_candidates(&state, org_id, &q).await?;
 
     let mut hits = Vec::new();
     for doc in candidates {
@@ -111,54 +112,87 @@ pub async fn query(
         });
     }
 
-    Ok(Json(QueryResponse { hits }))
+    Ok(Json(QueryResponse {
+        hits,
+        degraded,
+        banner: if degraded {
+            Some("search_opensearch_fallback".into())
+        } else {
+            None
+        },
+    }))
 }
 
 async fn fetch_candidates(
     state: &AppState,
     org_id: OrgId,
     q: &str,
-) -> Result<Vec<SearchDoc>, AppError> {
+) -> Result<(Vec<SearchDoc>, bool), AppError> {
     if let Some(base) = &state.opensearch_url {
-        let url = format!("{}/companyos/_search", base.trim_end_matches('/'));
-        let query_str = if q.is_empty() {
-            "*".to_string()
-        } else {
-            q.to_string()
-        };
-        let body = serde_json::json!({
-            "query": {
-                "bool": {
-                    "must": [{ "query_string": { "query": query_str } }],
-                    "filter": [{ "term": { "org_id": org_id.as_uuid().to_string() } }]
-                }
-            },
-            "size": 50
-        });
-        let resp = state
-            .http
-            .post(&url)
-            .json(&body)
-            .send()
-            .await
-            .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, "search", e.to_string()))?;
-        let v: serde_json::Value = resp
-            .json()
-            .await
-            .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
-        let mut out = Vec::new();
-        if let Some(hits) = v.pointer("/hits/hits").and_then(|h| h.as_array()) {
-            for h in hits {
-                if let Some(src) = h.get("_source") {
-                    if let Ok(doc) = serde_json::from_value::<SearchDoc>(src.clone()) {
-                        out.push(doc);
-                    }
+        match fetch_opensearch(state, base, org_id, q).await {
+            Ok(docs) => return Ok((docs, false)),
+            Err(e) => {
+                warn!(error = %e, "OpenSearch query failed; falling back to Postgres mirror");
+                let docs = fetch_postgres_mirror(state, org_id, q).await?;
+                return Ok((docs, true));
+            }
+        }
+    }
+
+    // OPENSEARCH_URL unset — memory list (dev) plus Postgres mirror if populated.
+    let mut docs = fetch_memory(state, org_id, q)?;
+    if docs.is_empty() {
+        docs = fetch_postgres_mirror(state, org_id, q).await?;
+    }
+    Ok((docs, false))
+}
+
+async fn fetch_opensearch(
+    state: &AppState,
+    base: &str,
+    org_id: OrgId,
+    q: &str,
+) -> Result<Vec<SearchDoc>, String> {
+    let url = format!("{}/companyos/_search", base.trim_end_matches('/'));
+    let query_str = if q.is_empty() {
+        "*".to_string()
+    } else {
+        q.to_string()
+    };
+    let body = serde_json::json!({
+        "query": {
+            "bool": {
+                "must": [{ "query_string": { "query": query_str } }],
+                "filter": [{ "term": { "org_id": org_id.as_uuid().to_string() } }]
+            }
+        },
+        "size": 50
+    });
+    let resp = state
+        .http
+        .post(&url)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("opensearch status {}", resp.status()));
+    }
+    let v: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    let mut out = Vec::new();
+    if let Some(hits) = v.pointer("/hits/hits").and_then(|h| h.as_array()) {
+        for h in hits {
+            if let Some(src) = h.get("_source") {
+                if let Ok(doc) = serde_json::from_value::<SearchDoc>(src.clone()) {
+                    out.push(doc);
                 }
             }
         }
-        return Ok(out);
     }
+    Ok(out)
+}
 
+fn fetch_memory(state: &AppState, org_id: OrgId, q: &str) -> Result<Vec<SearchDoc>, AppError> {
     let map = state
         .memory
         .lock()
@@ -176,4 +210,52 @@ async fn fetch_candidates(
         }
     }
     Ok(out)
+}
+
+async fn fetch_postgres_mirror(
+    state: &AppState,
+    org_id: OrgId,
+    q: &str,
+) -> Result<Vec<SearchDoc>, AppError> {
+    let mut tx = state
+        .pool
+        .begin()
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    set_session_org_id(&mut tx, org_id)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    let rows: Vec<(uuid::Uuid, String, String, String, String, Option<String>)> = sqlx::query_as(
+        r#"
+        SELECT org_id, doc_id, doc_type, title, body, href
+        FROM search_doc_mirror
+        WHERE org_id = $1
+          AND (
+            $2 = ''
+            OR lower(title) LIKE '%' || $2 || '%'
+            OR lower(body) LIKE '%' || $2 || '%'
+          )
+        ORDER BY updated_at DESC
+        LIMIT 50
+        "#,
+    )
+    .bind(org_id.as_uuid())
+    .bind(q)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    Ok(rows
+        .into_iter()
+        .map(|(org_id, doc_id, doc_type, title, body, href)| SearchDoc {
+            org_id,
+            doc_id,
+            doc_type,
+            title,
+            body,
+            href,
+        })
+        .collect())
 }

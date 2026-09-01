@@ -1,6 +1,6 @@
 # 06-IMPLEMENTATION-PLAN
 
-Status: **Active** outline. Phase 0–4.5 implemented; Phase 1.11 mobile/desktop shells.
+Status: **Active** outline. Phase 0–4.5 + 1.11 implemented; ops gates (restore drill, runbooks, game days, SOC 2 pack) in progress.
 
 ## Completed
 
@@ -121,6 +121,7 @@ only), cross-org publisher review staffing, and marketplace billing.
 
 | Phase          | Notes                   |
 | -------------- | ----------------------- |
+| Ops gates      | Restore drill, alert↔runbook CI, game days, load harness, SOC 2 readiness pack (this slice) |
 | InvoiceDunning | Temporal activity wiring (catalogue configurable in 3.5) |
 | PDF / email    | Nice-to-have            |
 | Client parity  | Broader Flutter feature depth vs Phase 2–4 modules; store signing |

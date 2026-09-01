@@ -242,7 +242,24 @@ fn estimate_cost_minor(model: &str, input: u32, output: u32) -> i64 {
     (cost * 100.0).round() as i64
 }
 
+/// Game-day / ops: force provider failures without a live API key.
+pub struct DownProvider;
+
+#[async_trait]
+impl LlmProvider for DownProvider {
+    async fn complete(&self, _req: CompletionRequest) -> Result<CompletionResult, String> {
+        Err("AI provider forced down (AI_PROVIDER_FORCE_DOWN=1)".into())
+    }
+
+    async fn stream_tokens(&self, _req: CompletionRequest) -> Result<Vec<String>, String> {
+        Err("AI provider forced down (AI_PROVIDER_FORCE_DOWN=1)".into())
+    }
+}
+
 pub fn build_provider() -> Arc<dyn LlmProvider> {
+    if std::env::var("AI_PROVIDER_FORCE_DOWN").ok().as_deref() == Some("1") {
+        return Arc::new(DownProvider);
+    }
     let api_key = std::env::var("AI_API_KEY").unwrap_or_default();
     if api_key.is_empty() {
         Arc::new(MockProvider)

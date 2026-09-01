@@ -138,11 +138,14 @@ async fn process_chat(
         citations: citations.clone(),
     };
 
-    let completion = state
-        .provider
-        .complete(completion_req)
-        .await
-        .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, &request_id, e))?;
+    let completion = state.provider.complete(completion_req).await.map_err(|e| {
+        // Provider down → copilot disabled (fail closed); rest of app continues.
+        AppError::new(
+            ErrorCode::FeatureDisabled,
+            &request_id,
+            format!("copilot disabled (provider unavailable): {e}"),
+        )
+    })?;
 
     let mut tool_trace = Vec::new();
     let mut proposals = Vec::new();

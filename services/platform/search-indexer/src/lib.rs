@@ -33,6 +33,9 @@ pub async fn migrate(pool: &sqlx::PgPool) -> anyhow::Result<()> {
         for stmt in split_sql(include_str!("../migrations/001_search.sql")) {
             companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
         }
+        for stmt in split_sql(include_str!("../migrations/002_search_doc_mirror.sql")) {
+            companyos_tenancy::execute_migration_stmt(pool, &stmt).await?;
+        }
         Ok(())
     })
     .await

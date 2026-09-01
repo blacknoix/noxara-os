@@ -1,0 +1,92 @@
+# CompanyOS alert catalogue (TRD 8.5 + product ops alerts)
+# CI: scripts/ops/check-alert-runbooks.sh fails if any alert lacks a runbook path.
+# Alert IDs are stable; runbook paths are repo-relative.
+
+version: 1
+alerts:
+  # --- TRD 8.5 platform alerts ---
+  - id: outbox_lag
+    description: Unpublished outbox_event rows exceed OUTBOX_LAG_ALERT_THRESHOLD
+    signal: OUTBOX_LAG_ALERT log line / relay /metrics lag
+    runbook: docs/runbooks/outbox-lag.md
+
+  - id: dlq_depth
+    description: outbox_dlq unreplayed rows grow beyond threshold
+    signal: SELECT COUNT(*) FROM outbox_dlq WHERE replayed_at IS NULL
+    runbook: docs/runbooks/dlq-depth.md
+
+  - id: nats_down
+    description: NATS JetStream unreachable from outbox relay
+    signal: relay publish errors / nats connection refused
+    runbook: docs/runbooks/nats-down.md
+
+  - id: replication_event_lag
+    description: Analytics/search/notification consumers behind event stream
+    signal: analytics freshness lag_seconds / search reindex backlog
+    runbook: docs/runbooks/replication-event-lag.md
+
+  - id: slo_burn
+    description: Error-budget / latency budget burn rate elevated
+    signal: gateway 5xx rate or p95 budget breach (staging monitors)
+    runbook: docs/runbooks/slo-burn.md
+
+  - id: ai_spend_anomaly
+    description: Org AI token/cost burn exceeds policy or sudden spike
+    signal: ai usage ledger / monthly budget hard-stop
+    runbook: docs/runbooks/ai-spend-anomaly.md
+
+  # --- Product / security ops alerts ---
+  - id: auth_key_rotation
+    description: JWKS signing key rotation required or in progress
+    signal: scheduled rotation / suspected key exposure
+    runbook: docs/runbooks/auth-key-rotation.md
+
+  - id: secret_rotation
+    description: Application or CMEK/test secret rotation
+    signal: scheduled secret hygiene / CMEK rotate
+    runbook: docs/runbooks/secret-rotation.md
+
+  - id: mass_session_revocation
+    description: Org-wide or user session revocation event
+    signal: admin revoke-all / password reset family revoke
+    runbook: docs/runbooks/mass-session-revocation.md
+
+  - id: locked_out_owner
+    description: Last Owner lockout / MFA break-glass
+    signal: support ticket / lockout counters
+    runbook: docs/runbooks/locked-out-owner-recovery.md
+
+  - id: failed_payment
+    description: Payment recorded but invoice/journal mismatch
+    signal: finance reconciliation mismatch
+    runbook: docs/runbooks/failed-payment-reconciliation.md
+
+  - id: stuck_invoice
+    description: Invoice lifecycle stuck (draft/issued unpaid abnormally)
+    signal: aging report / dunning workflow stall
+    runbook: docs/runbooks/stuck-invoice.md
+
+  - id: payroll_close_reconciliation
+    description: Payroll run close vs journal debit=credit mismatch
+    signal: payroll paid without balanced journal / close checklist fail
+    runbook: docs/runbooks/payroll-close-reconciliation.md
+
+  - id: backup_restore_drill
+    description: Scheduled backup restore drill (counts as a backup)
+    signal: CI ops-restore-drill / quarterly ops calendar
+    runbook: docs/runbooks/backup-restore-drill.md
+
+  - id: regional_failover
+    description: Cell / region failover drill or live cutover
+    signal: control-plane failover-drill / residency alert
+    runbook: docs/runbooks/regional-failover.md
+
+  - id: agent_kill_switch
+    description: AI agent kill switch engaged
+    signal: /api/v1/ai/agents/kill-switch
+    runbook: docs/runbooks/agent-kill-switch.md
+
+  - id: provider_outage
+    description: External payment provider outage
+    signal: webhook failures / provider status
+    runbook: docs/runbooks/provider-outage.md

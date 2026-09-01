@@ -5,6 +5,7 @@ use axum::Json;
 use companyos_errors::{AppError, ErrorCode};
 use companyos_events::EventEnvelope;
 use companyos_ids::new_uuid_v7;
+use tracing::warn;
 
 use crate::mapping::{doc_type_from_aggregate, doc_type_from_custom_aggregate};
 use crate::state::{AppState, SearchDoc};
@@ -68,6 +69,9 @@ pub async fn ingest(
         href,
     };
 
+    // Always mirror to Postgres for OpenSearch-down fallback (game day / TRD 8.2).
+    upsert_mirror(&state, &doc).await?;
+
     if let Some(base) = &state.opensearch_url {
         let url = format!(
             "{}/companyos/_doc/{}-{}",
@@ -75,15 +79,16 @@ pub async fn ingest(
             envelope.org_id.as_uuid(),
             doc_id
         );
-        state
-            .http
-            .put(&url)
-            .json(&doc)
-            .send()
-            .await
-            .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, "search", e.to_string()))?
-            .error_for_status()
-            .map_err(|e| AppError::new(ErrorCode::ServiceUnavailable, "search", e.to_string()))?;
+        match state.http.put(&url).json(&doc).send().await {
+            Ok(resp) => {
+                if let Err(e) = resp.error_for_status() {
+                    warn!(error = %e, "OpenSearch ingest failed; Postgres mirror retained");
+                }
+            }
+            Err(e) => {
+                warn!(error = %e, "OpenSearch unreachable on ingest; Postgres mirror retained");
+            }
+        }
     } else {
         let mut map = state
             .memory
@@ -93,4 +98,41 @@ pub async fn ingest(
     }
 
     Ok(Json(IngestResponse { upserted: true }))
+}
+
+async fn upsert_mirror(state: &AppState, doc: &SearchDoc) -> Result<(), AppError> {
+    let mut tx = state
+        .pool
+        .begin()
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    sqlx::query("SELECT set_config('app.search_ingest', '1', true)")
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    sqlx::query(
+        r#"
+        INSERT INTO search_doc_mirror (org_id, doc_id, doc_type, title, body, href, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, now())
+        ON CONFLICT (org_id, doc_id) DO UPDATE SET
+            doc_type = EXCLUDED.doc_type,
+            title = EXCLUDED.title,
+            body = EXCLUDED.body,
+            href = EXCLUDED.href,
+            updated_at = now()
+        "#,
+    )
+    .bind(doc.org_id)
+    .bind(&doc.doc_id)
+    .bind(&doc.doc_type)
+    .bind(&doc.title)
+    .bind(&doc.body)
+    .bind(&doc.href)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::new(ErrorCode::Internal, "search", e.to_string()))?;
+    Ok(())
 }
