@@ -2,6 +2,17 @@
 -- Extends finance_entity (3.5); same-currency eliminations first.
 -- No DROP POLICY under FORCE RLS.
 
+-- Allow intercompany journal postings (extends 005 allowlist; do not restore
+-- a broad unique on (org, source_type, source_id) — payroll unique stays payroll-only).
+ALTER TABLE finance_journal_entry DROP CONSTRAINT IF EXISTS finance_journal_entry_source_type_check;
+ALTER TABLE finance_journal_entry ADD CONSTRAINT finance_journal_entry_source_type_check
+    CHECK (source_type IN (
+        'invoice_issue', 'payment', 'credit_note', 'expense', 'manual', 'payroll',
+        'inventory_receipt', 'inventory_cogs', 'inventory_depreciation',
+        'vendor_bill', 'vendor_payment',
+        'intercompany'
+    ));
+
 -- Intercompany due-to / due-from clearing accounts (seeded lazily by handlers).
 -- Codes reserved: 1500 IC Receivable, 2500 IC Payable, 4900 IC Revenue, 5900 IC Expense.
 
