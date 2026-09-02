@@ -79,20 +79,11 @@ pub async fn migrate_isolation_schema(pool: &PgPool) -> anyhow::Result<()> {
         sqlx::query(stmt).execute(pool).await?;
     }
 
-    let outbox_sql = include_str!("../../outbox/migrations/001_outbox_event.sql");
-    for stmt in outbox_sql.split(';') {
-        let stmt = stmt.trim();
-        if stmt.is_empty() {
-            continue;
-        }
-        if stmt
-            .lines()
-            .all(|l| l.trim().is_empty() || l.trim_start().starts_with("--"))
-        {
-            continue;
-        }
-        sqlx::query(stmt).execute(pool).await?;
-    }
+    // Use outbox migrate (idempotent; ignores duplicate_object) — do not re-exec
+    // 001 SQL with DROP POLICY (races parallel tests under FORCE RLS).
+    companyos_outbox::migrate(pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("outbox migrate: {e}"))?;
 
     Ok(())
 }
