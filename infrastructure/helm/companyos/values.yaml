@@ -1,0 +1,265 @@
+# Default values — overridden by values-staging.yaml for the staging cell.
+
+nameOverride: companyos
+fullnameOverride: companyos
+
+cell:
+  id: us-primary
+  region: us
+
+image:
+  registry: "" # e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com/companyos-staging
+  tag: latest
+  pullPolicy: IfNotPresent
+
+namespace: companyos
+
+# Shared env (non-secret). Secrets via existingSecret / external secrets later.
+config:
+  publicAppUrl: https://staging.example.invalid
+  publicApiUrl: https://api.staging.example.invalid
+  companyosLocalAuth: "0"
+  authCookieSecure: "1"
+  # AI uses mock when AI_API_KEY unset — do not inject a live key in staging defaults.
+  hibpEnabled: "0"
+
+database:
+  host: ""
+  port: "5432"
+  name: companyos
+  # Secret keys expected in existingSecret: DATABASE_URL
+  existingSecret: companyos-staging-secrets
+  sslMode: require
+
+redis:
+  # Managed ElastiCache — not the in-cluster chart.
+  enabled: false
+  urlSecretKey: REDIS_URL
+
+objectStorage:
+  # S3 (MinIO substitute)
+  bucket: ""
+  region: us-east-1
+  # IRSA on file-service SA
+  fileServiceRoleArn: ""
+
+ingress:
+  enabled: true
+  className: alb
+  host: staging.example.invalid
+  apiHost: api.staging.example.invalid
+
+# Self-hosted deps that compose runs (no clean AWS managed equivalent, or cost/complexity).
+deps:
+  nats:
+    enabled: true
+    image: nats:2.10-alpine
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  temporal:
+    enabled: true
+    image: temporalio/auto-setup:1.25.2
+    # Uses same RDS with database `temporal` (create via bootstrap SQL).
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  opensearch:
+    enabled: true
+    image: opensearchproject/opensearch:2.18.0
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+  clickhouse:
+    enabled: true
+    image: clickhouse/clickhouse-server:24.12
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+
+services:
+  gateway:
+    enabled: true
+    image: gateway
+    replicas: 2
+    port: 8080
+    resources:
+      requests: { cpu: 100m, memory: 128Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  core:
+    enabled: true
+    image: core
+    replicas: 2
+    port: 8081
+    bindEnv: CORE_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  crm:
+    enabled: true
+    image: crm
+    replicas: 1
+    port: 8082
+    bindEnv: CRM_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  finance:
+    enabled: true
+    image: finance
+    replicas: 1
+    port: 8083
+    bindEnv: FINANCE_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  project:
+    enabled: true
+    image: project
+    replicas: 1
+    port: 8084
+    bindEnv: PROJECT_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  project-worker:
+    enabled: true
+    image: project-worker
+    replicas: 1
+    port: null
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  hr:
+    enabled: true
+    image: hr
+    replicas: 1
+    port: 8088
+    bindEnv: HR_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  inventory:
+    enabled: true
+    image: inventory
+    replicas: 1
+    port: 8093
+    bindEnv: INVENTORY_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  notification:
+    enabled: true
+    image: notification
+    replicas: 1
+    port: 8085
+    bindEnv: NOTIFICATION_BIND
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+  search:
+    enabled: true
+    image: search
+    replicas: 1
+    port: 8086
+    bindEnv: SEARCH_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  analytics:
+    enabled: true
+    image: analytics
+    replicas: 1
+    port: 8087
+    bindEnv: ANALYTICS_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  file:
+    enabled: true
+    image: file
+    replicas: 1
+    port: 8089
+    bindEnv: FILE_BIND
+    serviceAccount: file-service
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+  outbox-relay:
+    enabled: true
+    image: outbox-relay
+    replicas: 1
+    port: null
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+  workflow-host:
+    enabled: true
+    image: workflow-host
+    replicas: 1
+    port: 8091
+    bindEnv: WORKFLOW_HOST_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  workflow:
+    enabled: true
+    image: workflow
+    replicas: 1
+    port: 8094
+    bindEnv: WORKFLOW_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  ai:
+    enabled: true
+    image: ai
+    replicas: 1
+    port: 8092
+    bindEnv: AI_BIND
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  integration:
+    enabled: true
+    image: integration
+    replicas: 1
+    port: 8095
+    bindEnv: INTEGRATION_BIND
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+  custom:
+    enabled: true
+    image: custom
+    replicas: 1
+    port: 8096
+    bindEnv: CUSTOM_BIND
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+  web:
+    enabled: true
+    image: web
+    replicas: 2
+    port: 3000
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }

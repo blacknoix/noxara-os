@@ -1,8 +1,13 @@
 # CompanyOS infrastructure
 
-Phase 0 provides:
+| Path | Purpose |
+|------|---------|
+| `docker/docker-compose.yml` | Local deps (Postgres, Redis, NATS, Temporal, MinIO; optional OpenSearch/ClickHouse via profile `full`) |
+| `docker/Dockerfile.rust` / `Dockerfile.web` | Container images for staging (not used by `dev-up`) |
+| `terraform/` | Cloud resources for the **staging** cell (`us-east-1` / `us-primary`) |
+| `helm/companyos/` | Kubernetes workloads + self-hosted deps for that cell |
+| `sql/bootstrap-app-role.sql` | Post-RDS app role (`companyos` NOSUPERUSER NOBYPASSRLS) |
 
-- `docker/docker-compose.yml` — local dependencies (Postgres, Redis, NATS JetStream, Temporal, MinIO; optional OpenSearch/ClickHouse via profile `full`)
-- `terraform/` — skeletons only; **no live apply** in Phase 0
+**Do not apply Terraform from CI.** Plan / validate / scan only — see [`docs/ops/staging.md`](../docs/ops/staging.md) and `make staging-plan`.
 
-See `scripts/dev-up` and `docs/runbooks/local-dev.md`.
+Local bootstrap remains `scripts/dev-up` + Compose.

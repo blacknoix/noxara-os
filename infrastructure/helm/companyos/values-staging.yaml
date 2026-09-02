@@ -1,0 +1,94 @@
+# Staging cell values — us-east-1 / us-primary
+# Fill image.registry, database.host, objectStorage.* from `terraform output`
+# after a real plan/apply (this PR does not apply).
+
+cell:
+  id: us-primary
+  region: us
+
+image:
+  # Example: 123456789012.dkr.ecr.us-east-1.amazonaws.com/companyos-staging
+  registry: ""
+  tag: staging
+  pullPolicy: IfNotPresent
+
+config:
+  publicAppUrl: https://staging.example.invalid
+  publicApiUrl: https://api.staging.example.invalid
+  companyosLocalAuth: "0"
+  authCookieSecure: "1"
+  hibpEnabled: "0"
+
+database:
+  host: "" # terraform output rds_endpoint
+  port: "5432"
+  name: companyos
+  existingSecret: companyos-staging-secrets
+  sslMode: require
+
+redis:
+  enabled: false
+  urlSecretKey: REDIS_URL
+
+objectStorage:
+  bucket: "" # terraform output files_bucket_id
+  region: us-east-1
+  fileServiceRoleArn: "" # terraform output file_service_role_arn
+
+ingress:
+  enabled: true
+  className: alb
+  host: staging.example.invalid
+  apiHost: api.staging.example.invalid
+
+# Compose profile `full` deps — self-hosted on EKS for staging (documented substitutions).
+deps:
+  nats:
+    enabled: true
+  temporal:
+    enabled: true
+  opensearch:
+    enabled: true
+  clickhouse:
+    enabled: true
+
+# Reduced replica counts vs a future prod values file; topology identical.
+services:
+  gateway:
+    replicas: 2
+  core:
+    replicas: 2
+  web:
+    replicas: 2
+  crm:
+    replicas: 1
+  finance:
+    replicas: 1
+  project:
+    replicas: 1
+  project-worker:
+    replicas: 1
+  hr:
+    replicas: 1
+  inventory:
+    replicas: 1
+  notification:
+    replicas: 1
+  search:
+    replicas: 1
+  analytics:
+    replicas: 1
+  file:
+    replicas: 1
+  outbox-relay:
+    replicas: 1
+  workflow-host:
+    replicas: 1
+  workflow:
+    replicas: 1
+  ai:
+    replicas: 1
+  integration:
+    replicas: 1
+  custom:
+    replicas: 1

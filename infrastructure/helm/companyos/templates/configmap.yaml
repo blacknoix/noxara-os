@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: companyos-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "companyos.labels" . | nindent 4 }}
+data:
+  COMPANYOS_CELL_ID: {{ .Values.cell.id | quote }}
+  COMPANYOS_CELL_REGION: {{ .Values.cell.region | quote }}
+  PUBLIC_APP_URL: {{ .Values.config.publicAppUrl | quote }}
+  PUBLIC_API_URL: {{ .Values.config.publicApiUrl | quote }}
+  COMPANYOS_LOCAL_AUTH: {{ .Values.config.companyosLocalAuth | quote }}
+  AUTH_COOKIE_SECURE: {{ .Values.config.authCookieSecure | quote }}
+  HIBP_ENABLED: {{ .Values.config.hibpEnabled | quote }}
+  NATS_URL: "nats://nats.{{ .Values.namespace }}.svc.cluster.local:4222"
+  TEMPORAL_ADDRESS: "temporal.{{ .Values.namespace }}.svc.cluster.local:7233"
+  OPENSEARCH_URL: "http://opensearch.{{ .Values.namespace }}.svc.cluster.local:9200"
+  CLICKHOUSE_URL: "http://clickhouse.{{ .Values.namespace }}.svc.cluster.local:8123"
+  AWS_REGION: {{ .Values.objectStorage.region | quote }}
+  S3_BUCKET: {{ .Values.objectStorage.bucket | quote }}
+  CORE_SERVICE_URL: "http://core.{{ .Values.namespace }}.svc.cluster.local:8081"
+  CRM_SERVICE_URL: "http://crm.{{ .Values.namespace }}.svc.cluster.local:8082"
+  FINANCE_SERVICE_URL: "http://finance.{{ .Values.namespace }}.svc.cluster.local:8083"
+  PROJECT_SERVICE_URL: "http://project.{{ .Values.namespace }}.svc.cluster.local:8084"
+  HR_SERVICE_URL: "http://hr.{{ .Values.namespace }}.svc.cluster.local:8088"
+  INVENTORY_SERVICE_URL: "http://inventory.{{ .Values.namespace }}.svc.cluster.local:8093"
+  NOTIFICATION_SERVICE_URL: "http://notification.{{ .Values.namespace }}.svc.cluster.local:8085"
+  SEARCH_SERVICE_URL: "http://search.{{ .Values.namespace }}.svc.cluster.local:8086"
+  ANALYTICS_SERVICE_URL: "http://analytics.{{ .Values.namespace }}.svc.cluster.local:8087"
+  FILE_SERVICE_URL: "http://file.{{ .Values.namespace }}.svc.cluster.local:8089"
+  AI_SERVICE_URL: "http://ai.{{ .Values.namespace }}.svc.cluster.local:8092"
+  WORKFLOW_SERVICE_URL: "http://workflow.{{ .Values.namespace }}.svc.cluster.local:8094"
+  INTEGRATION_SERVICE_URL: "http://integration.{{ .Values.namespace }}.svc.cluster.local:8095"
+  CUSTOM_SERVICE_URL: "http://custom.{{ .Values.namespace }}.svc.cluster.local:8096"
+  GATEWAY_URL: "http://gateway.{{ .Values.namespace }}.svc.cluster.local:8080"

@@ -1,0 +1,27 @@
+# Multi-stage build for CompanyOS Rust workspace binaries.
+# Usage:
+#   docker build -f infrastructure/docker/Dockerfile.rust \
+#     --build-arg PACKAGE=companyos-gateway \
+#     --build-arg BIN=companyos-gateway \
+#     -t companyos/gateway:local .
+ARG RUST_VERSION=1.85
+
+FROM rust:${RUST_VERSION}-bookworm AS builder
+ARG PACKAGE
+ARG BIN
+WORKDIR /src
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY crates ./crates
+COPY services ./services
+RUN cargo build --release -p "${PACKAGE}" \
+  && cp "target/release/${BIN}" /out
+
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates libssl3 \
+  && rm -rf /var/lib/apt/lists/* \
+  && useradd --system --uid 10001 --create-home companyos
+WORKDIR /app
+COPY --from=builder /out /app/service
+USER companyos
+ENTRYPOINT ["/app/service"]
