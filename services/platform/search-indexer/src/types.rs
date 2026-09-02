@@ -15,6 +15,12 @@ pub struct SearchHit {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct QueryResponse {
     pub hits: Vec<SearchHit>,
+    /// True when OpenSearch was unavailable and Postgres list fallback served results.
+    #[serde(default)]
+    pub degraded: bool,
+    /// Operator/UI banner key when degraded (e.g. `search_opensearch_fallback`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub banner: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

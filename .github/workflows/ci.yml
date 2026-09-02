@@ -139,3 +139,100 @@ jobs:
           echo "Full Tauri GUI build needs Linux WebKitGTK (dev) or Xcode (macOS)."
           echo "Store-signed macOS/Windows and live crash reporting are follow-ups."
           echo "Tray, Alt+Space hotkey, and companyos:// deep links live in apps/desktop/src-tauri."
+
+  # Ops gates — required: every alert has a runbook (TRD 8.5).
+  ops-alert-runbooks:
+    name: Ops (alert ↔ runbook link check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check alert catalogue runbooks
+        run: bash scripts/ops/check-alert-runbooks.sh
+
+  # Ops gates — required: Postgres dump/restore + RLS + journal balance.
+  ops-restore-drill:
+    name: Ops (Postgres restore drill)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql-client
+      - name: Restore drill (dump → isolated DB → RLS + journal)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bash scripts/ops/restore-drill.sh
+
+  # Ops gates — required: rotate *test* secret only (MockKms).
+  ops-secret-rotation:
+    name: Ops (test secret rotation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Rotate MockKms test secret
+        run: bash scripts/ops/rotate-test-secret.sh
+
+  # Ops gates — informational load harness (budgets, not production SLOs).
+  # continue-on-error: do not flake the required gates / main Rust job.
+  ops-load-harness:
+    name: Ops (load harness — informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://companyos:companyos@127.0.0.1:5432/companyos_test
+      TEST_DATABASE_URL: postgres://companyos:companyos@127.0.0.1:5432/companyos_test
+      OPS_LOAD_HARNESS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Create non-superuser role for RLS
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql-client
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "CREATE ROLE companyos LOGIN PASSWORD 'companyos' NOSUPERUSER NOBYPASSRLS CREATEDB;" \
+            -c "CREATE DATABASE companyos_test OWNER companyos;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d companyos_test -v ON_ERROR_STOP=1 \
+            -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+      - name: Load harness (read p95 ≤200ms / write p95 ≤400ms budgets)
+        env:
+          AUTH_JWT_SECRET: ci-test-auth-secret
+          AUTH_COOKIE_SECURE: "0"
+          COMPANYOS_LOCAL_AUTH: "0"
+          HIBP_ENABLED: "0"
+        run: bash scripts/ops/load-harness.sh
