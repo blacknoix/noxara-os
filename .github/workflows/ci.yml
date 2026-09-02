@@ -328,6 +328,61 @@ jobs:
       - name: Rotate MockKms test secret
         run: bash scripts/ops/rotate-test-secret.sh
 
+  # Staging infra — plan/validate/scan only. Never apply.
+  staging-infra:
+    name: Staging infra (fmt, validate, scan)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure/terraform/environments/staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+          terraform_wrapper: false
+      - name: terraform fmt -check
+        run: terraform fmt -check -recursive ../..
+      - name: terraform init (no backend)
+        run: terraform init -backend=false -input=false
+      - name: terraform validate
+        run: terraform validate
+      - name: Install checkov
+        run: pip install 'checkov>=3.2,<4'
+      - name: checkov (static scan)
+        working-directory: ${{ github.workspace }}
+        run: |
+          checkov -d infrastructure/terraform \
+            --config-file infrastructure/terraform/.checkov.yml \
+            --framework terraform \
+            --compact \
+            --quiet
+      - name: terraform plan (optional — skip without AWS secrets)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          TF_VAR_rds_master_password: ${{ secrets.TF_VAR_RDS_MASTER_PASSWORD }}
+          TF_VAR_redis_auth_token: ${{ secrets.TF_VAR_REDIS_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+            echo "AWS credentials not configured as GitHub secrets."
+            echo "Skipping terraform plan (does not fail this job)."
+            echo "To enable: set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,"
+            echo "TF_VAR_RDS_MASTER_PASSWORD, TF_VAR_REDIS_AUTH_TOKEN."
+            exit 0
+          fi
+          if [ -z "${TF_VAR_rds_master_password:-}" ] || [ -z "${TF_VAR_redis_auth_token:-}" ]; then
+            echo "AWS keys present but TF_VAR_* secrets missing — skipping plan."
+            exit 0
+          fi
+          terraform plan -var-file=terraform.tfvars.example -input=false -no-color
+      - name: Guard — no apply step in this workflow
+        run: |
+          echo "Confirmed: this job never runs terraform apply."
+          echo "See docs/ops/staging.md and make staging-plan."
+
   # Ops gates — informational load harness (budgets, not production SLOs).
   # continue-on-error: do not flake the required gates / main Rust job.
   ops-load-harness:

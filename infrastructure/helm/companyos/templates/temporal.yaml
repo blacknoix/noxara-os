@@ -1,0 +1,67 @@
+{{- if .Values.deps.temporal.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "companyos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: temporal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: temporal
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "companyos.labels" . | nindent 8 }}
+        app.kubernetes.io/component: temporal
+    spec:
+      containers:
+        - name: temporal
+          image: {{ .Values.deps.temporal.image }}
+          env:
+            - name: DB
+              value: postgres12
+            - name: DB_PORT
+              value: {{ .Values.database.port | quote }}
+            - name: POSTGRES_SEEDS
+              value: {{ .Values.database.host | quote }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: TEMPORAL_DB_USER
+                  optional: true
+            - name: POSTGRES_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: TEMPORAL_DB_PASSWORD
+                  optional: true
+          ports:
+            - name: grpc
+              containerPort: 7233
+          resources:
+            {{- toYaml .Values.deps.temporal.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "companyos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: temporal
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/component: temporal
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: grpc
+      port: 7233
+      targetPort: grpc
+{{- end }}

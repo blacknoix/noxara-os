@@ -1,0 +1,6 @@
+apiVersion: v2
+name: companyos
+description: CompanyOS staging cell — Rust services, web, and self-hosted deps (NATS/Temporal/OpenSearch/ClickHouse)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

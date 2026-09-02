@@ -1,0 +1,12 @@
+# Example remote state — copy to backend.tf when an AWS account exists.
+# Do not commit real bucket names with production data.
+#
+# terraform {
+#   backend "s3" {
+#     bucket         = "companyos-tfstate-ACCOUNT"
+#     key            = "staging/us-primary/terraform.tfstate"
+#     region         = "us-east-1"
+#     dynamodb_table = "companyos-tf-locks"
+#     encrypt        = true
+#   }
+# }

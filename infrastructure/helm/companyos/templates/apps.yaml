@@ -1,0 +1,86 @@
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "companyos.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  replicas: {{ $svc.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: {{ $name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "companyos.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $name }}
+    spec:
+      serviceAccountName: {{ default "companyos-default" $svc.serviceAccount }}
+      containers:
+        - name: {{ $name }}
+          image: {{ include "companyos.image" (dict "root" $ "svc" $svc) }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- if $svc.port }}
+          ports:
+            - name: http
+              containerPort: {{ $svc.port }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: companyos-config
+            - secretRef:
+                name: {{ $.Values.database.existingSecret }}
+                optional: true
+          env:
+            {{- if and $svc.bindEnv $svc.port }}
+            - name: {{ $svc.bindEnv }}
+              value: "0.0.0.0:{{ $svc.port }}"
+            {{- end }}
+            {{- if eq $name "web" }}
+            - name: PORT
+              value: "3000"
+            {{- end }}
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+          {{- if $svc.port }}
+          readinessProbe:
+            httpGet:
+              path: {{ if eq $name "web" }}/{{ else }}/healthz{{ end }}
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: {{ if eq $name "web" }}/{{ else }}/healthz{{ end }}
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          {{- end }}
+{{- if $svc.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "companyos.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+  ports:
+    - name: http
+      port: {{ $svc.port }}
+      targetPort: http
+{{- end }}
+{{- end }}
+{{- end }}

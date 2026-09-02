@@ -1,0 +1,29 @@
+# Intentional staging / single-region skips — see docs/ops/staging.md.
+skip-check:
+  - CKV_AWS_58
+  - CKV_AWS_136
+  - CKV_AWS_191
+  - CKV_AWS_3
+  - CKV_AWS_145
+  - CKV_AWS_26
+  - CKV2_AWS_64
+  - CKV_AWS_144
+  - CKV2_AWS_62
+  - CKV_AWS_39
+  - CKV_AWS_38
+  - CKV_AWS_382
+  - CKV_AWS_353
+  - CKV_AWS_118
+  - CKV_AWS_31
+  - CKV_AWS_130
+  - CKV_AWS_158
+  - CKV2_AWS_28
+  - CKV_AWS_18
+  - CKV2_AWS_61
+  - CKV_AWS_21
+  - CKV2_AWS_6
+  - CKV_AWS_111
+  - CKV2_AWS_57
+  - CKV_AWS_355
+  - CKV_AWS_338
+  - CKV_AWS_163

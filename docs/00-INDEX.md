@@ -38,7 +38,7 @@ Accepted ADRs [001–022](adrs/) document foundational decisions. ADR [019](adrs
 - [Auth threat model](threat-models/auth.md)
 - [Platform / ops threat model](threat-models/platform-ops.md)
 - [Compliance / SOC 2 Type I readiness](compliance/soc2-type-i-readiness.md)
-- [Ops alert catalogue](ops/alert-catalogue.yaml) · [degradation ladder](ops/degradation-ladder.md) · [gaps](ops/gaps.md)
+- [Ops alert catalogue](ops/alert-catalogue.yaml) · [degradation ladder](ops/degradation-ladder.md) · [gaps](ops/gaps.md) · [staging IaC](ops/staging.md)
 - ADR [016](adrs/016-org-scoped-jwt-opaque-refresh.md) — org-scoped JWT + opaque refresh cookies
 - ADR [017](adrs/017-org-provisioning-durable-command.md) — durable OrgProvisioning (Temporal follow-up)
 - ADR [018](adrs/018-table-virtualisation.md) — Table virtualisation (`@tanstack/react-virtual`)

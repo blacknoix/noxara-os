@@ -12,7 +12,8 @@ implemented or not proven in production. Do not treat CI greens as live SLOs.
 | Temporal SDK start while down | Deferred OK | Approval/workflow rows persist; Temporal start is best-effort and deferred. Full worker rehydration needs Temporal back. |
 | Redis authz cache | N/A by design | Authz is **per-request from Postgres** (sole PDP). Redis only backs rate-limit/SSE; both fall back without Redis. |
 | Production RPO/RTO measurement | Target only | See [`rpo-rto-targets.md`](./rpo-rto-targets.md). CI restore drill ≠ prod timed restore. |
-| Real Okta/Entra, AWS KMS, PrivateLink, App Store | Out of scope | Mocked OIDC / MockKms / unsigned mobile only. |
+| Real Okta/Entra, AWS KMS CMK, PrivateLink, App Store | Out of scope | Mocked OIDC / MockKms / unsigned mobile only. |
+| Live staging AWS cell apply | IaC only | Terraform/Helm for `us-primary` shipped; CI plan/validate/scan only — see [`staging.md`](./staging.md). |
 | External pen test | Out of scope | Attack-surface appendix in threat model for later engagement. |
 | 30-day 99.9% availability / 10 design partners / TTFV | Out of scope | Human/ops metrics. |
 | 10M-row analytics p95 | Out of scope | Modest CI load harness only. |
