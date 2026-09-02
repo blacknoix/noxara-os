@@ -1,0 +1,11 @@
+# Optional local Android upload signing (NEVER commit real secrets).
+# CI generates an ephemeral keystore via COMPANYOS_UPLOAD_* env vars instead.
+#
+# storePassword=...
+# keyPassword=...
+# keyAlias=upload
+# storeFile=/absolute/path/to/upload.keystore
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=

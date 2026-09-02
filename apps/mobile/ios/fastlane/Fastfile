@@ -1,0 +1,113 @@
+# frozen_string_literal: true
+
+# CompanyOS iOS Fastlane — gym / match ready.
+# Linux CI only dry-runs (no Xcode). Real IPA requires a macOS runner + Apple certs.
+# Do NOT call deliver / upload_to_app_store from CI in this pipeline.
+
+opt_out_usage
+default_platform(:ios)
+
+PLATFORM_ROOT = File.expand_path("..", __dir__)
+FLUTTER_ROOT = File.expand_path("../..", __dir__)
+
+def git_build_number
+  Dir.chdir(FLUTTER_ROOT) do
+    `git rev-list --count HEAD`.strip
+  end
+rescue StandardError
+  "1"
+end
+
+def git_version_name
+  # Prefer pubspec version name (before +build).
+  pubspec = File.read(File.join(FLUTTER_ROOT, "pubspec.yaml"))
+  if pubspec =~ /^version:\s*([^\s+]+)/
+    Regexp.last_match(1)
+  else
+    "0.1.0"
+  end
+end
+
+platform :ios do
+  desc "Dry-run: validate lane wiring without Xcode / gym / match"
+  lane :dry_run do
+    UI.header("CompanyOS iOS dry-run (no Xcode required)")
+    UI.message("Flutter root: #{FLUTTER_ROOT}")
+    UI.message("iOS root: #{PLATFORM_ROOT}")
+    UI.message("Version name: #{git_version_name}")
+    UI.message("Build number (git rev-list): #{git_build_number}")
+
+    required = [
+      File.join(PLATFORM_ROOT, "Runner.xcodeproj", "project.pbxproj"),
+      File.join(PLATFORM_ROOT, "Runner", "Info.plist"),
+      File.join(PLATFORM_ROOT, "ExportOptions.plist"),
+      File.join(__dir__, "Appfile"),
+      File.join(__dir__, "Matchfile"),
+    ]
+    required.each do |path|
+      UI.user_error!("Missing required file: #{path}") unless File.exist?(path)
+    end
+
+    info = File.read(File.join(PLATFORM_ROOT, "Runner", "Info.plist"))
+    unless info.include?("CFBundleURLTypes") && info.include?("companyos")
+      UI.user_error!("Info.plist must declare companyos:// URL scheme")
+    end
+    unless info.include?("ITSAppUsesNonExemptEncryption")
+      UI.user_error!("Info.plist must declare ITSAppUsesNonExemptEncryption")
+    end
+
+    UI.success("iOS Fastlane dry-run OK — gym/match skipped (no Xcode on this runner).")
+    UI.important("Next: run `fastlane ios beta` or `fastlane ios release` on a macOS runner with Apple certs (see docs/clients/store-release.md).")
+  end
+
+  desc "Build signed IPA via Flutter + gym (macOS + match certs required)"
+  lane :beta do
+    ensure_xcode!
+    build_number = ENV.fetch("COMPANYOS_IOS_BUILD_NUMBER", git_build_number)
+    version_name = ENV.fetch("COMPANYOS_IOS_VERSION_NAME", git_version_name)
+    app_id = ENV.fetch("COMPANYOS_IOS_BUNDLE_ID", "com.companyos.companyosMobile")
+
+    # match expects MATCH_PASSWORD + App Store Connect API key / Apple ID secrets.
+    # Skip when COMPANYOS_SKIP_MATCH=1 (local unsigned experiments only).
+    unless ENV["COMPANYOS_SKIP_MATCH"] == "1"
+      match(
+        type: "appstore",
+        readonly: is_ci,
+        app_identifier: app_id,
+      )
+    end
+
+    Dir.chdir(FLUTTER_ROOT) do
+      sh("flutter", "pub", "get")
+      sh(
+        "flutter", "build", "ipa",
+        "--release",
+        "--build-name=#{version_name}",
+        "--build-number=#{build_number}",
+        "--export-options-plist=ios/ExportOptions.plist",
+      )
+    end
+
+    ipa = Dir[File.join(FLUTTER_ROOT, "build", "ios", "ipa", "*.ipa")].first
+    UI.user_error!("IPA not found under build/ios/ipa") if ipa.nil?
+    UI.success("Built IPA: #{ipa}")
+    # Intentionally no upload_to_testflight / deliver here.
+  end
+
+  desc "App Store release build (macOS). Does not upload."
+  lane :release do
+    beta
+    UI.important("IPA ready locally. Upload with Transporter / `deliver` is a manual follow-up — not part of this lane.")
+  end
+
+  private_lane :ensure_xcode! do
+    begin
+      sh("xcodebuild", "-version")
+    rescue StandardError
+      UI.user_error!(
+        "Xcode is required for ios beta/release. On Linux CI use `fastlane ios dry_run` instead. " \
+        "See docs/clients/store-release.md for macOS runner + cert requirements.",
+      )
+    end
+  end
+end

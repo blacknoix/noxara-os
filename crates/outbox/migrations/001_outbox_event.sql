@@ -19,8 +19,8 @@ ALTER TABLE outbox_event ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE outbox_event FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS outbox_tenant_isolation ON outbox_event;
-
+-- Idempotent: do not DROP POLICY (parallel tests would briefly see deny-all under FORCE RLS).
+-- Re-migrate treats duplicate_object (42710) as success in companyos_outbox::migrate.
 CREATE POLICY outbox_tenant_isolation ON outbox_event
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);

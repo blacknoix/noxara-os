@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'src/api/api_client.dart';
 import 'src/auth/auth_service.dart';
 import 'src/biometrics/biometric_service.dart';
+import 'src/crash/crash_reporter.dart';
 import 'src/deep_link/deep_link.dart';
 import 'src/offline/mutation_queue.dart';
 import 'src/offline/read_cache.dart';
@@ -15,8 +16,25 @@ class SessionHolder {
   static AuthService? auth;
 }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Crash reporting: CI uses fake/empty CRASH_DSN → FakeCrashTransport.
+  // A live DSN requires wiring a real CrashTransport (not done in this PR).
+  final crashConfig = CrashReporterConfig.fromEnvironment();
+  final crash = CrashReporter(
+    config: crashConfig,
+    transport: FakeCrashTransport(),
+  );
+  await crash.initialize();
+  FlutterError.onError = (details) {
+    crash.captureException(
+      details.exception,
+      stackTrace: details.stack,
+      context: {'library': details.library ?? 'flutter'},
+    );
+  };
+
   const apiBase =
       String.fromEnvironment('API_URL', defaultValue: 'http://127.0.0.1:8080');
   final api = ApiClient(
@@ -32,6 +50,7 @@ void main() {
     biometrics: FakeBiometricService(),
     queue: MutationQueue(),
     cache: ReadCache(),
+    crash: crash,
   ));
 }
 
@@ -44,6 +63,7 @@ class CompanyOsApp extends StatefulWidget {
     required this.biometrics,
     required this.queue,
     required this.cache,
+    this.crash,
   });
 
   final AuthService auth;
@@ -52,6 +72,7 @@ class CompanyOsApp extends StatefulWidget {
   final BiometricService biometrics;
   final MutationQueue queue;
   final ReadCache cache;
+  final CrashReporter? crash;
 
   @override
   State<CompanyOsApp> createState() => _CompanyOsAppState();

@@ -1251,15 +1251,16 @@ async fn lifecycle_emits_marketplace_outbox_events() {
     let installer = Caller::owner();
 
     let published = publish_listing(&app, publisher, &["sales.customer.read"], &[]).await;
-    let (_, body) = install(
+    let (install_status, body) = install(
         &app,
         installer,
         &published.listing_id,
         &["sales.customer.read"],
     )
     .await;
+    assert_eq!(install_status, StatusCode::CREATED, "install: {body}");
     let install_id = body["install"]["id"].as_str().expect("id").to_string();
-    call(
+    let (uninstall_status, uninstall_body) = call(
         &app,
         request(
             "POST",
@@ -1269,6 +1270,11 @@ async fn lifecycle_emits_marketplace_outbox_events() {
         ),
     )
     .await;
+    assert_eq!(
+        uninstall_status,
+        StatusCode::OK,
+        "uninstall: {uninstall_body}"
+    );
 
     for (org, expected) in [
         (

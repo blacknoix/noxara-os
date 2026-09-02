@@ -1,8 +1,10 @@
 -- Phase 1.8: relay cross-tenant publish + DLQ.
 -- Relay sets `app.outbox_relay = '1'` (bypasses tenant session) so it can
 -- publish all orgs' unpublished rows. Permissive policies OR together.
+--
+-- Idempotent: do not DROP POLICY (parallel tests would briefly see deny-all under FORCE RLS).
+-- Re-migrate treats duplicate_object (42710) as success in companyos_outbox::migrate.
 
-DROP POLICY IF EXISTS outbox_relay_publish ON outbox_event;
 CREATE POLICY outbox_relay_publish ON outbox_event
     USING (current_setting('app.outbox_relay', true) = '1')
     WITH CHECK (current_setting('app.outbox_relay', true) = '1');
@@ -29,12 +31,10 @@ CREATE INDEX IF NOT EXISTS outbox_dlq_org_id_idx ON outbox_dlq (org_id);
 ALTER TABLE outbox_dlq ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outbox_dlq FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS outbox_dlq_tenant_isolation ON outbox_dlq;
 CREATE POLICY outbox_dlq_tenant_isolation ON outbox_dlq
     USING (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid)
     WITH CHECK (org_id = NULLIF(current_setting('app.org_id', true), '')::uuid);
 
-DROP POLICY IF EXISTS outbox_dlq_relay ON outbox_dlq;
 CREATE POLICY outbox_dlq_relay ON outbox_dlq
     USING (current_setting('app.outbox_relay', true) = '1')
     WITH CHECK (current_setting('app.outbox_relay', true) = '1');

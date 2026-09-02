@@ -1,0 +1,8 @@
+# App Store Connect / Apple Developer identifiers (no secrets committed).
+# Override via env: APP_STORE_CONNECT_TEAM_ID, ITC_TEAM_ID, etc.
+
+app_identifier("com.companyos.companyosMobile")
+# Placeholder team IDs — replace when Apple Developer account is available.
+apple_id(ENV.fetch("APPLE_ID", "REPLACE_ME@companyos.example"))
+team_id(ENV.fetch("APPLE_TEAM_ID", "XXXXXXXXXX"))
+itc_team_id(ENV.fetch("ITC_TEAM_ID", "XXXXXXXXXX"))
