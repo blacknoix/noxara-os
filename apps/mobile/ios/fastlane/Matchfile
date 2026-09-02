@@ -1,0 +1,8 @@
+# match-ready stub. Real certs live in a private git repo or S3 — never this repo.
+# Set MATCH_GIT_URL / MATCH_PASSWORD via GitHub secrets on a macOS runner.
+
+git_url(ENV.fetch("MATCH_GIT_URL", "git@github.com:EXAMPLE/companyos-certificates.git"))
+storage_mode("git")
+type("appstore")
+app_identifier(["com.companyos.companyosMobile"])
+team_id(ENV.fetch("APPLE_TEAM_ID", "XXXXXXXXXX"))

@@ -40,7 +40,7 @@ Status: **Active** outline. Phase 0–4.5 + 1.11 implemented; ops gates (restore
 - Bottom tabs: Home · Work · Create · Inbox · More; pull-to-refresh; native-feel tab transitions
 - Tauri (`apps/desktop`): wraps existing web app — system tray, native notifications API, global copilot hotkey Alt+Space, deep links `companyos://record/{id}`, offline shell with last cached dashboard
 - Backend minimum: `POST/GET/DELETE /api/v1/notifications/devices` push token registration (no live FCM/APNs)
-- CI: Flutter analyze + tests (+ optional unsigned Android APK); desktop `shell-core` unit tests. Store-signed iOS/macOS and crash reporting are follow-ups
+- CI: Flutter analyze + tests; required `android-signed-release` (ephemeral CI keystore → AAB); iOS Fastlane `dry_run` on Linux; optional unsigned debug APK `continue-on-error`. Live store upload / macOS IPA / live crash DSN are follow-ups (`docs/clients/store-release.md`)
 - Parity matrix updated in `docs/clients/parity-matrix.md`
 
 ## Phase 4.5 — Industry packs / client parity (this PR)

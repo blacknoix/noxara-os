@@ -29,6 +29,9 @@ describe('client parity matrix', () => {
     expect(md).toContain('companyos://record/');
     expect(md).toContain('FakeBiometricService');
     expect(md).toContain('out-of-scope');
+    expect(md).toContain('android-signed-release');
+    expect(md).toContain('FakeCrashTransport');
+    expect(md).toContain('store-release.md');
     // Auth row: web + mobile both implemented
     expect(md).toMatch(/\|\s*Auth[^\n]*\|\s*implemented\s*\|\s*implemented\s*\|/);
   });
